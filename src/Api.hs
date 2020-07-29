@@ -89,6 +89,7 @@ count = lens _count $ \record field -> record { _count = field }
 instance ToURL Model where
   toURL (Model m) = Num m
   fromURL (Num m) = pure $ Model m
+  fromURL (Path "") = pure $ Model 0
   fromURL v = fail $ "ToURL: Expected Number, but got " <> show v
 
 
