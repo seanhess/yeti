@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: aced26b38d1880b2d50353bf43417291b3f83a620edf6452d3c41b821885ba67
+-- hash: b0c34740951622616384502521aca6fd3d8d78b742121be274229d6d3cf9a0e1
 
 name:           wookie
 version:        0.1.0.0
@@ -19,7 +19,6 @@ license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
-    ChangeLog.md
 
 source-repository head
   type: git
@@ -29,6 +28,7 @@ library
   exposed-modules:
       Api
       Lib
+      Runtime
   other-modules:
       Paths_wookie
   hs-source-dirs:
@@ -37,12 +37,14 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , lens
     , lucid
+    , mtl
     , scotty
     , string-conversions
     , text
-    , transformers
+    , time
   default-language: Haskell2010
 
 executable wookie-exe
@@ -51,17 +53,19 @@ executable wookie-exe
       Paths_wookie
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wname-shadowing -Wincomplete-patterns
   build-depends:
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , lens
     , lucid
+    , mtl
     , scotty
     , string-conversions
     , text
-    , transformers
+    , time
     , wookie
   default-language: Haskell2010
 
@@ -77,11 +81,13 @@ test-suite wookie-test
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , lens
     , lucid
+    , mtl
     , scotty
     , string-conversions
     , text
-    , transformers
+    , time
     , wookie
   default-language: Haskell2010

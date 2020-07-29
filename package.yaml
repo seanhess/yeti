@@ -8,7 +8,6 @@ copyright:           "All Rights Reserved"
 
 extra-source-files:
 - README.md
-- ChangeLog.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -23,11 +22,13 @@ dependencies:
 - base >= 4.7 && < 5
 - aeson
 - bytestring
+- containers
 - text
 - lucid
 - lens
 - scotty
-- transformers
+- mtl
+- time
 - string-conversions
 
 library:
@@ -41,6 +42,9 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wname-shadowing
+    - -Wincomplete-patterns
+    # - -Wall
     dependencies:
     - wookie
 
