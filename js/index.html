@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <script>
+    function test() {
+      console.log("TEST")
+    }
+
+    function sendMessage(body) {
+      return fetch("/test", { method: "POST", body: body })
+    }
+
+    function messageBody(action, url) {
+      return JSON.stringify({action: action, url: url})
+    }
+
+    function runtime(action) {
+      let url = location.hash.substr(1)
+          body = messageBody(action, url)
+      console.log("RUNTIME:", action, url, body)
+      sendMessage(body)
+        .then(res => res.json())
+        .then(onResponse)
+        // let the server tell us what it is
+        // TODO we also need to update the URL
+    }
+
+    function onResponse(data) {
+      document.body.innerHTML = data.resView
+      location.hash = data.resUrl
+    }
+    </script>
+  </head>
+  <body>
+    <script>
+      // I need an initial action, no?
+      runtime("Init")
+    </script>
+  </body>
+</html>
