@@ -57,9 +57,7 @@ parseURL t =
 -- wait, this needs to run in IO
 runtime :: Message -> IO Response
 runtime Message{url, action} = do
-  putStrLn $ cs $ serializeAction Increment
   m <- fromURL (parseURL url) :: IO Model
-  print m
   let a = read $ cs action :: Action
   m2 <- execStateT (update a) m :: IO Model
   let out = Lucid.renderBS (view m2)

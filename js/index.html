@@ -25,8 +25,8 @@
     }
 
     function onResponse(data) {
-      document.body.innerHTML = data.resView
-      location.hash = data.resUrl
+      document.getElementById("content").innerHTML = data.resView
+      window.location.hash = data.resUrl
     }
     </script>
   </head>
@@ -35,5 +35,6 @@
       // I need an initial action, no?
       runtime("Init")
     </script>
+    <div id="content"></div>
   </body>
 </html>
