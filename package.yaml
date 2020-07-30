@@ -23,6 +23,8 @@ dependencies:
 - aeson
 - bytestring
 - containers
+- vector
+- unordered-containers
 - text
 - lucid
 - lens

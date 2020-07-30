@@ -9,7 +9,7 @@ module Api where
 import Runtime
 
 import Data.Map as Map (Map, fromList)
-import Data.Aeson (ToJSON(..), genericToJSON, defaultOptions, Options(sumEncoding), SumEncoding(..), Value(..))
+import Data.Aeson (ToJSON(..), FromJSON(..), genericToJSON, defaultOptions, Options(sumEncoding), SumEncoding(..), Value(..))
 
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text (Text)
@@ -48,62 +48,47 @@ data Model = Model
 makeLenses ''Model
 
 
-toRoutePath :: ToJSON a => a -> Path
-toRoutePath a = undefined $ toJSON a
-
--- What if it can't be mapped?
--- Maybe I should make it support everything
-toRouteSegment :: Value -> Segment
-toRouteSegment (String s) = Single (Str s)
-toRouteSegment (Number n) = Single (Num $ round n)
-toRouteSegment (Bool b) = Single (Flag b)
--- toRouteSegment (Array a) = Multi (map toRouteSegment a)
--- toRouteSegment (Object o) = Multi (map toRouteSegment a)
-
--- We don't want to fail parsing here
--- but we aren't in JSON land anymore
--- we could parse it manually though, using Parsec
 
 
+-- TODO Your own Route / Path system with support for generics
 
 class RoutePath a where
   toPath :: a -> Path
   -- parsePath :: Path -> Maybe a
 
 
+
+
 data Route
     = Counter Integer
     | Course CourseId CoursePage
-    | Courses CourseSearch
-    deriving (Generic)
+    | Courses CourseId CourseSearch
+    deriving (Generic, Show, Eq)
 instance ToJSON Route where
-  toJSON = genericToJSON defaultOptions { sumEncoding = ObjectWithSingleField }
+  toJSON = routeToJSON
+instance FromJSON Route where
+  parseJSON = routeParseJSON
+
 
 data CoursePage = Contents | Comments
-  deriving (Generic)
+  deriving (Generic, Show, Eq)
 instance ToJSON CoursePage
+instance FromJSON CoursePage
 
 data CourseSearch = CourseSearch
   { term :: Text
   , category :: Text
-  } deriving (Generic)
+  } deriving (Generic, Show, Eq)
 instance ToJSON CourseSearch
+instance FromJSON CourseSearch
 
--- Each of these should go to a segment, no?
--- could it do it from the aeson?
--- aeson doesn't map directly to a route though, because it can be infinitely nested
 
 type CourseId = Text
 
--- could we resuse these definititions to provide two-way mappings?
--- polymorphism
-
--- these are when you are GIVEN a Counter c. I fail to see how you could make a parser from them
-
-instance RoutePath Route where
-  toPath (Counter c)      = Root </> "counter" </> param c
-  toPath (Course i page) = Root </> "course" </> param i </> param page
-  toPath (Courses search) = Root </> "courses" </> (fields ["term" .: term search, "category" .: category search])
+-- instance RoutePath Route where
+--   toPath (Counter c)      = Root </> "counter" </> param c
+--   toPath (Course i page) = Root </> "course" </> param i </> param page
+--   toPath (Courses search) = Root </> "courses" </> (fields ["term" .: term search, "category" .: category search])
 
 
   -- we need a more dynamic way to get this to work
@@ -113,9 +98,9 @@ instance RoutePath Route where
   -- parsePath (Courses search) = Root </> "courses" </> (fields ["term" .: term search, "category" .: category search])
 
 
-instance Param CoursePage where
-  toFragment Contents = "contents"
-  toFragment Comments = "comments"
+-- instance Param CoursePage where
+--   toFragment Contents = "contents"
+--   toFragment Comments = "comments"
 
 
 -- genericFields

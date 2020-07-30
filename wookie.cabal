@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b0c34740951622616384502521aca6fd3d8d78b742121be274229d6d3cf9a0e1
+-- hash: 707dc9027c1dfac884ff09649cceee1241093083acdeced70f90b27c81cd9e62
 
 name:           wookie
 version:        0.1.0.0
@@ -45,6 +45,8 @@ library
     , string-conversions
     , text
     , time
+    , unordered-containers
+    , vector
   default-language: Haskell2010
 
 executable wookie-exe
@@ -66,6 +68,8 @@ executable wookie-exe
     , string-conversions
     , text
     , time
+    , unordered-containers
+    , vector
     , wookie
   default-language: Haskell2010
 
@@ -89,5 +93,7 @@ test-suite wookie-test
     , string-conversions
     , text
     , time
+    , unordered-containers
+    , vector
     , wookie
   default-language: Haskell2010
