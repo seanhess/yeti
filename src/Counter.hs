@@ -50,11 +50,21 @@ makeLenses ''Model
 
 
 
+-- we can't give a specific load method here
+-- except we know the params for this match!
+-- it could take Param or Route or something....
+
+
 
 
 
 -- Load a model based on URL parameters
 -- this shouldn't even be called if the URL is invalid. That's a 404 instead. _Router_
+type Load = Integer -> IO Model
+type Update = Action -> StateT Model IO ()
+type View = Model -> Html ()
+
+
 load :: Integer -> IO Model
 load c = do
   t <- Time.getCurrentTime

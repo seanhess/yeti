@@ -37,19 +37,16 @@ data Response = Response
 -- 3. applies the action via update
 -- 4. renders the view
 
-runtime :: forall model action. (Read action, Show action) => IO model -> (action -> StateT model IO ()) -> (model -> Html ()) -> ByteString -> IO Response
-runtime load update view body = do
+runAction :: forall model action. (Read action, Show action) => IO model -> (action -> StateT model IO ()) -> (model -> Html ()) -> ByteString -> IO Response
+runAction load update view body = do
   m <- load :: IO model
 
-  -- do we have a matching action?
-  -- TODO this is a dumb way, this should only happen on GETS
-  -- if we expected to have an action and it fails we should error out
-  let ma = readMaybe $ cs body :: Maybe action
-  print (body, ma)
-  m2 <- case ma of
-    Just a -> execStateT (update a) m :: IO model
-    Nothing -> pure m
+  m2 <- case (body, readMaybe $ cs body) of
+    (_, Just a) -> execStateT (update a) m
+    ("", Nothing) -> pure m
+    (_, Nothing) -> fail $ "Could not parse action: " <> cs body
 
+  -- TODO return the new url. How? We need a way to go from model -> route
   let h = view m2
   pure $ Response h -- (renderSegment $ toSegment m2)
 
