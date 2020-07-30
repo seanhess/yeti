@@ -30,6 +30,7 @@ dependencies:
 - lens
 - scotty
 - mtl
+- wai
 - time
 - string-conversions
 

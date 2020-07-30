@@ -2,14 +2,17 @@
 
 module Main where
 
+import Debug.Trace (traceM)
 import Data.String.Conversions (cs)
-import Data.Aeson (Value(..), object, (.=))
--- import Network.Wai.Middleware.Cors
+import Data.Text as Text (stripPrefix, intercalate, Text)
 import Web.Scotty
-import Lucid (renderBS, Html, renderText)
-import Lucid.Html5
-import Api (view, runtime, Model(..), Message(action, url))
-import Runtime (runtime)
+import Network.Wai (Request, pathInfo, rawPathInfo)
+import Lucid (renderBS, Html)
+import Lucid.Html5 (html_, head_, script_, src_, body_, type_)
+-- import Counter (view, Model(..), load, update, view)
+import App (resolve)
+import Wookie.Runtime (runtime, Message, Response(..))
+import Wookie.Router (parsePath)
 import Control.Monad.IO.Class (liftIO)
 
 lucid :: Html a -> ActionM ()
@@ -24,28 +27,42 @@ main = do
   scotty 3000 $ do
     -- middleware simpleCors
 
-    get "/" $ do
-      setHeader "Content-Type" "text/html"
-      file "js/index.html"
+    -- get "/" $ do
+    --   setHeader "Content-Type" "text/html"
+    --   file "js/index.html"
 
-    get "/counter/:count" $ do
-      -- this is just a load. It may or may not have an action
-      m <- body
-      c <- param "count" :: ActionM Integer
-      runtime (Api.load c) Api.update Api.view m
+    get "/js/main.js" $ do
+      setHeader "Content-Type" "text/javascript"
+      file "js/main.js"
 
+    get (function $ appRoutePattern "/app/") app
+    post (function $ appRoutePattern "/app/") app
 
-
-    post "/counter/:count" $ do
-      -- this'll have an action
-      -- m <- jsonData
-      -- the body as a bytestring
-      -- m <- body
-      -- r <- liftIO $ Api.runtime m
-      -- json r
 
     get "/:name" $ do
       name <- param "name"
       html $ mconcat ["Hello: ", name]
 
 
+  where
+
+    app :: ActionM ()
+    app = do
+      m    <- body
+      path <- param "path" :: ActionM Text
+
+      -- what if we don't find a page
+      liftIO $ print (path, parsePath path)
+      let Just go = App.resolve path
+      Response view <- liftIO $ go m
+
+      lucid $ html_ $ do
+        head_ $ do
+          script_ [type_ "text/javascript", src_ "/js/main.js"] ("test()" :: Text)
+        body_ view
+
+    appRoutePattern :: Text -> Request -> Maybe [Param]
+    appRoutePattern prefix req = do
+      let totalPath = cs $ rawPathInfo req
+      appPath <- Text.stripPrefix prefix totalPath
+      pure [("path", cs appPath)]

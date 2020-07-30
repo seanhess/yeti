@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 972342155d44d0c2f5ce3d9882d5b3335883e88cbd18ffa6f2af54589ae5ae01
+-- hash: 1a3098b14d3a202809fe13d53797cb6a1f1e477263447bf5aeba734919055bb1
 
 name:           wookie
 version:        0.1.0.0
@@ -26,10 +26,11 @@ source-repository head
 
 library
   exposed-modules:
-      Api
+      App
+      Counter
       Lib
-      Router
-      Runtime
+      Wookie.Router
+      Wookie.Runtime
   other-modules:
       Paths_wookie
   hs-source-dirs:
@@ -48,6 +49,7 @@ library
     , time
     , unordered-containers
     , vector
+    , wai
   default-language: Haskell2010
 
 executable wookie-exe
@@ -71,6 +73,7 @@ executable wookie-exe
     , time
     , unordered-containers
     , vector
+    , wai
     , wookie
   default-language: Haskell2010
 
@@ -96,5 +99,6 @@ test-suite wookie-test
     , time
     , unordered-containers
     , vector
+    , wai
     , wookie
   default-language: Haskell2010
