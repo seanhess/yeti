@@ -14,6 +14,7 @@ import Data.Aeson (ToJSON(..), FromJSON(..), genericToJSON, defaultOptions, Opti
 
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text (Text)
+import Text.Read (readMaybe)
 import Data.String.Conversions (cs)
 import Data.ByteString.Lazy (ByteString)
 import GHC.Generics (Generic)
@@ -50,10 +51,14 @@ makeLenses ''Model
 
 
 
--- we can't give a specific load method here
--- except we know the params for this match!
--- it could take Param or Route or something....
 
+instance Page Model where
+   toSegment (Model c _) = cs $ show c
+
+   loadPage t = do
+     -- TODO some parsing utilities
+     Just n <- pure $ readMaybe (cs t)
+     load n
 
 
 

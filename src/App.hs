@@ -15,15 +15,15 @@ import Lucid (Html)
 
 
 
-resolve :: Text -> Maybe (ByteString -> IO Response)
-resolve t = do
-  r <- fromPath =<< parsePath t
-  pure $ resolveRoute r
+-- resolve :: Text -> Maybe (ByteString -> IO Response)
+-- resolve t = do
+--   r <- fromPath =<< parsePath t
+--   pure $ resolveRoute r
 
 
 -- This gets the new model, doesn't update the route!
-resolveRoute :: Route -> (ByteString -> IO Response)
-resolveRoute (Counter n) = runAction (Counter.load n) Counter.update Counter.view
+-- resolveRoute :: Route -> (ByteString -> IO Response)
+-- resolveRoute (Counter n) = runAction (Counter.load n) Counter.update Counter.view
 
 
 
@@ -98,13 +98,13 @@ resolveRoute (Counter n) = runAction (Counter.load n) Counter.update Counter.vie
 
 -- load is known to take the params type
 
-data CounterParams = CounterParams Integer
+-- data CounterParams = CounterParams Integer
 
--- wait that's not a type
--- this has everything we need to render it
-data CurrentPage
-    = CounterPage Integer (Page Integer Counter.Model Counter.Action)
-    | OtherPage String
+-- -- wait that's not a type
+-- -- this has everything we need to render it
+-- data CurrentPage
+--     = CounterPage Integer (Page Integer Counter.Model Counter.Action)
+--     | OtherPage String
 
 
 
