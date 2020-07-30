@@ -53,12 +53,13 @@ type Key = Text
 -- infixl 4 </>
 
 
--- (.:) :: Param p => Text -> p -> (Text, Fragment)
--- t .: f = (t, toFragment f)
 
 -- data :> Segment Segment = 
 
 -- Fragments are anything that can be in a URL
+
+-- I can deterministically parse from Text to Path and back again
+
 -- data Fragment
 --   = Str Text
 --   | Num Integer
@@ -67,135 +68,55 @@ type Key = Text
 -- instance IsString Fragment where
 --   fromString = Str . cs
 
--- no, this IS the same
-newtype Path = Path Value
+data Path
+  = Str Text
+  | Num Integer
+  | Flag Bool
+  | Fields (Map Text Path)
+  | (:>) Path Path
+  deriving (Show, Eq)
 instance IsString Path where
-  fromString = Path . String . cs
+  fromString = Str . cs
+
+fields :: [(Text, Path)] -> Path
+fields = Fields . Map.fromList
+
+(.:) :: Text -> Path -> (Text, Path)
+t .: p = (t, p)
+
+renderPath :: Path -> Text
+renderPath (Str t) = t
+renderPath (Num n) = cs $ show n
+renderPath (Flag True) = "true"
+renderPath (Flag False) = "false"
+renderPath (p1 :> p2) = renderPath p1 <> "/" <> renderPath p2
+renderPath (Fields m) =
+  Map.toList m
+    & map (\(k,v) -> k <> ":" <> renderPath v)
+    & Text.intercalate "|"
+
+
+-- no, this IS the same
+-- newtype Path = Path Value
+-- instance IsString Path where
+--   fromString = Path . String . cs
 
 
 
-parseRoute :: FromJSON r => Text -> Maybe r
-parseRoute t = do
-  v <- parseTopValue t
-  -- Success r <- pure $ fromJSON v
-  let res = fromJSON v
-  case res of
-    Success a -> pure a
-    Error e -> error e
 
-
--- how??
--- split by "/"
-parseTopValue :: Text -> Maybe Value
-parseTopValue t = do
-  (top:segs) <- pure $ Text.splitOn "/" t
-  subs <- mapM parseSegment segs
-  pure $ Object $ HM.fromList [(top, Array $ Vector.fromList subs)]
-
-
-parseSegment :: Text -> Maybe Value
-parseSegment s =
-  parseBool s <|> parseNumber s <|> parseArray s <|> parseObject s <|> parseString s
-  where
-    parseString :: Text -> Maybe Value
-    parseString t = Just $ String t
-
-    parseNumber :: Text -> Maybe Value
-    parseNumber t = Number <$> readMaybe (cs t)
-
-    parseBool :: Text -> Maybe Value
-    parseBool "true" = Just $ Bool True
-    parseBool "false" = Just $ Bool False
-    parseBool _ = Nothing
-
-    parseArray :: Text -> Maybe Value
-    parseArray t = do
-      t2 <- Text.stripPrefix "[" t
-      t3 <- Text.stripSuffix "]" t2
-      tv <- pure $ Text.splitOn "," t3
-      ss <- mapM parseSegment tv
-      pure $ Array $ Vector.fromList ss
-
-    parseObject :: Text -> Maybe Value
-    parseObject t = do
-      -- it could be only one
-      tf <- pure $ Text.splitOn "|" t
-      ps <- mapM parsePair tf
-      pure $ Object $ HM.fromList ps
-
-
-    parsePair :: Text -> Maybe (Text, Value)
-    parsePair = toPair . Text.splitOn ":"
-
-    toPair :: [Text] -> Maybe (Text, Value)
-    toPair xs = do
-      [k, v] <- pure xs
-      v' <- parseSegment v
-      pure (k, v')
-
-
-
-renderRoute :: ToJSON a => a -> Text
-renderRoute a = renderTopValue $ toJSON a
 
 -- renderPath :: Path -> Text
 -- renderPath Root = "/"
--- renderPath (p :> s) = renderPath p <> "/" <> renderSegment s
+-- renderPath (p :> s) = renderPath p <> "/" <> renderJegment s
 
-renderPath :: Path -> Text
-renderPath (Path p) = renderValue p
+-- renderPath :: Path -> Text
+-- renderPath (Path p) = renderValue p
 
 
 
 -- it's going to be an object with a single field, then a list of the other stuffz
 
-renderTopValue :: Value -> Text
-renderTopValue (Object o) =
-  let fs = HM.toList o
-      flat = map flatten fs
-  -- take ALL the keys/values
-  -- and flatten them with a "/"
-  in Text.intercalate "/" $ mconcat flat
-  where
-    flatten (k, Array v) = k : (map renderValue $ Vector.toList v)
-    flatten (k, v) = [k, renderValue v]
-renderTopValue v = renderValue v
 
-renderValue :: Value -> Text
-renderValue (String s) = s
-renderValue (Bool b) = cs $ encode b
-renderValue (Number n) = cs $ encode n
-
-renderValue (Array a) =
-  let vs = Vector.toList a
-      ts = map renderValue vs
-  in "[" <> Text.intercalate "," ts <> "]"
-
--- can I make a whole new object encoding?
--- I don't want quotes. filter out or escape special characters instead
-renderValue (Object o) =
-  HM.toList o
-    & map (\(k,v) -> k <> ":" <> renderValue v)
-    & Text.intercalate "|"
-
-renderValue Null = ""
-
-
-routeToJSON :: (Generic a, GToJSON Zero (Rep a)) => a -> Value
-routeToJSON = genericToJSON routeOptions
-
-routeParseJSON :: (Generic a, GFromJSON Zero (Rep a)) => Value -> Parser a
-routeParseJSON = genericParseJSON routeOptions
-
-routeOptions :: Options
-routeOptions = defaultOptions { sumEncoding = ObjectWithSingleField }
-
-  -- = Str Text
-  -- | Num Integer
-  -- | Flag Bool
-  -- | Fields (Map Text Segment)
-  -- | Segs [Segment]
-  -- deriving (Show, Eq)
 
 -- Maybe this isn't the right level
 -- class Param a where
@@ -216,9 +137,6 @@ routeOptions = defaultOptions { sumEncoding = ObjectWithSingleField }
 
 -- param :: Param a => a -> Segment
 -- param = Single . toFragment
-
--- fields :: [(Text, Fragment)] -> Segment
--- fields = Fields . Map.fromList
 
 -- so you have a segment, and want to add it to the end
 

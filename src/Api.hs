@@ -7,8 +7,9 @@ module Api where
 
 
 import Runtime
+-- import Router
 
-import Data.Map as Map (Map, fromList)
+import Data.Map as Map (Map, fromList, lookup)
 import Data.Aeson (ToJSON(..), FromJSON(..), genericToJSON, defaultOptions, Options(sumEncoding), SumEncoding(..), Value(..))
 
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
@@ -52,10 +53,6 @@ makeLenses ''Model
 
 -- TODO Your own Route / Path system with support for generics
 
-class RoutePath a where
-  toPath :: a -> Path
-  -- parsePath :: Path -> Maybe a
-
 
 
 
@@ -64,30 +61,60 @@ data Route
     | Course CourseId CoursePage
     | Courses CourseId CourseSearch
     deriving (Generic, Show, Eq)
-instance ToJSON Route where
-  toJSON = routeToJSON
-instance FromJSON Route where
-  parseJSON = routeParseJSON
+-- instance ToJSON Route where
+--   toJSON = routeToJSON
+-- instance FromJSON Route where
+--   parseJSON = routeParseJSON
 
 
 data CoursePage = Contents | Comments
   deriving (Generic, Show, Eq)
-instance ToJSON CoursePage
-instance FromJSON CoursePage
+-- instance ToJSON CoursePage
+-- instance FromJSON CoursePage
 
 data CourseSearch = CourseSearch
   { term :: Text
   , category :: Text
   } deriving (Generic, Show, Eq)
-instance ToJSON CourseSearch
-instance FromJSON CourseSearch
+-- instance ToJSON CourseSearch
+-- instance FromJSON CourseSearch
 
 
 type CourseId = Text
 
--- instance RoutePath Route where
---   toPath (Counter c)      = Root </> "counter" </> param c
---   toPath (Course i page) = Root </> "course" </> param i </> param page
+class RoutePath a where
+  toPath :: a -> Path
+  fromPath :: Path -> Maybe a
+
+instance RoutePath Route where
+  toPath (Counter c) = "counter" :> Num c
+  toPath (Course i p) = "course" :> Str i :> toPath p
+  toPath (Courses i s) = "courses" :> Str i :> toPath s
+
+  fromPath ("counter" :> Num n) = Just (Counter n)
+  fromPath ("course" :> Str i :> cp) = Course i <$> (fromPath cp)
+  fromPath ("courses" :> Str i :> s) = Courses i <$> (fromPath s)
+  fromPath _ = Nothing
+
+instance RoutePath CoursePage where
+  toPath Comments = "comments"
+  toPath Contents = "contents"
+
+  fromPath "comments" = Just Comments
+  fromPath "contents" = Just Contents
+  fromPath _ = Nothing
+
+instance RoutePath CourseSearch where
+  toPath (CourseSearch term cat) = fields ["term" .: Str term, "category" .: Str cat]
+
+  fromPath (Fields m) = do
+    Str t <- Map.lookup "term" m
+    Str c <- Map.lookup "category" m
+    pure $ CourseSearch t c
+  fromPath _ = Nothing
+
+
+--   toPath (Course i page)  = Root </> "course" </> param i </> param page
 --   toPath (Courses search) = Root </> "courses" </> (fields ["term" .: term search, "category" .: category search])
 
 
