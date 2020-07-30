@@ -4,7 +4,7 @@ module App where
 
 import Data.ByteString.Lazy (ByteString)
 import Data.Text (Text)
-import Counter
+-- import Counter
 import Wookie.Router
 import Wookie.Runtime
 import Lucid (Html)

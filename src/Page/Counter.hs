@@ -2,7 +2,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
-module Counter where
+module Page.Counter where
 
 
 
@@ -123,7 +123,6 @@ view :: Model -> Html ()
 view m = div_ $ do
 
   div_ $ do
-    h1_ "Counter"
     button_ [ onclick_ (serializeAction Increment)] "Increment"
     button_ [ onclick_ (serializeAction Decrement)] "Decrement"
     button_ [ onclick_ (serializeAction (Set 5))] "Set 5"
@@ -135,6 +134,10 @@ view m = div_ $ do
     p_ $ do
       span_ "Time: "
       span_ (toHtml $ show $ m ^. timestamp)
+
+    p_ $ a_ [href_ "/app/counter/100"] "Click here to jump to Count = 100"
+    p_ $ a_ [href_ "https://www.google.com"] "Google.com"
+    p_ $ a_ [href_ "/app/about"] "About"
 
 
 -- well, let's see, it can call it via the whole url!
