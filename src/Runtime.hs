@@ -16,7 +16,7 @@ import Control.Applicative ((<|>))
 import Data.Maybe (fromMaybe, mapMaybe)
 import Data.String.Conversions (cs)
 import Control.Monad.State.Lazy (StateT, modify, put, execStateT)
-import Data.Aeson (ToJSON(..), FromJSON(..), Value(..), encode, Result(..), fromJSON)
+import Data.Aeson (ToJSON(..), FromJSON(..), encode, Result(..), fromJSON)
 import Data.Aeson (genericToJSON, defaultOptions, Options(sumEncoding), SumEncoding(..), genericParseJSON)
 import Data.Aeson.Types (GToJSON, GFromJSON, Zero, Parser)
 import Data.Vector as Vector (Vector, toList, fromList)
@@ -34,45 +34,15 @@ data Message = Message
 instance FromJSON Message
 
 
--- it's either a single or a multi
--- the multi could be described as a list, no?
--- Path x
--- Num y
--- /courses/2|3|4|5
-
-type Key = Text
 
 
--- If you put it here, you can't use a typeclass
--- data Path
---   = Root
---   | (:>) Path Segment
-
--- (</>) :: Path -> Segment -> Path
--- p </> a = p :> a
--- infixl 4 </>
-
-
-
--- data :> Segment Segment = 
-
--- Fragments are anything that can be in a URL
-
--- I can deterministically parse from Text to Path and back again
-
--- data Fragment
---   = Str Text
---   | Num Integer
---   | Flag Bool
---   deriving (Show, Eq)
--- instance IsString Fragment where
---   fromString = Str . cs
 
 data Path
   = Str Text
   | Num Integer
   | Flag Bool
   | Fields (Map Text Path)
+  | Array [Path]
   | (:>) Path Path
   deriving (Show, Eq)
 instance IsString Path where
@@ -94,12 +64,57 @@ renderPath (Fields m) =
   Map.toList m
     & map (\(k,v) -> k <> ":" <> renderPath v)
     & Text.intercalate "|"
+renderPath (Array ps) =
+  let ts = map renderPath ps
+  in "[" <> Text.intercalate "," ts <> "]"
 
 
--- no, this IS the same
--- newtype Path = Path Value
--- instance IsString Path where
---   fromString = Path . String . cs
+-- well, wait a minute, we're just piping it all through?
+parsePath :: Text -> Maybe Path
+parsePath t = do
+  let ss = Text.splitOn "/" t
+  ps <- mapM parseSegment ss
+  pure $ foldl1 ((:>)) ps
+
+
+
+parseSegment :: Text -> Maybe Path
+parseSegment s =
+  parseBool s <|> parseNumber s <|> parseObject s <|> parseArray s <|> parseString s
+  where
+    parseString :: Text -> Maybe Path
+    parseString t = Just $ Str t
+
+    parseNumber :: Text -> Maybe Path
+    parseNumber t = Num <$> readMaybe (cs t)
+
+    parseBool :: Text -> Maybe Path
+    parseBool "true" = Just $ Flag True
+    parseBool "false" = Just $ Flag False
+    parseBool _ = Nothing
+
+    parseObject :: Text -> Maybe Path
+    parseObject t = do
+      tf <- pure $ Text.splitOn "|" t
+      ps <- mapM parsePair tf
+      pure $ Fields $ Map.fromList ps
+
+    parseArray :: Text -> Maybe Path
+    parseArray t = do
+      t2 <- Text.stripPrefix "[" t
+      t3 <- Text.stripSuffix "]" t2
+      tv <- pure $ Text.splitOn "," t3
+      Array <$> mapM parseSegment tv
+
+
+    parsePair :: Text -> Maybe (Text, Path)
+    parsePair = toPair . Text.splitOn ":"
+
+    toPair :: [Text] -> Maybe (Text, Path)
+    toPair xs = do
+      [k, v] <- pure xs
+      v' <- parseSegment v
+      pure (k, v')
 
 
 
