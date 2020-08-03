@@ -29,8 +29,8 @@ lucid h = do
   raw . renderBS $ h
 
 
--- TODO back button doesn't work
--- TODO intercept link clicks and forward using our system
+-- TODO back button doesn't work: history.onpopstate? Just call it again with the current url. The url is updating
+-- TODO data attributes instead of onclick()?
 
 
 -- This embeds the javascript into the page
@@ -51,10 +51,9 @@ reply h = do
   where
     renderWhole :: Html () -> ActionM ()
     renderWhole h' = do
-      js <- liftIO $ Text.readFile "js/main.js"
       lucid $ html_ $ do
         head_ $ do
-          script_ [type_ "text/javascript"] js
+          script_ [type_ "text/javascript", src_ "/js/main.js"] ("test()" :: Text)
         body_ $ do
           h1_ "App"
           div_ [id_ "content"] h'
@@ -76,6 +75,10 @@ main = do
   scotty 3000 $ do
     middleware (delay 100)
 
+    get "/js/main.js" $ do
+      setHeader "Content-Type" "text/javascript"
+      file "js/main.js"
+
     -- TODO some fancy way of mountain this at "/app/counter" and having the page url just work
     matchAny "/app/counter/:p" $ do
       p <- param "p"
@@ -84,7 +87,7 @@ main = do
       setPageUrl ("/app/counter/" <> cs s)
       reply h
 
-    matchAny "/app/about" $ do
+    get "/app/about" $ do
       setPageUrl "/app/about"
       reply $ About.view ()
 
