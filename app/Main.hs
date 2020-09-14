@@ -30,7 +30,46 @@ lucid h = do
 
 
 -- TODO back button doesn't work: history.onpopstate? Just call it again with the current url. The url is updating
--- TODO data attributes instead of onclick()?
+-- TODO Example: username / password validation
+-- TODO Example: tab navigation
+-- TODO Example: React client-side component (date picker? Not sure what it would be)
+
+-- TODO VDOM: See below, on HTML-REACT-PARSER. Render HTML, parse client-side, convert to a react component
+-- TODO better serialization of actions: use `replace` from html-react-parser
+
+
+-- HTML-REACT-PARSER
+-- =========================================================
+-- https://github.com/remarkablemark/html-react-parser
+-- https://www.npmjs.com/package/html-react-parser - let's you swap out certain elements with components, cool.
+-- So you should be able to drop in react components and have it work!
+-- I can put fancy things in (NOT JAVASCRIPT) and my component can replace them with working coolness
+-- XSS - i need to escape the  rendered input on the server
+-- Lucid already escapes things! So <script> with give you: &lt;script:gt;. It even escapes quotes. Sick. How does it still work??
+-- Just test an XSS attack and see if you can get it to work
+
+
+
+-- VDOM =============
+-- Virtual Dom Javascript library - looks unmaintained
+-- React - why not communicate directly to react? we could probably create view code. Makes embedding other react components easy. Makes people feel happy
+-- Elm - probably impossible without reproducing the views
+
+-- <MyButton color="blue" shadowSize={2}>
+  -- Click Me
+-- </MyButton>
+-- React.createElement(
+  -- MyButton,
+  -- {color: 'blue', shadowSize: 2},
+  -- 'Click Me'
+-- )
+-- <div className="sidebar" />
+-- React.createElement(
+  -- 'div',
+  -- {className: 'sidebar'}
+-- )
+
+
 
 
 -- This embeds the javascript into the page

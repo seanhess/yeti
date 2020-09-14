@@ -24,6 +24,11 @@ import Lucid (Html, toHtml, toHtmlRaw, renderBS)
 import Lucid.Html5
 
 
+
+-- 
+
+
+
 -- TESTS
 -- TODO Pre-render the first page load - complete
 -- TODO two counters
@@ -56,18 +61,25 @@ instance Page Model where
    toSegment (Model c _) = cs $ show c
 
    loadPage t = do
-     -- TODO some parsing utilities
+     -- TODO parse to a custom format. Map, Num, String, List
+     -- it'll usually be multiple items, so default to map?
+     -- or ALWAYS do a map. Yeah that makes sense.
+     -- this already exists, it's called querystring
+     -- OH! And the querystring behaves differently. It's not part of relative paths
+     -- we definitely want to use it.
+     -- Plus we'll have a library
+     -- /app/counter/count:99
+     -- /app/counter/left:3|right:9
+     -- /app/counter?count=99
+     -- /app/counter?left=99
+     -- /app/counter?items=2,3,4&henry=dog%20tired
+     -- yes, definitely. It's how PHP used to work
      Just n <- pure $ readMaybe (cs t)
      load n
 
 
 
 
--- Load a model based on URL parameters
--- this shouldn't even be called if the URL is invalid. That's a 404 instead. _Router_
-type Load = Integer -> IO Model
-type Update = Action -> StateT Model IO ()
-type View = Model -> Html ()
 
 
 load :: Integer -> IO Model
@@ -76,37 +88,6 @@ load c = do
   pure $ Model c t
 
 
--- Wait, so: Increment comes in. We have the URL, which contains
--- APPROACH 1 - pass the state up to the server every time.
--- APPROACH 2 - "reload" the whole page, but diff everything
--- Can the action *decide* what to do?
-
-
--- "RELOAD"
--- 1. load() from URL -> model
--- 2. call update with the model -> model'
--- 3. call view with model' -> Html
-
-
-
--- LINKS
--- /courses/1234/contents to /courses/12345/comments
--- Intercept the URL change
--- Send it as a special "load" action to the runtime
--- Get the root url, and diff, like normal. If parts are the same, they're the same
--- So the buttons could be implemented as links, if you wanted
-
-
-
-
-
--- instance ToSegment Model where
---   toSegment (Model m) = Num m
---   fromSegment (Num m) = pure $ Model m
-
---   -- an empty fragment? Not sure if this is the right thing to do or not
---   fromSegment (Path "") = pure $ Model 0
---   fromSegment v = fail $ "ToSegment: Expected Number, but got " <> show v
 
 
 update :: Action -> StateT Model IO ()
