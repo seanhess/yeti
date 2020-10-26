@@ -1,4 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -8,7 +11,7 @@ module Page.Counter where
 
 
 import Wookie.Runtime
-import Wookie.Router
+import Wookie.Events (click)
 
 import Data.Map as Map (Map, fromList, lookup)
 import Data.Aeson (ToJSON(..), FromJSON(..), genericToJSON, defaultOptions, Options(sumEncoding), SumEncoding(..), Value(..))
@@ -17,6 +20,7 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text (Text)
 import Text.Read (readMaybe)
+import Data.Maybe (fromMaybe)
 import Data.String.Conversions (cs)
 import Data.ByteString.Lazy (ByteString)
 import GHC.Generics (Generic)
@@ -50,63 +54,41 @@ data Action
 instance PageAction Action
 
 
--- can we override this?
-class PageAction a where
-  serialize :: a -> Text
-  default serialize :: Show a => a -> Text
-  serialize = cs . show
 
-  -- class Enum a where
-  --   enum :: [a]
-  --   default enum :: (Generic a, GEnum (Rep a)) => [a]
-  --   enum = map to genum
-
--- -- well, let's see, it can call it via the whole url!
--- -- we need to fix this
--- serializeAction :: Show action => action -> Text
--- serializeAction a = "runtime('"<> (cs $ show a) <> "')"
-
-
+data Counter = A | B
 
 data Model = Model
   { _count :: Integer
   , _timestamp :: UTCTime
+  , _message :: Maybe Text
   } deriving (Show, Eq)
 
 makeLenses ''Model
 
 
+-- data Params = Params
+--   { _count :: 
+--   }
 
 
-instance Page Model where
-   toSegment (Model c _) = cs $ show c
 
-   loadPage t = do
-     -- TODO parse to a custom format. Map, Num, String, List
-     -- it'll usually be multiple items, so default to map?
-     -- or ALWAYS do a map. Yeah that makes sense.
-     -- this already exists, it's called querystring
-     -- OH! And the querystring behaves differently. It's not part of relative paths
-     -- we definitely want to use it.
-     -- Plus we'll have a library
-     -- /app/counter/count:99
-     -- /app/counter/left:3|right:9
-     -- /app/counter?count=99
-     -- /app/counter?left=99
-     -- /app/counter?items=2,3,4&henry=dog%20tired
-     -- yes, definitely. It's how PHP used to work
-     Just n <- pure $ readMaybe (cs t)
-     load n
+
+instance Page Model (Integer, Maybe Text) where
+   toParams (Model c _ msg) =
+     (c, msg)
+
+   loadPage (c, msg) = do
+     load c msg
 
 
 
 
 
 
-load :: MonadIO m => Integer -> m Model
-load c = do
+load :: MonadIO m => Integer -> Maybe Text -> m Model
+load c msg = do
   t <- liftIO $ Time.getCurrentTime
-  pure $ Model c t
+  pure $ Model c t msg
 
 
 
@@ -132,6 +114,9 @@ view m = div_ $ do
     button_ [ click (Set 5)] "Set 5"
 
     p_ $ do
+      span_ (toHtml $ fromMaybe "" $ m ^. message)
+
+    p_ $ do
       span_ "Count: "
       span_ (toHtml $ show $ m ^. count)
 
@@ -139,20 +124,11 @@ view m = div_ $ do
       span_ "Time: "
       span_ (toHtml $ show $ m ^. timestamp)
 
-    p_ $ a_ [href_ "/app/counter/100"] "Click here to jump to Count = 100"
+    p_ $ a_ [href_ "/app/counter?count=100"] "Click here to jump to Count = 100"
     p_ $ a_ [href_ "https://www.google.com"] "Google.com"
     p_ $ a_ [href_ "/app/about"] "About"
 
 
-
-
--- our onclick attribute, but fancified
--- TODO better typeclass for action
--- we need to set TWO attributes
--- oh, no we don't
--- data-wookie-click="Action"
-click :: PageAction action => action -> Attribute
-click = makeAttribute "data-click" . serialize
 
 
 

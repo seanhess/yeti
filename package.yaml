@@ -33,6 +33,7 @@ dependencies:
 - wai
 - time
 - string-conversions
+- http-types
 
 library:
   source-dirs: src

@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
@@ -6,7 +8,8 @@ import Debug.Trace (traceM)
 import Data.String.Conversions (cs)
 import Data.Text as Text (stripPrefix, intercalate, Text)
 import Data.Text.IO as Text (readFile)
-import qualified Data.Text.Lazy as TL (Text)
+import qualified Data.Text.Lazy as TL
+import Data.Map as Map (fromList, toList, keys)
 import Web.Scotty
 import Network.Wai (Request, pathInfo, rawPathInfo, Application)
 import Lucid (renderBS, Html)
@@ -15,13 +18,17 @@ import Lucid.Html5 (html_, head_, script_, src_, body_, type_, h1_, id_, div_)
 -- import App (resolve)
 import Page.Counter as Counter (view, update)
 import Page.About as About (view)
-import Wookie.Runtime (Message, Response(..), Page(..), runLoad, runAction)
-import Wookie.Router (parsePath)
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
+import Data.Function ((&))
 
 import Control.Monad.State.Lazy (StateT, execStateT)
 import Text.Read (readMaybe)
+
+import Network.HTTP.Types.URI (renderSimpleQuery)
+
+import Wookie.Runtime
+import Wookie.Router (parsePath)
 
 lucid :: Html a -> ActionM ()
 lucid h = do
@@ -98,12 +105,18 @@ reply h = do
           div_ [id_ "content"] h'
 
 
-setPageUrl :: TL.Text -> ActionM ()
+setPageUrl :: Text -> ActionM ()
 setPageUrl u =
-  setHeader "X-Page-Url" u
+  setHeader "X-Page-Url" $ cs u
 
 -- TODO update url via header
 -- TODO handle empty body -> load only
+
+
+-- renderQuery :: Params -> Text
+-- renderQuery ps =
+--   cs $ renderSimpleQuery True $ fmap toStrings $ Map.toList ps
+--   where toStrings (a, b) = (cs a, cs b)
 
 
 main :: IO ()
@@ -119,11 +132,24 @@ main = do
       file "js/main.js"
 
     -- TODO some fancy way of mountain this at "/app/counter" and having the page url just work
-    matchAny "/app/counter/:p" $ do
-      p <- param "p"
-      b <- body
-      Response h s <- runAction Counter.update Counter.view p b
-      setPageUrl ("/app/counter/" <> cs s)
+    matchAny "/app/counter" $ do
+
+      p <- (Text.intercalate "&" . fmap (cs. fst)) <$> params
+
+      -- TODO parse and throw an error if needesd
+      (ps :: (Integer, Maybe Text)) <- decode p & \case
+             Nothing -> fail $ "Could not decode params: " <> cs p
+             Just a -> pure a
+
+      cmd <- command =<< body
+
+      Response h s <- runAction Counter.update Counter.view ps cmd
+
+      -- wait, what do we do here?
+      -- I need to RENDER to a querystring
+      -- shoot
+
+      setPageUrl ("/app/counter?" <> s)
       reply h
 
     get "/app/about" $ do

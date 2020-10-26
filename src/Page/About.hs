@@ -13,7 +13,7 @@ import Lucid.Html5
 view :: () -> Html ()
 view m = div_ $ do
   h1_ "About"
-  p_ $ a_ [href_ "/app/counter/77"] "Counter 77"
+  p_ $ a_ [href_ "/app/counter?count=77"] "Counter 77"
 
 
 

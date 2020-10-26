@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d7421222699b597783f4775ba0cb5c930702330eefb5ede3224d83ec5e1080c4
+-- hash: f430f1d7024f4ba1555c7351aa7ebfd9c8b14bfdc04c1a1b04564784272011b0
 
 name:           wookie
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
       App
       Page.About
       Page.Counter
+      Wookie.Events
       Wookie.Router
       Wookie.Runtime
   other-modules:
@@ -40,6 +41,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , http-types
     , lens
     , lucid
     , mtl
@@ -64,6 +66,7 @@ executable wookie-exe
     , base >=4.7 && <5
     , bytestring
     , containers
+    , http-types
     , lens
     , lucid
     , mtl
@@ -90,6 +93,7 @@ test-suite wookie-test
     , base >=4.7 && <5
     , bytestring
     , containers
+    , http-types
     , lens
     , lucid
     , mtl
