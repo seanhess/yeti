@@ -12,7 +12,7 @@ function sendMessage(body) {
 
 
 function sendLoad(url) {
-  console.log("SEnd load", url)
+  console.log("Send load", url)
   return fetch(url, {
     method: "GET",
     headers: {"Accept": "application/vdom"}
@@ -49,6 +49,8 @@ function onResponseBody(body) {
 }
 
 function interceptClickEvent(e) {
+
+    // Check for intercepted links
     var href;
     var target = e.target || e.srcElement;
     if (target.tagName === 'A') {
@@ -60,9 +62,16 @@ function interceptClickEvent(e) {
           console.log("INTERCEPT LINK", href)
           link(href)
           e.preventDefault();
+          return
         }
     }
+
+  var click = e.target.dataset.click;
+  if (click) {
+    runtime(click)
+  }
 }
+
 
 
 //listen for link click events at the document level

@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -12,6 +13,7 @@ import Wookie.Router
 import Data.Map as Map (Map, fromList, lookup)
 import Data.Aeson (ToJSON(..), FromJSON(..), genericToJSON, defaultOptions, Options(sumEncoding), SumEncoding(..), Value(..))
 
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text (Text)
 import Text.Read (readMaybe)
@@ -21,7 +23,8 @@ import GHC.Generics (Generic)
 import Control.Monad.State.Lazy (StateT)
 import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
-import Lucid.Html5
+import Lucid.Base (makeAttribute, Attribute)
+import Lucid.Html5 hiding (onclick_)
 
 
 
@@ -44,6 +47,24 @@ data Action
   | Decrement
   | Set Integer
   deriving (Show, Read)
+instance PageAction Action
+
+
+-- can we override this?
+class PageAction a where
+  serialize :: a -> Text
+  default serialize :: Show a => a -> Text
+  serialize = cs . show
+
+  -- class Enum a where
+  --   enum :: [a]
+  --   default enum :: (Generic a, GEnum (Rep a)) => [a]
+  --   enum = map to genum
+
+-- -- well, let's see, it can call it via the whole url!
+-- -- we need to fix this
+-- serializeAction :: Show action => action -> Text
+-- serializeAction a = "runtime('"<> (cs $ show a) <> "')"
 
 
 
@@ -82,15 +103,17 @@ instance Page Model where
 
 
 
-load :: Integer -> IO Model
+load :: MonadIO m => Integer -> m Model
 load c = do
-  t <- Time.getCurrentTime
+  t <- liftIO $ Time.getCurrentTime
   pure $ Model c t
 
 
 
 
-update :: Action -> StateT Model IO ()
+-- does it have to be IO?
+-- no.... it should be any MonadIO
+update :: MonadIO m => Action -> StateT Model m ()
 update Increment = count += 1
 update Decrement = count -= 1
 update (Set n) = count .= n
@@ -104,9 +127,9 @@ view :: Model -> Html ()
 view m = div_ $ do
 
   div_ $ do
-    button_ [ onclick_ (serializeAction Increment)] "Increment"
-    button_ [ onclick_ (serializeAction Decrement)] "Decrement"
-    button_ [ onclick_ (serializeAction (Set 5))] "Set 5"
+    button_ [ click Increment] "Increment"
+    button_ [ click Decrement] "Decrement"
+    button_ [ click (Set 5)] "Set 5"
 
     p_ $ do
       span_ "Count: "
@@ -121,9 +144,15 @@ view m = div_ $ do
     p_ $ a_ [href_ "/app/about"] "About"
 
 
--- well, let's see, it can call it via the whole url!
-serializeAction :: Action -> Text
-serializeAction a = "runtime('"<> (cs $ show a) <> "')"
+
+
+-- our onclick attribute, but fancified
+-- TODO better typeclass for action
+-- we need to set TWO attributes
+-- oh, no we don't
+-- data-wookie-click="Action"
+click :: PageAction action => action -> Attribute
+click = makeAttribute "data-click" . serialize
 
 
 
