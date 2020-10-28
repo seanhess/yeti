@@ -40,9 +40,9 @@ data Response = Response
 
 
 
-class Page model params where
-  toParams :: model -> params
-  loadPage :: (MonadIO m, MonadFail m) => params -> m model
+-- class Page model params where
+--   toParams :: model -> params
+--   loadPage :: (MonadIO m, MonadFail m) => params -> m model
 
 
 
@@ -56,6 +56,9 @@ class PageAction a where
   default readAction :: Read a => Text -> Maybe a
   readAction = readMaybe . cs
 
+instance PageAction () where
+  showAction _ = ""
+  readAction _ = Just ()
 
 
 
@@ -75,6 +78,10 @@ instance Params Int where
 instance Params Text where
   encode = id
   decode = Just . id
+
+instance Params () where
+  encode _ = ""
+  decode _ = Just ()
 
 -- this will decode Maybe Text as ""
 instance Params a => Params (Maybe a) where
@@ -108,69 +115,8 @@ instance Params a => Params [a] where
     where isBracket c = c == '[' || c == ']'
 
 
--- type Key = TL.Text
--- type Params = Map Key TL.Text
 
 
--- -- allows me to override the read instance
--- -- unless I want to just make a list type and use the normal read?
--- class Param a where
---   readParam :: TL.Text -> Maybe a
-
--- instance Param Integer where
---   readParam = readMaybe . cs
-
--- instance Param Text where
---   readParam = Just . cs
-
--- -- instance Param a => Param (Maybe a) where
--- --   readParam = readParam
-
-
--- required :: (MonadFail m, Param a) => Key -> Params -> m a
--- required k ps = do
---   v <- ps !? k      & failMaybe ("Missing key: " <> cs k)
---   readParam (cs v) & failMaybe ("Could not read:" <> show (k, v))
-
-
--- -- | looks up the param and gives you a maybe if it failed
--- param :: Param a => Key -> Params -> Maybe a
--- param k ps = do
---   v <- ps !? k
---   readParam (cs v)
-
-
-
--- failMaybe :: MonadFail m => String -> Maybe a -> m a
--- failMaybe _ (Just v) = pure v
--- failMaybe err Nothing = fail err
-
--- -- Looks up the param for you and fails if it can't find it
--- paramFindKey :: MonadFail m => Key -> Params -> m Text
--- paramFindKey k ps = do
---   case ps !? k of
---     Nothing -> fail $ "Missing key: " <> cs k
---     Just v -> pure $ cs v
-
--- paramInt :: MonadFail m => Key -> Params -> m Integer
--- paramInt k ps = do
---   v <- paramFindKey k ps
---   case readMaybe (cs v) of
---     Nothing -> fail $ "Could not read: " <> show (k, v)
---     Just n -> pure n
-
-
-
-
--- | Load the page from route params
--- runLoad
---   :: (MonadIO m, Page model params, Params params)
---   -> (model -> Html ())
---   => params
---   -> m (Html ())
--- runLoad view p = do
---    m <- liftIO $ loadPage p
---    pure $ view m
 
 
 -- One of the actions could be Load
@@ -180,20 +126,20 @@ data Command action
 
 
 type View model = (model -> Html ())
+type Update model action m = (action -> StateT model m ())
 
 
 -- | Load the page from route params, then apply the action
 runAction
-  :: forall m model params action. (MonadIO m, MonadFail m, Page model params, Params params, PageAction action)
-  => (action -> StateT model m ())
-  -> View model
+  :: forall m model params action. (MonadIO m, MonadFail m, Params params, PageAction action)
+  => Page params model action m
   -> params
   -> Command action
   -> m Response
-runAction update view ps cmd = do
+runAction (Page params load update view) ps cmd = do
 
   -- load the initial model from the parameters
-  m <- loadPage ps
+  m <- load ps
 
   -- run either a load or an action
   m' <- case cmd of
@@ -201,7 +147,7 @@ runAction update view ps cmd = do
     Action a -> execStateT (update a) m
 
   -- respond
-  let ps' = toParams m' :: params
+  let ps' = params m' :: params
   pure $ Response (view m') (encode ps')
 
 
@@ -216,10 +162,11 @@ command b =
 
 
 -- | TODO do I need a type like this? Instead of all the typeclasses?
--- data Page params model action = Page
---   { load :: params -> IO model
---   , update :: action -> StateT model IO ()
---   , view :: model -> Html ()
---   }
+data Page params model action m = Page
+  { params :: model -> params
+  , load   :: params -> m model
+  , update :: action -> StateT model m ()
+  , view   :: model -> Html ()
+  }
 
 

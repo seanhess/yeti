@@ -4,20 +4,21 @@
 
 module Main where
 
+import Control.Monad.IO.Class (MonadIO)
 import Debug.Trace (traceM)
 import Data.String.Conversions (cs)
 import Data.Text as Text (stripPrefix, intercalate, Text)
 import Data.Text.IO as Text (readFile)
 import qualified Data.Text.Lazy as TL
 import Data.Map as Map (fromList, toList, keys)
-import Web.Scotty
+import Web.Scotty as Scotty
 import Network.Wai (Request, pathInfo, rawPathInfo, Application)
 import Lucid (renderBS, Html)
 import Lucid.Html5 (html_, head_, script_, src_, body_, type_, h1_, id_, div_)
 -- import Counter (view, Model(..), load, update, view)
 -- import App (resolve)
-import Page.Counter as Counter (view, update)
-import Page.About as About (view)
+import qualified Page.Counter as Counter
+import qualified Page.About as About
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
 import Data.Function ((&))
@@ -27,7 +28,7 @@ import Text.Read (readMaybe)
 
 import Network.HTTP.Types.URI (renderSimpleQuery)
 
-import Wookie.Runtime
+import Wookie.Runtime (Page(Page), Response(..), runAction, command, Params(encode, decode), Page, PageAction)
 import Wookie.Router (parsePath)
 
 lucid :: Html a -> ActionM ()
@@ -131,34 +132,43 @@ main = do
       setHeader "Content-Type" "text/javascript"
       file "js/main.js"
 
-    -- TODO some fancy way of mountain this at "/app/counter" and having the page url just work
-    matchAny "/app/counter" $ do
-
-      p <- (Text.intercalate "&" . fmap (cs. fst)) <$> params
-
-      -- TODO parse and throw an error if needesd
-      (ps :: (Integer, Maybe Text)) <- decode p & \case
-             Nothing -> fail $ "Could not decode params: " <> cs p
-             Just a -> pure a
-
-      cmd <- command =<< body
-
-      Response h s <- runAction Counter.update Counter.view ps cmd
-
-      -- wait, what do we do here?
-      -- I need to RENDER to a querystring
-      -- shoot
-
-      setPageUrl ("/app/counter?" <> s)
-      reply h
-
-    get "/app/about" $ do
-      setPageUrl "/app/about"
-      reply $ About.view ()
+    -- pages! This feels way more magical than it should, I think :(
+    page "/app/counter" Counter.page
+    page "/app/about"   About.page
 
     get "/:name" $ do
       name <- param "name"
       html $ mconcat ["Hello: ", name]
+
+
+-- give it a route and a page
+
+
+handlePage 
+  :: forall params model action. (PageAction action, Params params)
+  => String -> Page params model action ActionM -> ActionM ()
+handlePage path pg = do
+
+  p <- (Text.intercalate "&" . fmap (cs. fst)) <$> Scotty.params
+
+  (ps :: params) <- decode p & \case
+          Nothing -> fail $ "Could not decode params: " <> cs p
+          Just a -> pure a
+
+  cmd <- command =<< body
+
+  Response h s <- runAction pg ps cmd
+
+  setPageUrl (cs path <> "?" <> s)
+  reply h
+
+
+page
+  :: forall params model action. (PageAction action, Params params)
+  => String -> Page params model action ActionM -> ScottyM ()
+page path pg = matchAny (literal path) $ handlePage path pg
+
+
 
 delay :: Int -> Application -> Application
 delay d application req respond = do

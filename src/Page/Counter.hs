@@ -10,7 +10,7 @@ module Page.Counter where
 
 
 
-import Wookie.Runtime
+import Wookie.Runtime (PageAction(..), Page(Page))
 import Wookie.Events (click)
 
 import Data.Map as Map (Map, fromList, lookup)
@@ -55,8 +55,6 @@ instance PageAction Action
 
 
 
-data Counter = A | B
-
 data Model = Model
   { _count :: Integer
   , _timestamp :: UTCTime
@@ -66,27 +64,25 @@ data Model = Model
 makeLenses ''Model
 
 
--- data Params = Params
---   { _count :: 
---   }
+
+type Params = (Integer, Maybe Text)
+
+
+page :: MonadIO m => Page Params Model Action m
+page = Page params load update view
+
+-- instance Page Model Params where
+--    loadPage = load
+--    toParams = params
+
+
+params :: Model -> Params
+params (Model c _ msg) = (c, msg)
 
 
 
-
-instance Page Model (Integer, Maybe Text) where
-   toParams (Model c _ msg) =
-     (c, msg)
-
-   loadPage (c, msg) = do
-     load c msg
-
-
-
-
-
-
-load :: MonadIO m => Integer -> Maybe Text -> m Model
-load c msg = do
+load :: MonadIO m => (Integer, Maybe Text) -> m Model
+load (c, msg) = do
   t <- liftIO $ Time.getCurrentTime
   pure $ Model c t msg
 
@@ -124,6 +120,7 @@ view m = div_ $ do
       span_ "Time: "
       span_ (toHtml $ show $ m ^. timestamp)
 
+    -- TODO function to generate links based on params
     p_ $ a_ [href_ "/app/counter?count=100"] "Click here to jump to Count = 100"
     p_ $ a_ [href_ "https://www.google.com"] "Google.com"
     p_ $ a_ [href_ "/app/about"] "About"
