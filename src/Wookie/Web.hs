@@ -112,7 +112,6 @@ reply h = do
 
 
 
-
 setPageUrl :: Text -> ActionM ()
 setPageUrl = Scotty.setHeader "X-Page-Url" . cs
 

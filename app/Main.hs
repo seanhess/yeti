@@ -28,7 +28,7 @@ import Text.Read (readMaybe)
 
 import Network.HTTP.Types.URI (renderSimpleQuery)
 
-import Wookie.Runtime (Page(Page), Response(..), runAction, command, Page, PageAction)
+import Wookie.Runtime (Response(..), runAction, command)
 import Wookie.Router (parsePath)
 import Wookie.Web (page, lucid, static)
 

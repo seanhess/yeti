@@ -4,6 +4,9 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Page.About where
 
+import Wookie.Web (pageUrl)
+
+import Page.Counter as Counter (Params)
 
 import Data.Text (Text)
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
@@ -18,7 +21,8 @@ view = div_ $ do
 
   -- I want to reference a certain page, I have the params for it
   -- yeah... and those should match
-  p_ $ a_ [href_ "/app/counter?count=77"] "Counter 77"
+  let params = (77, Nothing) :: Counter.Params
+  p_ $ a_ [href_ $ pageUrl "/app/counter" params] "Counter 77"
 
 
 
