@@ -14,22 +14,27 @@ import Data.Maybe (mapMaybe)
 class Params a where
   encode :: a -> Text
   decode :: Text -> Maybe a
+  defaults :: a
 
 instance Params Integer where
   encode = cs . show
   decode = readMaybe . cs
+  defaults = 0
 
 instance Params Int where
   encode = cs . show
   decode = readMaybe . cs
+  defaults = 0
 
 instance Params Text where
   encode = id
   decode = Just . id
+  defaults = ""
 
 instance Params () where
   encode _ = ""
   decode _ = Just ()
+  defaults = ()
 
 -- this will decode Maybe Text as ""
 instance Params a => Params (Maybe a) where
@@ -39,6 +44,8 @@ instance Params a => Params (Maybe a) where
   decode "" = Just $ Nothing
   decode a = Just $ decode a
 
+  defaults = Nothing
+
 
 instance (Params a, Params b) => Params (a, b) where
   encode (a, b) = Text.intercalate ":" $ [encode a, encode b]
@@ -47,6 +54,8 @@ instance (Params a, Params b) => Params (a, b) where
     a <- decode at
     b <- decode bt
     pure (a, b)
+
+  defaults = (defaults, defaults)
 
 
 instance Params a => Params [a] where
@@ -61,4 +70,6 @@ instance Params a => Params [a] where
     & Text.splitOn ","
     & mapMaybe decode
     where isBracket c = c == '[' || c == ']'
+
+  defaults = []
 

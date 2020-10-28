@@ -2,7 +2,7 @@
 module Wookie.Events where
 
 
-import Wookie.Runtime (PageAction(..))
+import Wookie.Page (PageAction(..))
 import Lucid.Base (makeAttribute, Attribute)
 
 

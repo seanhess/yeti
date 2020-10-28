@@ -30,7 +30,7 @@ import Network.HTTP.Types.URI (renderSimpleQuery)
 
 import Wookie.Runtime (Page(Page), Response(..), runAction, command, Page, PageAction)
 import Wookie.Router (parsePath)
-import Wookie.Web (page, lucid)
+import Wookie.Web (page, lucid, static)
 
 
 -- TODO back button doesn't work: history.onpopstate? Just call it again with the current url. The url is updating
@@ -92,7 +92,9 @@ main = do
 
     -- pages! This feels way more magical than it should, I think :(
     page "/app/counter" Counter.page
-    page "/app/about"   About.page
+
+    -- if you use "lucid" it doesn't work
+    static "/app/about" About.view
 
     get "/:name" $ do
       name <- param "name"

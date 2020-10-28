@@ -10,7 +10,7 @@ module Page.Counter where
 
 
 
-import Wookie.Runtime (PageAction(..), Page(Page))
+import Wookie.Page
 import Wookie.Events (click)
 
 import Data.Map as Map (Map, fromList, lookup)
@@ -43,7 +43,6 @@ import Lucid.Html5 hiding (onclick_)
 -- TODO VDOM rendering
 
 
--- My Component --------------------
 
 -- TODO make your own serialization, rather than Show / Read?
 data Action
@@ -54,6 +53,7 @@ data Action
 instance PageAction Action
 
 
+type Params = (Integer, Maybe Text)
 
 data Model = Model
   { _count :: Integer
@@ -65,11 +65,7 @@ makeLenses ''Model
 
 
 
-type Params = (Integer, Maybe Text)
 
-
-page :: MonadIO m => Page Params Model Action m
-page = Page params load update view
 
 -- instance Page Model Params where
 --    loadPage = load
@@ -78,6 +74,7 @@ page = Page params load update view
 
 params :: Model -> Params
 params (Model c _ msg) = (c, msg)
+
 
 
 
@@ -130,3 +127,7 @@ view m = div_ $ do
 
 
 
+
+
+page :: MonadIO m => Page Params Model Action m
+page = Page params load update view

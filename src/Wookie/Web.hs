@@ -4,17 +4,26 @@
 module Wookie.Web where
 
 
-import Wookie.Runtime (Page, PageAction, Response(..), runAction, command)
-import Wookie.Params (Params(..))
+import Wookie.Runtime (Response(..), runAction, command)
+import Wookie.Page (Page, PageAction)
+import Wookie.Params as Params (Params(..))
 
 import Data.Function ((&))
 import Data.String.Conversions (cs)
 import Data.Text as Text (Text, intercalate)
+import Data.List as List (lookup)
 import Web.Scotty (ActionM, ScottyM)
 import qualified Web.Scotty as Scotty
 import Lucid (renderBS, Html)
 import Lucid.Html5
 
+
+
+static :: String -> Html () -> ScottyM ()
+static path view =
+  Scotty.get (Scotty.literal path) $ do
+    setPageUrl $ cs path
+    lucid view
 
 
 -- | Scotty Router For a Page
@@ -30,11 +39,7 @@ handlePage
   => String -> Page params model action ActionM -> ActionM ()
 handlePage path pg = do
 
-  qs <- rawParams
-
-  (ps :: params) <- decode qs & \case
-          Nothing -> fail $ "Could not decode params: " <> cs qs
-          Just a -> pure a
+  ps <- params
 
   cmd <- command =<< Scotty.body
 
@@ -43,6 +48,34 @@ handlePage path pg = do
   -- Reply by setting the header and html
   setPageUrl $ pageUrl path p'
   reply h
+
+
+
+params :: Params params => ActionM params
+params = do
+
+  rps <- rawParams
+
+
+  -- it can't fail if it's the defaults
+
+  -- if the params are nothing, use the defaults, otherwise, parse them
+  let mps = case rps of
+            Nothing -> Just $ Params.defaults
+            Just ps -> Params.decode ps
+
+  case mps of
+    Nothing -> fail $ "Could not decode params: " <> cs (show rps)
+    Just a -> pure a
+
+
+
+
+  -- & \case
+  --         Nothing -> pure $ Just $ Params.defaults
+  --         Just ps -> pure $ Params.decode ps
+  -- pure undefined
+
 
 
 
@@ -89,8 +122,11 @@ pageUrl path ps =
   cs path <> "?p=" <> encode ps
 
 
-rawParams :: ActionM Text
-rawParams = Scotty.param "p"
+-- this can return a maybe text
+rawParams :: ActionM (Maybe Text)
+rawParams = do
+  ps <- Scotty.params
+  pure $ cs <$> List.lookup "p" ps
 
 
 

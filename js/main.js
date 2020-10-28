@@ -12,7 +12,6 @@ function sendMessage(body) {
 
 
 function sendLoad(url) {
-  console.log("Send load", url)
   return fetch(url, {
     method: "GET",
     headers: {"Accept": "application/vdom"}
@@ -24,26 +23,38 @@ function messageBody(action) {
 }
 
 function runtime(action) {
+  console.log(action)
   let body = messageBody(action)
   sendMessage(body)
     .then(onResponse)
     .then(onResponseBody)
 }
 
+// when you click a link
 function link(url) {
   sendLoad(url)
     .then(onResponse)
     .then(onResponseBody)
 }
 
+function restore(url) {
+  // same as above, but don't push state
+  sendLoad(url)
+    .then(res => res.text())
+    .then(onResponseBody)
+}
+
 function onResponse(res) {
-  let h = res.headers.get('X-Page-Url')
-  window.history.pushState("State", "Title", h)
+  let pageUrl = res.headers.get('X-Page-Url')
+  // TODO titles
+  let title = "Wookie Tab Title"
+  console.log(pageUrl)
+  window.history.pushState({pageUrl: pageUrl}, title, pageUrl)
   return res.text()
 }
 
 function onResponseBody(body) {
-  console.log("BODY", body)
+  console.log(body)
   document.getElementById("content").innerHTML = body
   // window.location.hash = data.resUrl
 }
@@ -80,3 +91,11 @@ if (document.addEventListener) {
 } else if (document.attachEvent) {
     document.attachEvent('onclick', interceptClickEvent);
 }
+
+window.addEventListener('popstate', (event) => {
+  // console.log("location:", document.location, "state:", event.state)
+  console.log("popstate", event.state, event.state.pageUrl)
+  if (event.state.pageUrl) {
+    restore(event.state.pageUrl)
+  }
+})

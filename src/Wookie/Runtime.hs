@@ -9,6 +9,7 @@
 module Wookie.Runtime where
 
 
+import Wookie.Page (Page(..), PageAction(..))
 
 import Control.Monad.State.Lazy (StateT, execStateT)
 import Data.Aeson (ToJSON(..), FromJSON(..))
@@ -44,24 +45,6 @@ data Response params = Response
 -- class Page model params where
 --   toParams :: model -> params
 --   loadPage :: (MonadIO m, MonadFail m) => params -> m model
-
-
-
-class PageAction a where
-  showAction :: a -> Text
-  readAction :: Text -> Maybe a
-
-  default showAction :: Show a => a -> Text
-  showAction = cs . show
-
-  default readAction :: Read a => Text -> Maybe a
-  readAction = readMaybe . cs
-
-instance PageAction () where
-  showAction _ = ""
-  readAction _ = Just ()
-
-
 
 
 
@@ -106,16 +89,5 @@ command b =
   case readAction $ cs b of
     Just a -> pure $ Update a
     Nothing -> fail $ "Could not parse action: " <> cs b
-
-
-
-
--- | TODO do I need a type like this? Instead of all the typeclasses?
-data Page params model action m = Page
-  { params :: model -> params
-  , load   :: params -> m model
-  , update :: action -> StateT model m ()
-  , view   :: model -> Html ()
-  }
 
 
