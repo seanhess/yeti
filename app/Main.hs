@@ -28,13 +28,9 @@ import Text.Read (readMaybe)
 
 import Network.HTTP.Types.URI (renderSimpleQuery)
 
-import Wookie.Runtime (Page(Page), Response(..), runAction, command, Params(encode, decode), Page, PageAction)
+import Wookie.Runtime (Page(Page), Response(..), runAction, command, Page, PageAction)
 import Wookie.Router (parsePath)
-
-lucid :: Html a -> ActionM ()
-lucid h = do
-  setHeader "Content-Type" "text/html"
-  raw . renderBS $ h
+import Wookie.Web (page, lucid)
 
 
 -- TODO back button doesn't work: history.onpopstate? Just call it again with the current url. The url is updating
@@ -44,6 +40,9 @@ lucid h = do
 
 -- TODO VDOM: See below, on HTML-REACT-PARSER. Render HTML, parse client-side, convert to a react component
 -- TODO better serialization of actions: use `replace` from html-react-parser
+
+-- TODO update url via header
+-- TODO handle empty body -> load only
 
 
 -- HTML-REACT-PARSER
@@ -79,47 +78,6 @@ lucid h = do
 
 
 
-
--- This embeds the javascript into the page
--- How can I tell if they already have it? By the url?
--- Accept encoding!
--- If they ask for Html, give them the whole thing
--- if they ask for Vdom, just give them the one part
-reply :: Html () -> ActionM ()
-reply h = do
-  -- Accept-Encoding: gzip
-  -- Accept: application/json
-  ha <- header "Accept"
-
-  case ha of
-    Just "application/vdom" -> lucid h
-    _ -> renderWhole h
-
-  where
-    renderWhole :: Html () -> ActionM ()
-    renderWhole h' = do
-      lucid $ html_ $ do
-        head_ $ do
-          script_ [type_ "text/javascript", src_ "/js/main.js"] ("test()" :: Text)
-        body_ $ do
-          h1_ "App"
-          div_ [id_ "content"] h'
-
-
-setPageUrl :: Text -> ActionM ()
-setPageUrl u =
-  setHeader "X-Page-Url" $ cs u
-
--- TODO update url via header
--- TODO handle empty body -> load only
-
-
--- renderQuery :: Params -> Text
--- renderQuery ps =
---   cs $ renderSimpleQuery True $ fmap toStrings $ Map.toList ps
---   where toStrings (a, b) = (cs a, cs b)
-
-
 main :: IO ()
 main = do
 
@@ -141,32 +99,9 @@ main = do
       html $ mconcat ["Hello: ", name]
 
 
--- give it a route and a page
 
 
-handlePage 
-  :: forall params model action. (PageAction action, Params params)
-  => String -> Page params model action ActionM -> ActionM ()
-handlePage path pg = do
 
-  p <- (Text.intercalate "&" . fmap (cs. fst)) <$> Scotty.params
-
-  (ps :: params) <- decode p & \case
-          Nothing -> fail $ "Could not decode params: " <> cs p
-          Just a -> pure a
-
-  cmd <- command =<< body
-
-  Response h s <- runAction pg ps cmd
-
-  setPageUrl (cs path <> "?" <> s)
-  reply h
-
-
-page
-  :: forall params model action. (PageAction action, Params params)
-  => String -> Page params model action ActionM -> ScottyM ()
-page path pg = matchAny (literal path) $ handlePage path pg
 
 
 
@@ -177,28 +112,3 @@ delay d application req respond = do
 
 
 
--- app :: ActionM ()
--- app = do
---   m    <- body
---   path <- param "path" :: ActionM Text
-
---   -- what if we don't find a page
---   -- liftIO $ print (path, parsePath path)
---   let Just go = App.resolve path
---   Response view <- liftIO $ go m
-
---   js <- liftIO $ Text.readFile "js/main.js"
-
---   lucid $ html_ $ do
---     head_ $ do
---       script_ [type_ "text/javascript"] js
---     body_ view
-
-
-
-
--- appRoutePattern :: Text -> Request -> Maybe [Param]
--- appRoutePattern prefix req = do
---   let totalPath = cs $ rawPathInfo req
---   appPath <- Text.stripPrefix prefix totalPath
---   pure [("path", cs appPath)]

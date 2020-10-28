@@ -26,6 +26,7 @@ import Data.Maybe (mapMaybe)
 import Data.Function ((&))
 
 
+
 data Message = Message
   { action :: Text
   , url :: Text
@@ -33,9 +34,9 @@ data Message = Message
 instance FromJSON Message
 
 
-data Response = Response
+data Response params = Response
   { resView :: Html ()
-  , resParams :: Text
+  , resParams :: params
   } deriving (Show, Generic)
 
 
@@ -62,58 +63,6 @@ instance PageAction () where
 
 
 
--- TODO use megaparsec
-class Params a where
-  encode :: a -> Text
-  decode :: Text -> Maybe a
-
-instance Params Integer where
-  encode = cs . show
-  decode = readMaybe . cs
-
-instance Params Int where
-  encode = cs . show
-  decode = readMaybe . cs
-
-instance Params Text where
-  encode = id
-  decode = Just . id
-
-instance Params () where
-  encode _ = ""
-  decode _ = Just ()
-
--- this will decode Maybe Text as ""
-instance Params a => Params (Maybe a) where
-  encode (Just a) = encode a
-  encode Nothing = ""
-
-  decode "" = Just $ Nothing
-  decode a = Just $ decode a
-
-
-instance (Params a, Params b) => Params (a, b) where
-  encode (a, b) = Text.intercalate "&" $ [encode a, encode b]
-  decode t = do
-    [at, bt] <- pure $ Text.splitOn "&" t
-    a <- decode at
-    b <- decode bt
-    pure (a, b)
-
-
-instance Params a => Params [a] where
-  encode [] = "[]"
-  encode as = "[" <> Text.intercalate "," (fmap encode as) <> "]"
-
-  -- they MUST have [ and ] around them?
-  -- maybe I should use a real parser...
-  decode "[]" = Just []
-  decode t = Just $ t
-    & Text.dropAround isBracket
-    & Text.splitOn ","
-    & mapMaybe decode
-    where isBracket c = c == '[' || c == ']'
-
 
 
 
@@ -121,8 +70,8 @@ instance Params a => Params [a] where
 
 -- One of the actions could be Load
 data Command action
-  = Load
-  | Action action
+  = Init
+  | Update action
 
 
 type View model = (model -> Html ())
@@ -131,11 +80,11 @@ type Update model action m = (action -> StateT model m ())
 
 -- | Load the page from route params, then apply the action
 runAction
-  :: forall m model params action. (MonadIO m, MonadFail m, Params params, PageAction action)
+  :: forall m model params action. (MonadIO m, MonadFail m, PageAction action)
   => Page params model action m
   -> params
   -> Command action
-  -> m Response
+  -> m (Response params)
 runAction (Page params load update view) ps cmd = do
 
   -- load the initial model from the parameters
@@ -143,19 +92,19 @@ runAction (Page params load update view) ps cmd = do
 
   -- run either a load or an action
   m' <- case cmd of
-    Load -> pure m
-    Action a -> execStateT (update a) m
+    Init -> pure m
+    Update a -> execStateT (update a) m
 
   -- respond
-  let ps' = params m' :: params
-  pure $ Response (view m') (encode ps')
+  pure $ Response (view m') (params m')
+
 
 
 command :: MonadFail m => PageAction action => ByteString -> m (Command action)
-command "" = pure Load
+command "" = pure Init
 command b =
   case readAction $ cs b of
-    Just a -> pure $ Action a
+    Just a -> pure $ Update a
     Nothing -> fail $ "Could not parse action: " <> cs b
 
 
