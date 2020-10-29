@@ -73,23 +73,70 @@ function interceptClickEvent(e) {
           console.log("INTERCEPT LINK", href)
           link(href)
           e.preventDefault();
-          return
         }
     }
 
+  
+}
+
+function onClick(e) {
+  // check for our clicks
   var click = e.target.dataset.click;
   if (click) {
     runtime(click)
+  }
+
+  else {
+    interceptClickEvent(e)
   }
 }
 
 
 
+function onSubmit(e) {
+  console.log("ONSUBMIT", e.target.dataset)
+  e.preventDefault();
+
+  var form = e.target
+  var submit = form.dataset.submit
+  var submit1 = form.dataset.submit1
+  var inputs = "input,textarea"
+
+  if (submit) {
+
+    // find any named inputs and textareas and add them
+    var formData = {}
+    for (var child of form.querySelectorAll(inputs)) {
+      if (child.name) {
+        formData[child.name] = child.value
+      }
+      else if (child.id) {
+        formData[child.id] = child.value
+      }
+    }
+
+    var action = submit + " " + encodeMap(formData)
+    console.log("Submit", action)
+    runtime(action)
+  }
+  else if (submit1) {
+
+    // collect the value from the first input or textarea we find
+    var child = form.querySelector(inputs)
+    var value = child.value || ""
+    var action = submit1 + " " + JSON.stringify(value)
+    console.log("Submit1", action)
+    runtime(action)
+  }
+}
+
 //listen for link click events at the document level
 if (document.addEventListener) {
-    document.addEventListener('click', interceptClickEvent);
+  document.addEventListener('click', onClick);
+  document.addEventListener('submit', onSubmit);
 } else if (document.attachEvent) {
-    document.attachEvent('onclick', interceptClickEvent);
+    document.attachEvent('onclick', onClick);
+    document.attachEvent('onsubmit', onSubmit);
 }
 
 window.addEventListener('popstate', (event) => {
@@ -99,3 +146,17 @@ window.addEventListener('popstate', (event) => {
     restore(event.state.pageUrl)
   }
 })
+
+
+function encodeMap(obj) {
+  var pairs = []
+  for (var key in obj) {
+    pairs.push([key, obj[key]])
+  }
+
+  return "(fromList [" + pairs.map(encodePair).join(",") + "])"
+}
+
+function encodePair(pair) {
+  return "(" + JSON.stringify(pair[0]) + "," + JSON.stringify(pair[1]) + ")"
+}

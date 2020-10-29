@@ -9,25 +9,16 @@
 module Page.Counter where
 
 
-
-import Wookie.Page
+import Wookie.Page as Page
 import Wookie.Events (click)
-
-import Data.Map as Map (Map, fromList, lookup)
-import Data.Aeson (ToJSON(..), FromJSON(..), genericToJSON, defaultOptions, Options(sumEncoding), SumEncoding(..), Value(..))
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text (Text)
-import Text.Read (readMaybe)
 import Data.Maybe (fromMaybe)
-import Data.String.Conversions (cs)
-import Data.ByteString.Lazy (ByteString)
-import GHC.Generics (Generic)
 import Control.Monad.State.Lazy (StateT)
 import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
-import Lucid.Base (makeAttribute, Attribute)
 import Lucid.Html5 hiding (onclick_)
 
 

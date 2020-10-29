@@ -57,8 +57,8 @@ data Command action
   | Update action
 
 
-type View model = (model -> Html ())
-type Update model action m = (action -> StateT model m ())
+-- type View model = (model -> Html ())
+-- type Update model action m = (action -> StateT model m ())
 
 
 -- | Load the page from route params, then apply the action

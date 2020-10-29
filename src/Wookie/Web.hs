@@ -104,7 +104,10 @@ reply h = do
     renderWhole h' = do
       lucid $ html_ $ do
         head_ $ do
+          meta_ [charset_ "UTF-8"]
+          meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
           script_ [type_ "text/javascript", src_ "/js/main.js"] ("test()" :: Text)
+
         body_ $ do
           h1_ "App"
           div_ [id_ "content"] h'

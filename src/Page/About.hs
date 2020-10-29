@@ -6,6 +6,7 @@ module Page.About where
 
 import Wookie.Web (pageUrl)
 
+-- TODO we need an external "Routes" file so we don't get circular referenes
 import Page.Counter as Counter (Params)
 
 import Data.Text (Text)

@@ -4,6 +4,7 @@
 
 module Main where
 
+import Control.Concurrent.STM (newTVar, atomically)
 import Control.Monad.IO.Class (MonadIO)
 import Debug.Trace (traceM)
 import Data.String.Conversions (cs)
@@ -19,6 +20,8 @@ import Lucid.Html5 (html_, head_, script_, src_, body_, type_, h1_, id_, div_)
 -- import App (resolve)
 import qualified Page.Counter as Counter
 import qualified Page.About as About
+import qualified Page.Todo as Todo
+import Page.Todo (Todo(..))
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
 import Data.Function ((&))
@@ -82,9 +85,11 @@ main :: IO ()
 main = do
 
   -- load embedded js
+  todos <- atomically $ newTVar [Todo "Test Item" False]
 
   scotty 3000 $ do
-    middleware (delay 100)
+    -- delay to simulate real-world conditions
+    middleware (delay 200)
 
     get "/js/main.js" $ do
       setHeader "Content-Type" "text/javascript"
@@ -92,6 +97,7 @@ main = do
 
     -- pages! This feels way more magical than it should, I think :(
     page "/app/counter" Counter.page
+    page "/app/todo" (Todo.page todos)
 
     -- if you use "lucid" it doesn't work
     static "/app/about" About.view

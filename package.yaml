@@ -23,17 +23,19 @@ dependencies:
 - aeson
 - bytestring
 - containers
-- vector
-- unordered-containers
-- text
-- lucid
-- lens
-- scotty
-- mtl
-- wai
-- time
-- string-conversions
 - http-types
+- lens
+- lucid
+- mtl
+- scotty
+- stm
+- string-conversions
+- text
+- time
+- unordered-containers
+- vector
+- wai
+- data-default
 
 library:
   source-dirs: src
