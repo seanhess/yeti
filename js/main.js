@@ -130,13 +130,28 @@ function onSubmit(e) {
   }
 }
 
+function onInput(e) {
+  console.log("INPUT", e.target.dataset, e.target.value)
+  var target = e.target
+  var onInput = target.dataset.oninput
+  if (onInput) {
+    var value = target.value || ""
+    var action = onInput + " " + JSON.stringify(value)
+    runtime(action)
+  }
+}
+
 //listen for link click events at the document level
 if (document.addEventListener) {
   document.addEventListener('click', onClick);
   document.addEventListener('submit', onSubmit);
+
+  // do I want to do this? Or just to the ones that have it?
+  document.addEventListener('input', onInput);
 } else if (document.attachEvent) {
     document.attachEvent('onclick', onClick);
     document.attachEvent('onsubmit', onSubmit);
+  document.attachEven('oninput', onInput);
 }
 
 window.addEventListener('popstate', (event) => {

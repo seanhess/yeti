@@ -10,7 +10,7 @@
 module Page.Todo where
 
 import Wookie.Page
-import Wookie.Events (click, submit1, FormData(..), submit, Value(..))
+import Wookie.Events (click, submit1, FormData(..), submit, Value(..), onInput)
 
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
 import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
@@ -122,9 +122,6 @@ view m = div_ $ do
   h3_ "Todos"
 
 
--- how can we serialize these generally??? We can't?
--- it's .... hmm... mahybe all by the last
-
 
   form_ [ submit1 AddTodo ] $ do
     button_ [] "Add"
@@ -132,7 +129,7 @@ view m = div_ $ do
 
   form_ [ submit1 Search ] $ do
     button_ [] "Search"
-    input_ [ name_ "search", value_ (m ^. search) ]
+    input_ [ name_ "search", value_ (m ^. search), onInput Search ]
 
 
   let ts = m ^. todos & filter (isSearch (m ^. search))

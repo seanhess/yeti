@@ -65,3 +65,6 @@ submit1 :: PageAction action => (Value -> action) -> Attribute
 submit1 con = makeAttribute "data-submit1" $ cs $ stripArgs $ showAction $con mempty
 
 
+onInput :: PageAction action => (Value -> action) -> Attribute
+onInput con = makeAttribute "data-onInput" $ cs $ stripArgs $ showAction $con mempty
+
