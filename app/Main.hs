@@ -91,9 +91,10 @@ main = do
     -- delay to simulate real-world conditions
     middleware (delay 200)
 
-    get "/js/main.js" $ do
+    get "/js/:file" $ do
+      filename <- param "file"
       setHeader "Content-Type" "text/javascript"
-      file "js/main.js"
+      file $ "js/" <> filename
 
     -- pages! This feels way more magical than it should, I think :(
     page "/app/counter" Counter.page

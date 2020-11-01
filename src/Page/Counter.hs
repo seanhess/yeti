@@ -97,6 +97,7 @@ view m = div_ $ do
     button_ [ click Decrement] "Decrement"
     button_ [ click (Set 5)] "Set 5"
 
+    -- see if I can get react to replace this
     p_ $ do
       span_ (toHtml $ fromMaybe "" $ m ^. message)
 

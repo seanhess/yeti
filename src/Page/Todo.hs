@@ -10,7 +10,7 @@
 module Page.Todo where
 
 import Wookie.Page
-import Wookie.Events (click, submit1, FormData(..), submit, Value(..), onInput)
+import Wookie.Events (click, submit1, FormData(..), submit, Value(..), onInput, defaultValue)
 
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
 import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
@@ -121,15 +121,14 @@ view :: Model -> Html ()
 view m = div_ $ do
   h3_ "Todos"
 
-
-
-  form_ [ submit1 AddTodo ] $ do
+  form_ [ id_ "add", submit1 AddTodo ] $ do
     button_ [] "Add"
     input_ []
 
-  form_ [ submit1 Search ] $ do
+  form_ [ id_ "search", submit1 Search ] $ do
     button_ [] "Search"
-    input_ [ name_ "search", value_ (m ^. search), onInput Search ]
+    -- "defaultvalue"
+    input_ [ name_ "search", defaultValue (m ^. search) ]
 
 
   let ts = m ^. todos & filter (isSearch (m ^. search))

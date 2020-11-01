@@ -9,6 +9,7 @@ import Data.String.Conversions (cs)
 import Data.Text as Text (Text, null)
 import Wookie.Page (PageAction(..), stripArgs, Argument(..))
 import Lucid.Base (makeAttribute, Attribute)
+import Lucid.Html5 (onchange_)
 import Data.Map as Map (Map, null, empty)
 
 
@@ -65,6 +66,17 @@ submit1 :: PageAction action => (Value -> action) -> Attribute
 submit1 con = makeAttribute "data-submit1" $ cs $ stripArgs $ showAction $con mempty
 
 
+-- onInput :: PageAction action => (Value -> action) -> Attribute
+-- onInput con = makeAttribute "data-onInput" $ cs $ stripArgs $ showAction $con mempty
+
+-- is he lowercasing my stuff!?
 onInput :: PageAction action => (Value -> action) -> Attribute
-onInput con = makeAttribute "data-onInput" $ cs $ stripArgs $ showAction $con mempty
+onInput con = makeAttribute "data-input" $ cs $ stripArgs $ showAction $ con mempty
+
+
+defaultValue = makeAttribute "data-default-value"
+
+
+call :: Text -> String -> Text
+call fun action = mconcat [fun, "(", cs action, ")"]
 
