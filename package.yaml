@@ -36,6 +36,7 @@ dependencies:
 - vector
 - wai
 - data-default
+- raw-strings-qq
 
 library:
   source-dirs: src

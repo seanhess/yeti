@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "html-react-parser": "^0.14.0",
+    "html-react-parser": "^0.14.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },

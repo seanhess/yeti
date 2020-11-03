@@ -58,6 +58,18 @@ instance (Params a, Params b) => Params (a, b) where
   defaults = (defaults, defaults)
 
 
+instance (Params a, Params b, Params c) => Params (a, b, c) where
+  encode (a, b, c) = Text.intercalate ":" $ [encode a, encode b, encode c]
+  decode t = do
+    [at, bt, ct] <- pure $ Text.splitOn ":" t
+    a <- decode at
+    b <- decode bt
+    c <- decode ct
+    pure (a, b, c)
+
+  defaults = (defaults, defaults, defaults)
+
+
 instance Params a => Params [a] where
   encode [] = "[]"
   encode as = "[" <> Text.intercalate "," (fmap encode as) <> "]"

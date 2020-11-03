@@ -7,7 +7,7 @@
 module Wookie.Page
  ( Page(Page)
  , PageAction(..)
- , Argument(..)
+ , Update
  , stripArgs
  ) where
 
@@ -23,12 +23,13 @@ import Data.Map (Map)
 
 
 
+type Update = StateT
 
 
 data Page params model action m = Page
   { params :: model -> params
   , load   :: params -> m model
-  , update :: action -> StateT model m ()
+  , update :: action -> Update model m ()
   , view   :: model -> Html ()
   }
 
@@ -54,16 +55,16 @@ instance PageAction () where
 
 
 
-class Argument a where
-  anything :: a
+-- class Argument a where
+--   anything :: a
 
-instance Monoid a => Argument (Arg a) where
-  anything = Arg mempty
+-- instance Monoid a => Argument (Arg a) where
+--   anything = Arg mempty
 
-newtype Arg a = Arg { arg :: a }
+-- newtype Arg a = Arg { arg :: a }
 
-instance Show (Arg a) where
-  show _ = "asdf"
+-- instance Show (Arg a) where
+--   show _ = "asdf"
 
 
 

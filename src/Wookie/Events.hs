@@ -7,7 +7,7 @@ import Data.Aeson (encode)
 
 import Data.String.Conversions (cs)
 import Data.Text as Text (Text, null)
-import Wookie.Page (PageAction(..), stripArgs, Argument(..))
+import Wookie.Page (PageAction(..), stripArgs)
 import Lucid.Base (makeAttribute, Attribute)
 import Lucid.Html5 (onchange_)
 import Data.Map as Map (Map, null, empty)

@@ -1,8 +1,11 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+import HTMLReactParser from 'html-react-parser';
+
+console.log("Loaded Deps: ", React, ReactDOM, HTMLReactParser)
+
 
 // TODO I should probably use a normal build process for this. It's weird to import it separately, but whatever. Also, I'm using fancy features now.
-
-console.log("Index", React)
-
 
 // what's happening globally?
 // really, I'm going to use globals? This is insane
@@ -83,11 +86,10 @@ class App extends React.Component {
 
     // support history
     window.addEventListener('popstate', (event) => {
-      // console.log("location:", document.location, "state:", event.state)
-      console.log("popstate", event.state, event.state.pageUrl)
-      if (event.state.pageUrl) {
-        this.restore(event.state.pageUrl)
-      }
+      var url = document.location.pathname + document.location.search
+      console.log("popstate!", event.state, url)
+      this.restore(url)
+      // }
     })
   }
 
@@ -268,15 +270,19 @@ function messageBody(action) {
   return action
 }
 
+// wait, we should only push one if it's different from the last one?
 function onResponse(res) {
-    let pageUrl = res.headers.get('X-Page-Url')
+  let pageUrl = res.headers.get('X-Page-Url')
+  var currentUrl = window.location.pathname + window.location.search
 
-    // TODO titles
+  // TODO titles
+  if (pageUrl != currentUrl) {
     let title = "Wookie Tab Title"
     console.log(pageUrl)
     window.history.pushState({pageUrl: pageUrl}, title, pageUrl)
     return res.text()
   }
+}
 
 
 
