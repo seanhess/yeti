@@ -51,6 +51,7 @@ type Params = (Text)
 data Model = Model
   { _todos :: [Todo]
   , _search :: Text
+  , _addContent :: Text
   } deriving (Show, Eq)
 
 makeLenses ''Model
@@ -67,7 +68,7 @@ load :: MonadIO m => TVar [Todo] -> Params -> m Model
 load savedTodos (s) = do
   ts <- liftIO $ atomically $
     readTVar savedTodos
-  pure $ Model ts s
+  pure $ Model ts s ""
 
 
 
@@ -88,6 +89,7 @@ update savedTodos (AddTodo (Value t)) = do
 
   -- we can't control the value!
   search .= ""
+  addContent .= ""
   todos .= ts
 
 update savedTodos (Delete t) = do
@@ -126,7 +128,7 @@ view m = div_ $ do
 
   form_ [ id_ "add", submit1 AddTodo ] $ do
     button_ [] "Add"
-    input_ []
+    input_ [ name_ "add", value_ (m ^. addContent) ]
 
   form_ [ id_ "search", submit1 Search ] $ do
     button_ [] "Search"

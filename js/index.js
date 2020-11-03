@@ -1,7 +1,16 @@
 
-// TODO I should probably use a normal build process for this. It's weird to import it separately, but whatever.
+// TODO I should probably use a normal build process for this. It's weird to import it separately, but whatever. Also, I'm using fancy features now.
 
 console.log("Index", React)
+
+
+// what's happening globally?
+// really, I'm going to use globals? This is insane
+var INIT = "INIT"
+var READY = "READY"
+var UPDATING = "UPDATING"
+var LOADING = "LOADING"
+var appStatus = INIT
 
 
 // A custom input!
@@ -10,20 +19,36 @@ class Input extends React.Component {
   // whenever value changes, update our text
   constructor(props) {
     super(props)
-    this.state = {text: props.value}
+    this.state = {
+      text: props.value
+    }
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    // if the props are different than the state?
+    // every time you type
+    if (appStatus == READY) {
+      return state
+    }
+    else {
+      return {text: props.value}
+    }
+
   }
 
   render() {
     return React.createElement("input", {
+      ...this.props,
       value: this.state.text,
-      name: this.props.name,
-      id: this.props.id,
       onChange: this.onChange.bind(this)
     })
   }
 
   onChange(e) {
-    this.setState({text: e.target.value})
+    // we have made a change! We want to use this until props change again
+    this.setState({
+      text: e.target.value
+    })
   }
 }
 
@@ -32,7 +57,9 @@ class App extends React.Component {
 
   constructor(props) {
     super(props);
+    appStatus = UPDATING
     this.state = {html: props.html}
+    setTimeout(() => appStatus = READY)
   }
 
   setHtml(html) {
@@ -65,7 +92,7 @@ class App extends React.Component {
   }
 
   runtime(action) {
-    console.log(action)
+    appStatus = LOADING
     let body = messageBody(action)
     sendMessage(body)
       .then(onResponse)
@@ -74,6 +101,7 @@ class App extends React.Component {
 
   // when you click a link
   link(url) {
+    appStatus = LOADING
     sendLoad(url)
       .then(onResponse)
       .then(this.onResponseBody.bind(this))
@@ -81,6 +109,7 @@ class App extends React.Component {
 
   restore(url) {
     // same as above, but don't push state
+    appStatus = LOADING
     sendLoad(url)
       .then(res => res.text())
       .then(this.onResponseBody.bind(this))
@@ -90,7 +119,9 @@ class App extends React.Component {
 
   onResponseBody(body) {
     console.log("BODY", body)
+    appStatus = UPDATING
     this.setState({html: body})
+    setTimeout(() => appStatus = READY)
   }
 
 
@@ -150,6 +181,7 @@ class App extends React.Component {
       var action = submit + " " + encodeMap(formData)
       console.log("Submit", action)
       this.runtime(action)
+      e.target.reset()
     }
     else if (submit1) {
 
@@ -159,6 +191,7 @@ class App extends React.Component {
       var action = submit1 + " " + JSON.stringify(value)
       console.log("Submit1", action)
       this.runtime(action)
+      e.target.reset()
     }
   }
 
@@ -178,8 +211,16 @@ class App extends React.Component {
   // }
 
   render() {
-    var content = parseServerHTML(this.state.html)
+    var content = this.parseServerHTML(this.state.html)
     return content
+  }
+
+  parseServerHTML(html) {
+    return HTMLReactParser(html, {replace: function(domNode) {
+      if (domNode.name == "input") {
+        return React.createElement(Input, domNode.attribs)
+      }
+    }})
   }
 }
 
@@ -262,39 +303,11 @@ function encodePair(pair) {
 }
 
 
-// wow, onInput is total garbage
-// because it.... calls the server immediately, and then replaces the field with what the server returns. I need a debounced version
+// What I want it to do:
+// 1. you can type whateve ryou want. CHECK
+// 2. when you submit it, it clears
+// a form could decide that, no?
 
-// what I want: when any form is submitted, refresh all values to their defaults. How in the world do I know a form submit from a normal one?
-// If I have a handle on the inputs I could clear them manually after react does its thing. Gross. Buggy
-
-// Grr, I don't have any ideas.
-// besides just doing it the react way, which is crazy in my case. Not light-weight at all. It'll send the whole web page back down when you finish typing. Granted, this only uses bandwidth, but still!
-
-// Maybe the trick is making simpler RPC? GraphQL?
-// Elm + A super simple RPC per page.
-// Sure
-
-// Like, making an elm app isn't hard. It's just that.. you have to duplicate everything. And you can't work in haskell from bottom up. 
-// I want to write this all in haskell
-// pfft.
-// Ok, what about custom components?
-// I have a component that:
-
-// It takes a value=x
-// it reapplies it at certain times. Whenever the page is re-rendered, but not when someone types. I don't actually care about that. 
-
-function parseServerHTML(html) {
-  // return HTMLReactParser(html)
-  return HTMLReactParser(html, {replace: function(domNode) {
-    if (domNode.name == "input") {
-      // setting the key means it will create a completely new component if the value changes
-      domNode.attribs.key = domNode.attribs.value
-      return React.createElement(Input, domNode.attribs)
-    }
-    // if (domNode.attribs && domNo
-  }})
-}
 
 init();
 
