@@ -85,6 +85,9 @@ update :: MonadIO m => TVar [Todo] -> Action -> StateT Model m ()
 update savedTodos (AddTodo (Value t)) = do
   let new = Todo t False
   ts <- liftIO $ atomically $ appendTodo savedTodos new
+
+  -- we can't control the value!
+  search .= ""
   todos .= ts
 
 update savedTodos (Delete t) = do
@@ -128,7 +131,7 @@ view m = div_ $ do
   form_ [ id_ "search", submit1 Search ] $ do
     button_ [] "Search"
     -- "defaultvalue"
-    input_ [ name_ "search", defaultValue (m ^. search) ]
+    input_ [ name_ "search", value_ (m ^. search) ]
 
 
   let ts = m ^. todos & filter (isSearch (m ^. search))

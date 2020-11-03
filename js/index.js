@@ -3,7 +3,30 @@
 
 console.log("Index", React)
 
-// It's already working, only updating the relevant parts
+
+// A custom input!
+class Input extends React.Component {
+
+  // whenever value changes, update our text
+  constructor(props) {
+    super(props)
+    this.state = {text: props.value}
+  }
+
+  render() {
+    return React.createElement("input", {
+      value: this.state.text,
+      name: this.props.name,
+      id: this.props.id,
+      onChange: this.onChange.bind(this)
+    })
+  }
+
+  onChange(e) {
+    this.setState({text: e.target.value})
+  }
+}
+
 
 class App extends React.Component {
 
@@ -143,16 +166,16 @@ class App extends React.Component {
   // it works, but e.target.value changes?
   // it's not returning true or something...
   // or it's re-asserting the value from react
-  onInput(e) {
-    console.log("INPUT", e.target.value)
-    var target = e.target
-    var onInput = target.dataset.input
-    if (onInput) {
-      var value = target.value || ""
-      var action = onInput + " " + JSON.stringify(value)
-      this.runtime(action)
-    }
-  }
+  // onInput(e) {
+  //   console.log("INPUT", e.target.value)
+  //   var target = e.target
+  //   var onInput = target.dataset.input
+  //   if (onInput) {
+  //     var value = target.value || ""
+  //     var action = onInput + " " + JSON.stringify(value)
+  //     this.runtime(action)
+  //   }
+  // }
 
   render() {
     var content = parseServerHTML(this.state.html)
@@ -171,16 +194,13 @@ function init() {
 
   // not working very well, because it's not "managed"
   // Write default value, which only has to happen on load
-  var defaultValues = document.querySelectorAll('[data-default-value]').forEach(function(el) {
-    el.value = el.dataset.defaultValue
-  })
+  // var defaultValues = document.querySelectorAll('[data-default-value]').forEach(function(el) {
+  //   el.value = el.dataset.defaultValue
+  // })
 
   // Hydrate with the actual contents
   var content = document.getElementById("content").innerHTML;
   console.log("CONTENT", content)
-  // var el = parseServerHTML(content)
-
-  // ReactDOM.hydrate(el, document.getElementById('content'))
   root = React.createElement(App, {html:content})
   ReactDOM.hydrate(root, document.getElementById('content'))
 
@@ -244,43 +264,36 @@ function encodePair(pair) {
 
 // wow, onInput is total garbage
 // because it.... calls the server immediately, and then replaces the field with what the server returns. I need a debounced version
+
+// what I want: when any form is submitted, refresh all values to their defaults. How in the world do I know a form submit from a normal one?
+// If I have a handle on the inputs I could clear them manually after react does its thing. Gross. Buggy
+
+// Grr, I don't have any ideas.
+// besides just doing it the react way, which is crazy in my case. Not light-weight at all. It'll send the whole web page back down when you finish typing. Granted, this only uses bandwidth, but still!
+
+// Maybe the trick is making simpler RPC? GraphQL?
+// Elm + A super simple RPC per page.
+// Sure
+
+// Like, making an elm app isn't hard. It's just that.. you have to duplicate everything. And you can't work in haskell from bottom up. 
+// I want to write this all in haskell
+// pfft.
+// Ok, what about custom components?
+// I have a component that:
+
+// It takes a value=x
+// it reapplies it at certain times. Whenever the page is re-rendered, but not when someone types. I don't actually care about that. 
+
 function parseServerHTML(html) {
-  return HTMLReactParser(html)
-  // return HTMLReactParser(html, {replace: function(domNode) {
-  //   // if it has data-input at all, add an onInput handler
-  //   if (domNode.attribs && domNode.attribs.defaultvalue) {
-  //     // console.log("DOM NODE", domNode.attribs)
-  //     // domNode.attribs.defaultValue = domNode.attribs.defaultvalue
-  //     // delete domNode.attribs.defaultvalue
-  //     console.log("DOM NODE", domNode.attribs)
-  //     domNode.attribs.defaultValue = domNode.attribs.defaultvalue
-
-  //     // so the server is sending down the "defaultvalue" attribute
-  //     // which it doesn't like
-  //     // I could go through and replace them all
-  //     // this is stupid and annoying
-  //     // but if I set value it'll yell at me too
-  //     delete domNode.attribs.defaultvalue
-
-  //   //   // so, the problem is, it hits, but it doesn't update the value
-  //   //   // so debouncing won't work
-  //   //   // just don't do this...
-  //   //   // i think, just don't do this
-  //   //   // only use react to render
-  //   //   domNode.attribs.onInput = function(e) {
-  //   //     console.log("ON INPUT", e.target.value)
-  //   //   }
-
-  //   //   // domNode.attribs.onInput = "testInput"
-  //   //     // debounce(testInput, 250)
-
-  //   // //   delete domNode.attribs.oninput
-  //   // //   domNode.attribs.onInput = inp
-  //     // return HTMLReactParser.domToReact(domNode)
-  //     // delete domNode.attribs.defaultvalue
-  //     return HTMLReactParser.domToReact(domNode)
-  //   }
-  // }})
+  // return HTMLReactParser(html)
+  return HTMLReactParser(html, {replace: function(domNode) {
+    if (domNode.name == "input") {
+      // setting the key means it will create a completely new component if the value changes
+      domNode.attribs.key = domNode.attribs.value
+      return React.createElement(Input, domNode.attribs)
+    }
+    // if (domNode.attribs && domNo
+  }})
 }
 
 init();
