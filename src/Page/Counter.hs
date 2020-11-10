@@ -69,8 +69,9 @@ params (Model c _ msg) = (c, msg)
 
 
 
-load :: MonadIO m => (Integer, Maybe Text) -> m Model
-load (c, msg) = do
+load :: MonadIO m => Maybe Params -> m Model
+load ps = do
+  let (c, msg) = fromMaybe (0, Nothing) ps
   t <- liftIO $ Time.getCurrentTime
   pure $ Model c t msg
 

@@ -120,7 +120,7 @@ class App extends React.Component {
 
 
   onResponseBody(body) {
-    console.log("BODY", body)
+    // console.log("BODY", body)
     appStatus = UPDATING
     this.setState({html: body})
     setTimeout(() => appStatus = READY)
@@ -181,7 +181,7 @@ class App extends React.Component {
       }
 
       var action = submit + " " + encodeMap(formData)
-      console.log("Submit", action)
+      // console.log("Submit", action)
       this.runtime(action)
       e.target.reset()
     }
@@ -191,7 +191,7 @@ class App extends React.Component {
       var child = form.querySelector(inputs)
       var value = child.value || ""
       var action = submit1 + " " + JSON.stringify(value)
-      console.log("Submit1", action)
+      // console.log("Submit1", action)
       this.runtime(action)
       e.target.reset()
     }
@@ -213,6 +213,7 @@ class App extends React.Component {
   // }
 
   render() {
+    // console.log("RENDER", this.state.html)
     var content = this.parseServerHTML(this.state.html)
     return content
   }
@@ -233,7 +234,7 @@ var root;
 
 
 function init() {
-  console.log("INIT")
+  // console.log("INIT")
 
   // not working very well, because it's not "managed"
   // Write default value, which only has to happen on load
@@ -278,10 +279,11 @@ function onResponse(res) {
   // TODO titles
   if (pageUrl != currentUrl) {
     let title = "Wookie Tab Title"
-    console.log(pageUrl)
+    console.log("pageUrl", pageUrl)
     window.history.pushState({pageUrl: pageUrl}, title, pageUrl)
-    return res.text()
   }
+
+  return res.text()
 }
 
 

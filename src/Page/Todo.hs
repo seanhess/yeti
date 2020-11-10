@@ -64,8 +64,9 @@ params m = m ^. search
 
 
 
-load :: MonadIO m => TVar [Todo] -> Params -> m Model
-load savedTodos (s) = do
+load :: MonadIO m => TVar [Todo] -> Maybe Params -> m Model
+load savedTodos ps = do
+  let (s) = fromMaybe ("") ps :: Params
   ts <- liftIO $ atomically $
     readTVar savedTodos
   pure $ Model ts s ""

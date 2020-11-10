@@ -65,7 +65,7 @@ data Command action
 runAction
   :: forall m model params action. (MonadIO m, MonadFail m, PageAction action)
   => Page params model action m
-  -> params
+  -> Maybe params
   -> Command action
   -> m (Response params)
 runAction (Page params load update view) ps cmd = do

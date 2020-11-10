@@ -28,7 +28,7 @@ type Update = StateT
 
 data Page params model action m = Page
   { params :: model -> params
-  , load   :: params -> m model
+  , load   :: Maybe params -> m model
   , update :: action -> Update model m ()
   , view   :: model -> Html ()
   }
