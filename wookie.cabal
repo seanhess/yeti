@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b7cc383d353939e0f29a22f3a5ac51093f668694b555bc39b94fae5731efcdae
+-- hash: 16f71bd320b6208edc83c49089e203f37d3e0a4cb60a70040fc8bf1b1ab5ca25
 
 name:           wookie
 version:        0.1.0.0
@@ -27,9 +27,6 @@ source-repository head
 library
   exposed-modules:
       App
-      Page.About
-      Page.Counter
-      Page.Todo
       Wookie
       Wookie.Events
       Wookie.Page
@@ -65,9 +62,12 @@ library
 executable wookie-exe
   main-is: Main.hs
   other-modules:
+      Page.About
+      Page.Counter
+      Page.Todo
       Paths_wookie
   hs-source-dirs:
-      app
+      example
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wname-shadowing -Wincomplete-patterns
   build-depends:
       aeson
