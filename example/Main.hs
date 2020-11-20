@@ -15,7 +15,7 @@ import Data.Map as Map (fromList, toList, keys)
 import Web.Scotty as Scotty
 import Network.Wai (Request, pathInfo, rawPathInfo, Application)
 import Lucid (renderBS, Html)
-import Lucid.Html5 (html_, head_, script_, src_, body_, type_, h1_, id_, div_)
+import Lucid.Html5
 -- import Counter (view, Model(..), load, update, view)
 -- import App (resolve)
 import qualified Page.Counter as Counter
@@ -33,7 +33,7 @@ import Network.HTTP.Types.URI (renderSimpleQuery)
 
 import Wookie.Runtime (Response(..), runAction, command)
 import Wookie.Router (parsePath)
-import Wookie.Web (page, lucid, static)
+import Wookie.Web (page, lucid, static, handle)
 
 
 -- TODO back button doesn't work: history.onpopstate? Just call it again with the current url. The url is updating
@@ -89,26 +89,41 @@ main = do
 
   scotty 3000 $ do
     -- delay to simulate real-world conditions
-    middleware (delay 200)
+    middleware (delay 100)
 
     get "/js/:file" $ do
       filename <- param "file"
       setHeader "Content-Type" "text/javascript"
-      file $ "js/" <> filename
+      file $ "dist/" <> filename
 
     -- pages! This feels way more magical than it should, I think :(
-    page "/app/counter" Counter.page
-    page "/app/todo" (Todo.page todos)
+    page "/app/counter" $ do
+      handle doc Counter.page
+
+    page "/app/todo/:n" $ do
+      n <- param "n" :: ActionM Int
+      liftIO $ print n
+      handle doc $ Todo.page todos
 
     -- if you use "lucid" it doesn't work
-    static "/app/about" About.view
+    get "/app/about" $
+      static $ About.view
 
-    get "/:name" $ do
+    get "/hello/:name" $ do
       name <- param "name"
       html $ mconcat ["Hello: ", name]
 
 
+doc :: Html () -> Html ()
+doc ct = do
+  html_ $ do
+    head_ $ do
+      meta_ [charset_ "UTF-8"]
+      meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
 
+    body_ $ do
+      ct
+      script_ [type_ "text/javascript", src_ "/js/build.js"] ("" :: Text)
 
 
 

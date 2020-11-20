@@ -42,6 +42,7 @@ class PageAction a where
   showAction :: a -> String
   readAction :: String -> Maybe a
 
+  -- TODO using show won't work. They might want to override show for another reason
   default showAction :: Show a => a -> String
   showAction = show
 

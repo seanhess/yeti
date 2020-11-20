@@ -3,6 +3,7 @@ module Wookie
  , PageAction
  , Update
  , page
+ , handle
  ) where
 
 import Wookie.Page

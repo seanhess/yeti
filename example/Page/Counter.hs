@@ -12,6 +12,7 @@ module Page.Counter where
 import Wookie.Page as Page
 import Wookie.Events (click)
 
+import Data.String.Conversions (cs)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text (Text)
@@ -91,9 +92,8 @@ update (Set n) = count .= n
 -- what about nested resolvers?
 -- TODO make your own onclick attribute that accepts an Action, not text
 view :: Model -> Html ()
-view m = div_ $ do
+view m = section_ $ do
 
-  div_ $ do
     button_ [ click Increment] "Increment"
     button_ [ click Decrement] "Decrement"
     button_ [ click (Set 5)] "Set 5"
@@ -102,7 +102,7 @@ view m = div_ $ do
     p_ $ do
       span_ (toHtml $ fromMaybe "" $ m ^. message)
 
-    p_ $ do
+    p_ [class_ ("message " <> (cs $ show $ m ^. count))] $ do
       span_ "Count: "
       span_ (toHtml $ show $ m ^. count)
 
@@ -112,6 +112,10 @@ view m = div_ $ do
 
     -- TODO function to generate links based on params
     p_ $ a_ [href_ "/app/counter?count=100"] "Click here to jump to Count = 100"
+
+
+    p_ $ a_ [click (Set 15), style_ "text-decoration:underline;cursor:pointer"] "Click here to jump to Count = 15"
+
     p_ $ a_ [href_ "https://www.google.com"] "Google.com"
     p_ $ a_ [href_ "/app/about"] "About"
 

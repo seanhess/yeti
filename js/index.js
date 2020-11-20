@@ -95,6 +95,7 @@ class App extends React.Component {
 
   runtime(action) {
     appStatus = LOADING
+    console.log("RUNTIME", action)
     let body = messageBody(action)
     sendMessage(body)
       .then(onResponse)
@@ -103,6 +104,7 @@ class App extends React.Component {
 
   // when you click a link
   link(url) {
+    console.log("LINK", url)
     appStatus = LOADING
     sendLoad(url)
       .then(onResponse)
@@ -111,6 +113,7 @@ class App extends React.Component {
 
   restore(url) {
     // same as above, but don't push state
+    console.log("RESTORE", url)
     appStatus = LOADING
     sendLoad(url)
       .then(res => res.text())
@@ -131,6 +134,7 @@ class App extends React.Component {
     // check for our clicks
     var click = e.target.dataset.click;
     if (click) {
+      e.preventDefault();
       this.runtime(click)
     }
 
@@ -159,7 +163,7 @@ class App extends React.Component {
 
 
   onSubmit(e) {
-    console.log("ONSUBMIT", e.target.dataset)
+    // console.log("ONSUBMIT", e.target.dataset)
     e.preventDefault();
 
     var form = e.target
@@ -220,6 +224,12 @@ class App extends React.Component {
 
   parseServerHTML(html) {
     return HTMLReactParser(html, {replace: function(domNode) {
+
+      if (domNode.attribs && domNode.attribs['class']) {
+        domNode.attribs.className = domNode.attribs.class
+        delete domNode.attribs.class
+      }
+
       if (domNode.name == "input") {
         return React.createElement(Input, domNode.attribs)
       }
@@ -243,10 +253,10 @@ function init() {
   // })
 
   // Hydrate with the actual contents
-  var content = document.getElementById("content").innerHTML;
-  console.log("CONTENT", content)
+  var content = document.getElementById("wookie-root-content").innerHTML;
+  // console.log("CONTENT", content)
   root = React.createElement(App, {html:content})
-  ReactDOM.hydrate(root, document.getElementById('content'))
+  ReactDOM.hydrate(root, document.getElementById("wookie-root-content"))
 
 
 }
@@ -279,7 +289,7 @@ function onResponse(res) {
   // TODO titles
   if (pageUrl != currentUrl) {
     let title = "Wookie Tab Title"
-    console.log("pageUrl", pageUrl)
+    console.log(" - ", "pageUrl", pageUrl)
     window.history.pushState({pageUrl: pageUrl}, title, pageUrl)
   }
 
