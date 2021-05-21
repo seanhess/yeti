@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import HTMLReactParser from 'html-react-parser';
 
-console.log("Loaded Deps: ", React, ReactDOM, HTMLReactParser)
 
 
 // TODO I should probably use a normal build process for this. It's weird to import it separately, but whatever. Also, I'm using fancy features now.
@@ -132,10 +131,10 @@ class App extends React.Component {
 
   onClick(e) {
     // check for our clicks
-    var click = e.target.dataset.click;
-    if (click) {
+    var src = e.target.closest("[data-click]")
+    if (src && src.dataset.click) {
       e.preventDefault();
-      this.runtime(click)
+      this.runtime(src.dataset.click)
     }
 
     else {
@@ -225,13 +224,26 @@ class App extends React.Component {
   parseServerHTML(html) {
     return HTMLReactParser(html, {replace: function(domNode) {
 
-      if (domNode.attribs && domNode.attribs['class']) {
-        domNode.attribs.className = domNode.attribs.class
-        delete domNode.attribs.class
+
+      if (domNode.attribs) {
+
+        if (domNode.attribs.class) {
+          domNode.attribs.className = domNode.attribs.class
+          delete domNode.attribs.class
+        }
+
+        // console.log(domNode.attribs)
+        // if (domNode.attribs["data-click"]) {
+        //   // I need an element with a click handler
+        //   // erm.... not sure how I'm supposed to do that!
+        // }
       }
 
+
+
       if (domNode.name == "input") {
-        return React.createElement(Input, domNode.attribs)
+        var props = HTMLReactParser.attributesToProps(domNode.attribs)
+        return React.createElement(Input, props)
       }
     }})
   }

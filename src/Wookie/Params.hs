@@ -7,6 +7,8 @@ import Data.Text (Text)
 import Data.Function ((&))
 import Text.Read (readMaybe)
 import Data.Maybe (mapMaybe)
+import Data.Time.Calendar (Day)
+import Data.Time.Format (defaultTimeLocale, formatTime, parseTimeM)
 
 
 
@@ -22,6 +24,14 @@ instance Params Integer where
 instance Params Int where
   encode = cs . show
   decode = readMaybe . cs
+
+instance Params Bool where
+  encode = cs . show
+  decode = readMaybe . cs
+
+instance Params Day where
+  encode = cs . formatTime defaultTimeLocale "%Y-%m-%d"
+  decode = parseTimeM True defaultTimeLocale "%Y-%m-%d" . cs
 
 instance Params Text where
   encode = id
@@ -55,6 +65,27 @@ instance (Params a, Params b, Params c) => Params (a, b, c) where
     b <- decode bt
     c <- decode ct
     pure (a, b, c)
+
+instance (Params a, Params b, Params c, Params d) => Params (a, b, c, d) where
+  encode (a, b, c, d) = Text.intercalate ":" $ [encode a, encode b, encode c, encode d]
+  decode t = do
+    [at, bt, ct, dt] <- pure $ Text.splitOn ":" t
+    a <- decode at
+    b <- decode bt
+    c <- decode ct
+    d <- decode dt
+    pure (a, b, c, d)
+
+instance (Params a, Params b, Params c, Params d, Params e) => Params (a, b, c, d, e) where
+  encode (a, b, c, d, e) = Text.intercalate ":" $ [encode a, encode b, encode c, encode d, encode e]
+  decode t = do
+    [at, bt, ct, dt, et] <- pure $ Text.splitOn ":" t
+    a <- decode at
+    b <- decode bt
+    c <- decode ct
+    d <- decode dt
+    e <- decode et
+    pure (a, b, c, d, e)
 
 instance Params a => Params [a] where
   encode [] = "[]"
