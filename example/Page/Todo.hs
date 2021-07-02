@@ -15,7 +15,6 @@ import Wookie.Events (click, submit1, FormData(..), submit, Value(..), onInput, 
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
 import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.State.Lazy (StateT)
 import Control.Monad (forM_)
 import Data.Map as Map (lookup, (!?))
 import Data.Maybe (fromMaybe)
@@ -49,17 +48,15 @@ data Todo = Todo
 type Params = (Text)
 
 data Model = Model
-  { _todos :: [Todo]
-  , _search :: Text
-  , _addContent :: Text
+  { todos :: [Todo]
+  , search :: Text
+  , addContent :: Text
   } deriving (Show, Eq)
-
-makeLenses ''Model
 
 
 
 params :: Model -> Params
-params m = m ^. search
+params m = search m
 
 
 
@@ -83,22 +80,20 @@ instance PageAction Action
 
 
 
-update :: MonadIO m => TVar [Todo] -> Action -> StateT Model m ()
-update savedTodos (AddTodo (Value t)) = do
+update :: MonadIO m => TVar [Todo] -> Action -> Model -> m Model
+update savedTodos (AddTodo (Value t)) m = do
   let new = Todo t False
   ts <- liftIO $ atomically $ appendTodo savedTodos new
 
   -- we can't control the value!
-  search .= ""
-  addContent .= ""
-  todos .= ts
+  pure $ m { search = "", addContent = "", todos = ts }
 
-update savedTodos (Delete t) = do
+update savedTodos (Delete t) m = do
   ts <- liftIO $ atomically $ deleteTodo savedTodos t
-  todos .= ts
+  pure $ m { todos = ts }
 
-update _ (Search (Value s)) = do
-  search .= s
+update _ (Search (Value s)) m = do
+  pure $ m { search = s }
 
 
 
@@ -129,15 +124,15 @@ view m = div_ $ do
 
   form_ [ id_ "add", submit1 AddTodo ] $ do
     button_ [] "Add"
-    input_ [ name_ "add", value_ (m ^. addContent) ]
+    input_ [ name_ "add", value_ (addContent m)]
 
   form_ [ id_ "search", submit1 Search ] $ do
     button_ [] "Search"
     -- "defaultvalue"
-    input_ [ name_ "search", value_ (m ^. search) ]
+    input_ [ name_ "search", value_ (search m) ]
 
 
-  let ts = m ^. todos & filter (isSearch (m ^. search))
+  let ts = (todos m) & filter (isSearch (search m))
 
   div_ $ do
     forM_ ts $ \todo ->

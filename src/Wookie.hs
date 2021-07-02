@@ -1,7 +1,6 @@
 module Wookie
  ( Page(Page)
  , PageAction
- , Update
  , page
  , handle
  ) where

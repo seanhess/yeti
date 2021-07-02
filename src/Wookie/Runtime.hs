@@ -11,7 +11,6 @@ module Wookie.Runtime where
 
 import Wookie.Page (Page(..), PageAction(..))
 
-import Control.Monad.State.Lazy (StateT, execStateT)
 import Data.Aeson (ToJSON(..), FromJSON(..))
 import Data.ByteString.Lazy (ByteString)
 import Data.String.Conversions (cs)
@@ -58,7 +57,7 @@ data Command action
 
 
 -- type View model = (model -> Html ())
--- type Update model action m = (action -> StateT model m ())
+-- type Update model action m = (action -> Model -> m Model)
 
 
 -- | Load the page from route params, then apply the action
@@ -76,7 +75,7 @@ runAction (Page params load update view) ps cmd = do
   -- run either a load or an action
   m' <- case cmd of
     Init -> pure m
-    Update a -> execStateT (update a) m
+    Update a -> update a m
 
   -- respond
   pure $ Response (view m') (params m')

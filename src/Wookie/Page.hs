@@ -7,7 +7,6 @@
 module Wookie.Page
  ( Page(Page)
  , PageAction(..)
- , Update
  , stripArgs
  ) where
 
@@ -23,13 +22,10 @@ import Data.Map (Map)
 
 
 
-type Update = StateT
-
-
 data Page params model action m = Page
   { params :: model -> params
   , load   :: Maybe params -> m model
-  , update :: action -> Update model m ()
+  , update :: action -> model -> m model
   , view   :: model -> Html ()
   }
 

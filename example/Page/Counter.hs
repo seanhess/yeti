@@ -48,12 +48,10 @@ instance PageAction Action
 type Params = (Integer, Maybe Text)
 
 data Model = Model
-  { _count :: Integer
-  , _timestamp :: UTCTime
-  , _message :: Maybe Text
+  { count :: Integer
+  , timestamp :: UTCTime
+  , message :: Maybe Text
   } deriving (Show, Eq)
-
-makeLenses ''Model
 
 
 
@@ -81,10 +79,10 @@ load ps = do
 
 -- does it have to be IO?
 -- no.... it should be any MonadIO
-update :: MonadIO m => Action -> StateT Model m ()
-update Increment = count += 1
-update Decrement = count -= 1
-update (Set n) = count .= n
+update :: MonadIO m => Action -> Model -> m Model
+update Increment m = pure $ m { count = count m + 1 }
+update Decrement m = pure $ m { count = count m - 1 }
+update (Set n)   m = pure $ m { count = n }
 
 
 
@@ -100,15 +98,15 @@ view m = section_ $ do
 
     -- see if I can get react to replace this
     p_ $ do
-      span_ (toHtml $ fromMaybe "" $ m ^. message)
+      span_ (toHtml $ fromMaybe "" $ message m)
 
-    p_ [class_ ("message " <> (cs $ show $ m ^. count))] $ do
+    p_ [class_ ("message " <> (cs $ show $ count m))] $ do
       span_ "Count: "
-      span_ (toHtml $ show $ m ^. count)
+      span_ (toHtml $ show $ count m)
 
     p_ $ do
       span_ "Time: "
-      span_ (toHtml $ show $ m ^. timestamp)
+      span_ (toHtml $ show $ timestamp m)
 
     -- TODO function to generate links based on params
     p_ $ a_ [href_ "/app/counter?count=100"] "Click here to jump to Count = 100"
