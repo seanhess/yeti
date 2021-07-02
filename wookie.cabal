@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c46398e40caeebe408f59bfd88ce278632e81e877f218316d7b892570b2f7a70
+-- hash: 1c8efbefd91fe30d531f2af77410599bd5cbe1ffb413ded471bc9372560df433
 
 name:           wookie
 version:        0.1.0.0
@@ -28,6 +28,7 @@ library
   exposed-modules:
       Wookie
       Wookie.Events
+      Wookie.JS
       Wookie.Page
       Wookie.Params
       Wookie.Router
@@ -43,6 +44,7 @@ library
     , bytestring
     , containers
     , data-default
+    , file-embed
     , http-types
     , lens
     , lucid
@@ -64,6 +66,7 @@ executable wookie-exe
       Page.About
       Page.Counter
       Page.Todo
+      Web
       Paths_wookie
   hs-source-dirs:
       example
@@ -74,6 +77,7 @@ executable wookie-exe
     , bytestring
     , containers
     , data-default
+    , file-embed
     , http-types
     , lens
     , lucid
@@ -104,6 +108,7 @@ test-suite wookie-test
     , bytestring
     , containers
     , data-default
+    , file-embed
     , http-types
     , lens
     , lucid

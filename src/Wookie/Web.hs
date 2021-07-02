@@ -8,6 +8,7 @@ module Wookie.Web where
 import Wookie.Runtime (Response(..), runAction, command)
 import Wookie.Page (Page, PageAction)
 import Wookie.Params as Params (Params(..))
+import Wookie.JS as JS
 
 import Control.Monad.IO.Class (liftIO)
 import Data.Function ((&))
@@ -46,10 +47,10 @@ page = Scotty.matchAny
 handle
   :: forall params model action. (PageAction action, Params params)
   => (Html () -> Html ()) -> Page params model action ActionM -> ActionM ()
-handle document pg = do
+handle doc pg = do
   Response h p' <- response pg
   setParams p'
-  render document h
+  render doc h
 
 
 
@@ -95,15 +96,30 @@ setParams ps = do
 -- If they ask for Html, give them the whole thing
 -- if they ask for Vdom, just give them the one part
 render :: (Html() -> Html ()) -> Html () -> ActionM ()
-render document view = do
+render toDocument view = do
   Scotty.header "Accept" >>= \case
     Just "application/vdom" -> lucid view
-    _ -> lucid $ document $ content view
+    _ -> lucid $ toDocument $ embedContent view
   where
-    content :: Html () -> Html ()
-    content v = div_ [id_ "wookie-root-content"] v
+    -- render the root node and embed the javascript
+    embedContent :: Html () -> Html ()
+    embedContent v = do
+      div_ [id_ "wookie-root-content"] v
+      script_ [type_ "text/javascript"] JS.build
 
 
+
+-- | Convenience toDocument function to pass to render. Allows you to add stylesheets and javascript easily
+document :: Html () -> Html () -> Html ()
+document heads content = do
+  html_ $ do
+    head_ $ do
+      meta_ [charset_ "UTF-8"]
+      meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
+      heads
+
+    body_ $ do
+      content
 
 setPageUrl :: Text -> ActionM ()
 setPageUrl = Scotty.setHeader "X-Page-Url" . cs
@@ -119,8 +135,6 @@ rawParams :: ActionM (Maybe Text)
 rawParams = do
   ps <- Scotty.params
   pure $ cs <$> List.lookup "p" ps
-
-
 
 
 
