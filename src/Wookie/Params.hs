@@ -1,7 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Wookie.Params where
 
-import Data.String.Conversions (cs)
+import Data.String.Conversions (cs, ConvertibleStrings)
 import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Function ((&))
@@ -17,17 +19,16 @@ class Params a where
   encode :: a -> Text
   decode :: Text -> Maybe a
 
-instance Params Integer where
+  default encode :: Show a => a -> Text
   encode = cs . show
+
+  default decode :: Read a => Text -> Maybe a
   decode = readMaybe . cs
 
-instance Params Int where
-  encode = cs . show
-  decode = readMaybe . cs
 
-instance Params Bool where
-  encode = cs . show
-  decode = readMaybe . cs
+instance Params Integer
+instance Params Int
+instance Params Bool
 
 instance Params Day where
   encode = cs . formatTime defaultTimeLocale "%Y-%m-%d"
@@ -36,6 +37,10 @@ instance Params Day where
 instance Params Text where
   encode = id
   decode = Just . id
+
+instance Params [Char] where
+  encode = cs
+  decode = Just . cs
 
 instance Params () where
   encode _ = ""
