@@ -111,15 +111,15 @@ render toDocument view = do
 
 -- | Convenience toDocument function to pass to render. Allows you to add stylesheets and javascript easily
 document :: Html () -> Html () -> Html ()
-document heads content = do
+document extra content = do
   html_ $ do
     head_ $ do
       meta_ [charset_ "UTF-8"]
       meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
-      heads
 
     body_ $ do
       content
+      extra
 
 setPageUrl :: Text -> ActionM ()
 setPageUrl = Scotty.setHeader "X-Page-Url" . cs
