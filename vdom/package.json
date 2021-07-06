@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "snabbdom": "^3.0.3",
+    "snabby": "^4.2.4",
     "vdom-parser": "^1.4.1",
     "virtual-dom": "^2.1.1"
   }

@@ -107,6 +107,10 @@ start = do
     get "/hello/:name" $ do
       name <- param "name"
       html $ mconcat ["Hello: ", name]
+
+    page "/test/:message" $ do
+      m <- param "message" :: ActionM Lazy.Text
+      html $ "<div><p>"<> m <>"</p><input type='text'/><p>Hello!</p><button>PRESS</button></div>"
 -- 
 
 doc = document (pure ())
