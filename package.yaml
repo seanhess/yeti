@@ -38,6 +38,7 @@ dependencies:
 - data-default
 - raw-strings-qq
 - file-embed
+- wai-middleware-static
 
 library:
   source-dirs: src

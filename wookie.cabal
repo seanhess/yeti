@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1c8efbefd91fe30d531f2af77410599bd5cbe1ffb413ded471bc9372560df433
+-- hash: 05af0782a7223474cb0e7cb5f8d66eafb7bc5fbe3e8722a4b5739c36e21cdb6a
 
 name:           wookie
 version:        0.1.0.0
@@ -58,6 +58,7 @@ library
     , unordered-containers
     , vector
     , wai
+    , wai-middleware-static
   default-language: Haskell2010
 
 executable wookie-exe
@@ -91,6 +92,7 @@ executable wookie-exe
     , unordered-containers
     , vector
     , wai
+    , wai-middleware-static
     , wookie
   default-language: Haskell2010
 
@@ -122,5 +124,6 @@ test-suite wookie-test
     , unordered-containers
     , vector
     , wai
+    , wai-middleware-static
     , wookie
   default-language: Haskell2010

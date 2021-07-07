@@ -108,14 +108,15 @@ view m = section_ $ do
       span_ "Time: "
       span_ (toHtml $ show $ timestamp m)
 
-    -- TODO function to generate links based on params
-    p_ $ a_ [href_ "/app/counter?count=100"] "Click here to jump to Count = 100"
+    h3_ "Test Form"
+    div_ $ 
+      form_ $ input_ [ type_ "text", name_ "test" ]
 
-
-    p_ $ a_ [click (Set 15), style_ "text-decoration:underline;cursor:pointer"] "Click here to jump to Count = 15"
-
-    p_ $ a_ [href_ "https://www.google.com"] "Google.com"
-    p_ $ a_ [href_ "/app/about"] "About"
+    -- -- TODO function to generate links based on params
+    -- p_ $ a_ [href_ "/app/counter?count=100"] "Click here to jump to Count = 100"
+    -- p_ $ a_ [click (Set 15), style_ "text-decoration:underline;cursor:pointer"] "Click here to jump to Count = 15"
+    -- p_ $ a_ [href_ "https://www.google.com"] "Google.com"
+    -- p_ $ a_ [href_ "/app/about"] "About"
 
 
 

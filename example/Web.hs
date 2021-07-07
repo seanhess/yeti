@@ -13,6 +13,7 @@ import Data.Text.IO as Text (readFile)
 import qualified Data.Text.Lazy as TL
 import Data.Map as Map (fromList, toList, keys)
 import Web.Scotty as Scotty
+import Network.Wai.Middleware.Static (staticWithOptions, defaultOptions)
 import Network.Wai (Request, pathInfo, rawPathInfo, Application)
 import Lucid (renderBS, Html)
 import Lucid.Html5
@@ -90,6 +91,7 @@ start = do
   scotty 3000 $ do
     -- delay to simulate real-world conditions
     middleware (delay 100)
+    middleware $ staticWithOptions defaultOptions
 
     -- pages! This feels way more magical than it should, I think :(
     page "/app/counter" $ do
@@ -109,8 +111,8 @@ start = do
       html $ mconcat ["Hello: ", name]
 
     page "/test/:message" $ do
-      m <- param "message" :: ActionM Lazy.Text
-      html $ "<div><p>"<> m <>"</p><input type='text'/><p>Hello!</p><button>PRESS</button></div>"
+      m <- param "message" :: ActionM TL.Text
+      html $ "<div id='container'><p>"<> m <>"</p><input type='text'/><p>Hello!</p><button data-click='Action 3'>PRESS</button></div>"
 -- 
 
 doc = document (pure ())

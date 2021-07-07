@@ -6,4 +6,7 @@ import Data.FileEmbed (embedFile)
 
 -- | Embed built javascript into file via Data.FileEmbed. Must be recompiled via node to work
 build :: ByteString
-build = $(embedFile "dist/build.js")
+build = $(embedFile "edom/build.js")
+
+run :: ByteString
+run = $(embedFile "edom/run.js")
