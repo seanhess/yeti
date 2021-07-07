@@ -6330,8 +6330,6 @@ var $author$project$Main$update = F2(
 		}
 	});
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -9885,6 +9883,8 @@ var $hecrj$html_parser$Html$Parser$run = function (str) {
 		A2($hecrj$html_parser$Html$Parser$oneOrMore, 'node', $hecrj$html_parser$Html$Parser$node),
 		str);
 };
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -9969,6 +9969,15 @@ var $elm$virtual_dom$VirtualDom$attribute = F2(
 			_VirtualDom_noJavaScriptOrHtmlUri(value));
 	});
 var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -9988,11 +9997,14 @@ var $elm$html$Html$Events$onClick = function (msg) {
 var $author$project$Main$toAttribute = function (_v0) {
 	var name = _v0.a;
 	var value = _v0.b;
-	if (name === 'data-click') {
-		return $elm$html$Html$Events$onClick(
-			$author$project$Main$ServerAction(value));
-	} else {
-		return A2($elm$html$Html$Attributes$attribute, name, value);
+	switch (name) {
+		case 'data-click':
+			return $elm$html$Html$Events$onClick(
+				$author$project$Main$ServerAction(value));
+		case 'checked':
+			return $elm$html$Html$Attributes$checked(true);
+		default:
+			return A2($elm$html$Html$Attributes$attribute, name, value);
 	}
 };
 var $author$project$Main$toElement = F3(
@@ -10052,17 +10064,9 @@ var $author$project$Main$viewHtml = function (model) {
 	}
 };
 var $author$project$Main$view = function (model) {
-	var test = A2(
-		$elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				$elm$html$Html$text('Elm Initialized')
-			]));
 	return {
 		body: _List_fromArray(
 			[
-				test,
 				$author$project$Main$viewHtml(model)
 			]),
 		title: 'Titulo'

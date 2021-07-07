@@ -22,7 +22,7 @@ view = div_ $ do
 
   -- I want to reference a certain page, I have the params for it
   -- yeah... and those should match
-  let params = (77, Nothing) :: Counter.Params
+  let params = (77, Nothing, False) :: Counter.Params
   p_ $ a_ [href_ $ pageUrl "/app/counter" params] "Counter 77"
 
 

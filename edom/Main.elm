@@ -144,8 +144,8 @@ update msg model =
 
 view : Model -> Document Msg
 view model =
-  let test = div [] [ text "Elm Initialized" ]
-  in { title = "Titulo", body = [test, viewHtml model] }
+  -- let test = div [] [ text "Elm Initialized" ]
+  { title = "Titulo", body = [viewHtml model] }
 
 viewHtml : Model -> Html Msg
 viewHtml model = 
@@ -208,5 +208,7 @@ toAttribute (name, value) =
   case name of
     "data-click" -> 
       Html.onClick (ServerAction value)
+    "checked" -> 
+      Html.checked True
     _ ->
       Html.attribute name value

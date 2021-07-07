@@ -105,12 +105,12 @@ render toDocument view = do
     embedContent :: Html () -> Html ()
     embedContent v = do
       div_ [id_ "wookie-root-content"] v
-      -- script_ [type_ "text/javascript"] JS.build
-      -- script_ [type_ "text/javascript"] JS.run
+      script_ [type_ "text/javascript"] JS.build
+      script_ [type_ "text/javascript"] JS.run
 
       -- DEBUGGING MODE
-      script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
-      script_ [type_ "text/javascript", src_ "/edom/run.js"] ("" :: Text)
+      -- script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
+      -- script_ [type_ "text/javascript", src_ "/edom/run.js"] ("" :: Text)
 
 
 

@@ -41,16 +41,18 @@ data Action
   = Increment
   | Decrement
   | Set Integer
+  | Check Bool
   deriving (Show, Read)
 instance PageAction Action
 
 
-type Params = (Integer, Maybe Text)
+type Params = (Integer, Maybe Text, Bool)
 
 data Model = Model
   { count :: Integer
   , timestamp :: UTCTime
   , message :: Maybe Text
+  , checked :: Bool
   } deriving (Show, Eq)
 
 
@@ -63,16 +65,16 @@ data Model = Model
 
 
 params :: Model -> Params
-params (Model c _ msg) = (c, msg)
+params (Model c _ msg ck) = (c, msg, ck)
 
 
 
 
 load :: MonadIO m => Maybe Params -> m Model
 load ps = do
-  let (c, msg) = fromMaybe (0, Nothing) ps
+  let (c, msg, ck) = fromMaybe (0, Nothing, False) ps
   t <- liftIO $ Time.getCurrentTime
-  pure $ Model c t msg
+  pure $ Model c t msg ck
 
 
 
@@ -83,6 +85,7 @@ update :: MonadIO m => Action -> Model -> m Model
 update Increment m = pure $ m { count = count m + 1 }
 update Decrement m = pure $ m { count = count m - 1 }
 update (Set n)   m = pure $ m { count = n }
+update (Check b) m = pure $ m { checked = b }
 
 
 
@@ -110,7 +113,16 @@ view m = section_ $ do
 
     h3_ "Test Form"
     div_ $ 
-      form_ $ input_ [ type_ "text", name_ "test" ]
+      form_ $ do
+        div_ $ input_ [ type_ "text", name_ "test" ]
+        div_ $ do
+          if checked m
+            then input_ [ type_ "checkbox", name_ "checkbox", click (Check False), checked_ ]
+            else input_ [ type_ "checkbox", name_ "checkbox", click (Check True) ]
+
+          if checked m
+            then input_ [ type_ "checkbox", name_ "checkbox2", click (Check False) ]
+            else input_ [ type_ "checkbox", name_ "checkbox2", click (Check True), checked_ ]
 
     -- -- TODO function to generate links based on params
     -- p_ $ a_ [href_ "/app/counter?count=100"] "Click here to jump to Count = 100"
