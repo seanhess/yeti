@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 05af0782a7223474cb0e7cb5f8d66eafb7bc5fbe3e8722a4b5739c36e21cdb6a
+-- hash: 8f43fdbb6fc70ef565fd9230f7d712986c717e3091f9470bbe3c9df20d468515
 
 name:           wookie
 version:        0.1.0.0
@@ -41,6 +41,7 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base64
     , bytestring
     , containers
     , data-default
@@ -75,6 +76,7 @@ executable wookie-exe
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base64
     , bytestring
     , containers
     , data-default
@@ -107,6 +109,7 @@ test-suite wookie-test
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base64
     , bytestring
     , containers
     , data-default

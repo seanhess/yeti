@@ -9,7 +9,7 @@ import Wookie.Runtime (Response(..), runAction, command)
 import Wookie.Page (Page, PageAction)
 import Wookie.Params as Params (Params(..))
 import Wookie.JS as JS
-
+import Data.Text.Encoding.Base64 (encodeBase64, decodeBase64)
 import Control.Monad.IO.Class (liftIO)
 import Data.Function ((&))
 import Data.String.Conversions (cs)
@@ -73,10 +73,13 @@ params = do
   rps <- rawParams
   case rps of
     Nothing -> pure Nothing
-    Just ps -> do
-      case Params.decode ps of
-        Nothing -> fail $ "Could not decode params: " <> cs (show rps)
-        Just a -> pure a
+    Just raw -> do
+      case (decodeBase64 raw) of
+        Left e -> fail $ "Could not decode params: " <> cs e
+        Right ps ->
+          case (Params.decode ps) of
+            Nothing -> fail $ "Could not decode params: " <> cs (show rps)
+            Just a -> pure a
 
 
 
@@ -132,7 +135,7 @@ setPageUrl = Scotty.setHeader "X-Page-Url" . cs
 
 pageUrl :: Params params => String -> params -> Text
 pageUrl path ps =
-  cs path <> "?p=" <> encode ps
+  cs path <> "?p=" <> (encodeBase64 $ Params.encode ps)
 
 
 -- this can return a maybe text

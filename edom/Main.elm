@@ -9,7 +9,7 @@ import Html.Events as Html
 import Html.Parser as Parser exposing (Node(..))
 import Http exposing (Response)
 import Dict exposing (Dict)
-import Debug
+-- import Debug
 
 -- TODO switch to forms, submit or submit1!
 -- TODO try checkboxes, I want to do something on each click
@@ -87,7 +87,7 @@ onResponse response =
     Http.GoodStatus_ meta body ->
       Ok (Dict.get "x-page-url" meta.headers, body)
 
-    Http.BadUrl_ url ->
+    Http.BadUrl_ _ ->
       Err Error
 
     Http.Timeout_ ->
