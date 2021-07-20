@@ -1,5 +1,5 @@
 module Main where
 
-import Web
+import App
 
-main = Web.start
+main = App.start

@@ -57,21 +57,38 @@ click = makeAttribute "data-click" . cs . showAction
 
 
 -- I don't need this to be generic, I can apply the emptiness myself!
-submit :: PageAction action => (FormData -> action) -> Attribute
-submit con = makeAttribute "data-submit" $ cs $ stripArgs $ showAction $ con mempty
+-- submit :: PageAction action => (FormData -> action) -> Attribute
+-- submit con = makeAttribute "data-submit" $ cs $ stripArgs $ showAction $ con mempty
 
 
--- | Submit a form with just one text field (like a search bar)
-submit1 :: PageAction action => (Value -> action) -> Attribute
-submit1 con = makeAttribute "data-submit1" $ cs $ stripArgs $ showAction $con mempty
+-- -- | Submit a form with just one text field (like a search bar)
+-- submit1 :: PageAction action => (Value -> action) -> Attribute
+-- submit1 con = makeAttribute "data-submit1" $ cs $ stripArgs $ showAction $con mempty
 
 
 -- onInput :: PageAction action => (Value -> action) -> Attribute
 -- onInput con = makeAttribute "data-onInput" $ cs $ stripArgs $ showAction $con mempty
 
 -- is he lowercasing my stuff!?
-onInput :: PageAction action => (Value -> action) -> Attribute
-onInput con = makeAttribute "data-input" $ cs $ stripArgs $ showAction $ con mempty
+-- onInput :: PageAction action => (Value -> action) -> Attribute
+-- onInput con = makeAttribute "data-input" $ cs $ stripArgs $ showAction $ con mempty
+
+onUpdate :: PageAction action => (Value -> action) -> Attribute
+onUpdate con = makeAttribute "data-update" $ cs $ stripArgs $ showAction $ con mempty
+
+onEnter :: PageAction action => action -> Attribute
+onEnter = makeAttribute "data-enter" . cs . showAction
+
+
+
+data Apply = Apply
+
+instance PageAction Apply where
+  showAction _ = "|Apply|"
+  readAction "|Apply|" = Just Apply
+  readAction _ = Nothing
+
+
 
 
 defaultValue = makeAttribute "data-default-value"

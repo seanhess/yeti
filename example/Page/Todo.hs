@@ -10,7 +10,7 @@
 module Page.Todo where
 
 import Wookie.Page
-import Wookie.Events (click, submit1, FormData(..), submit, Value(..), onInput, defaultValue)
+import Wookie.Events (click, FormData(..), Value(..), defaultValue, onUpdate, Apply(..), onEnter)
 
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
 import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
@@ -45,7 +45,7 @@ data Todo = Todo
   } deriving (Show, Eq)
 
 
-type Params = (Text)
+type Params = (Text, Text)
 
 data Model = Model
   { todos :: [Todo]
@@ -56,23 +56,28 @@ data Model = Model
 
 
 params :: Model -> Params
-params m = search m
+params m = (search m, addContent m)
 
 
 
 
 load :: MonadIO m => TVar [Todo] -> Maybe Params -> m Model
 load savedTodos ps = do
-  let (s) = fromMaybe ("") ps :: Params
+  let (s,t) = fromMaybe (("", "")) ps :: Params
   ts <- liftIO $ atomically $
     readTVar savedTodos
-  pure $ Model ts s ""
+  pure $ Model
+    { todos = ts
+    , search = s
+    , addContent = t
+    }
 
 
 
 
 data Action
-  = AddTodo Value
+  = AddTodo
+  | NewTodoInput Value
   | Delete Text
   | Search Value
   deriving (Show, Read)
@@ -81,11 +86,10 @@ instance PageAction Action
 
 
 update :: MonadIO m => TVar [Todo] -> Action -> Model -> m Model
-update savedTodos (AddTodo (Value t)) m = do
-  let new = Todo t False
+update savedTodos (AddTodo) m = do
+  let new = Todo (addContent m) False
   ts <- liftIO $ atomically $ appendTodo savedTodos new
 
-  -- we can't control the value!
   pure $ m { search = "", addContent = "", todos = ts }
 
 update savedTodos (Delete t) m = do
@@ -94,6 +98,9 @@ update savedTodos (Delete t) m = do
 
 update _ (Search (Value s)) m = do
   pure $ m { search = s }
+
+update _ (NewTodoInput (Value s)) m = do
+  pure $ m { addContent = s }
 
 
 
@@ -118,18 +125,19 @@ deleteTodo savedTodos t = do
   -- modifyTVar savedTodos (\ts -> ts <> [t])
 
 
+-- TODO Fix this apply thing! It's not obvious that you have to do that
+-- Or rather, make onUpdate be super loud, like it's obviously different from click, etc
 view :: Model -> Html ()
 view m = div_ $ do
   h3_ "Todos"
 
-  form_ [ id_ "add", submit1 AddTodo ] $ do
-    button_ [] "Add"
-    input_ [ name_ "add", value_ (addContent m)]
+  div_ [ id_ "add", style_ "margin:10" ] $ do
+    button_ [ click AddTodo ] "Add"
+    input_ [ name_ "add", value_ (addContent m), onUpdate (NewTodoInput), onEnter AddTodo ]
 
-  form_ [ id_ "search", submit1 Search ] $ do
-    button_ [] "Search"
-    -- "defaultvalue"
-    input_ [ name_ "search", value_ (search m) ]
+  div_ [ id_ "search", style_ "margin:10" ] $ do
+    button_ [ click Apply, onEnter Apply ] "Search"
+    input_ [ name_ "search", value_ (search m), onUpdate (Search), onEnter Apply ]
 
 
   let ts = (todos m) & filter (isSearch (search m))

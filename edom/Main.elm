@@ -3,13 +3,15 @@ module Main exposing (..)
 import Browser exposing (UrlRequest, Document)
 import Browser.Navigation as Browser exposing (Key)
 import Url exposing (Url)
-import Html exposing (Html, div, text, node)
+import Html exposing (Html, div, text, node, Attribute)
 import Html.Attributes as Html exposing (id)
 import Html.Events as Html
 import Html.Parser as Parser exposing (Node(..))
 import Http exposing (Response)
 import Dict exposing (Dict)
--- import Debug
+import Json.Encode as Encode
+import Json.Decode as Decode
+import Debug
 
 -- TODO switch to forms, submit or submit1!
 -- TODO try checkboxes, I want to do something on each click
@@ -36,9 +38,12 @@ type alias Value = String
 type ServerError
   = Error
 
+type alias Action = String
+
 type alias Model =
   { html : String
-  , inputs : Dict Id Value
+  , parsed : Html Msg
+  , updates : Dict Action Value
   , url : Url
   , key : Key
   }
@@ -55,8 +60,8 @@ main =
     }
 
 type Msg
-  = Input Id Value
-  | ServerAction String 
+  = ServerAction Action 
+  | ServerUpdate Action Value
   | Loaded (Result ServerError (Maybe String, String))
   | UrlChange Url
   | None
@@ -73,7 +78,8 @@ onUrlRequest _ = None
 init : String -> Url -> Key -> (Model, Cmd Msg)
 init start url key =
   ( { html = start
-    , inputs = Dict.empty
+    , updates = Dict.empty
+    , parsed = viewHtml start
     , key = key
     , url = url
     }
@@ -101,24 +107,37 @@ onResponse response =
     
 
 
+serializeValueAction : Action -> Value -> String
+serializeValueAction act val =
+  (act ++ " " ++ Encode.encode 0 (Encode.string val))
+
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    ServerAction action ->
-      (model
-      , Http.request
-        { method = "POST"
-        , headers = [Http.header "accept" "application/vdom"]
-        , url = Url.toString model.url
-        , body = Http.stringBody "text/plain" action
-        , timeout = Nothing
-        , tracker = Nothing
-        , expect = Http.expectStringResponse Loaded onResponse
-        }
+
+    ServerUpdate action value ->
+      ( { model | updates = Dict.insert action value model.updates }
+      , Cmd.none
       )
 
+    ServerAction action ->
+      let updates = Dict.foldl (\act val items -> serializeValueAction act val :: items) [] model.updates
+          body = String.join "\n" (updates ++ [action])
+      in ( { model | updates = Dict.empty }
+         , Http.request
+            { method = "POST"
+            , headers = [Http.header "accept" "application/vdom"]
+            , url = Url.toString model.url
+            , body = Http.stringBody "text/plain" body
+            , timeout = Nothing
+            , tracker = Nothing
+            , expect = Http.expectStringResponse Loaded onResponse
+            }
+         )
+
     Loaded (Ok (pageUrl, content)) ->
-      ( { model | html = content }
+      ( { model | html = content, parsed = viewHtml content }
       , case pageUrl of
           Nothing -> Cmd.none
           Just u -> Browser.pushUrl model.key u
@@ -126,11 +145,6 @@ update msg model =
 
     Loaded (Err _) ->
       (model, Cmd.none)
-
-    Input id value ->
-      ({ model | inputs = Dict.insert id value model.inputs }
-      , Cmd.none
-      )
 
     UrlChange url ->
       ( { model | url = url }
@@ -145,15 +159,16 @@ update msg model =
 view : Model -> Document Msg
 view model =
   -- let test = div [] [ text "Elm Initialized" ]
-  { title = "Titulo", body = [viewHtml model] }
+  { title = "Titulo", body = [model.parsed] }
 
-viewHtml : Model -> Html Msg
-viewHtml model = 
-  case (Parser.run model.html) of
-    Err _ -> div [] [ text "ERR" ]
-    Ok nodes -> 
-      div [ id "wookie-root-content"] <|
-        List.map toHtml nodes
+viewHtml : String -> Html Msg
+viewHtml input = 
+  Debug.log "PARSE" <|
+    case (Parser.run input) of
+      Err _ -> div [] [ text "ERR" ]
+      Ok nodes -> 
+        div [ id "wookie-root-content"] <|
+          List.map toHtml nodes
 
   -- div []
   --   [ button [ onClick Load ] [ text "Load" ]
@@ -184,16 +199,16 @@ toElement name atts childs =
   let convertedAtts = List.map toAttribute atts
       convertedChilds = List.map toHtml childs
   in case (name, idFromAttributes atts) of
-    ("input", Just id) ->
-      Html.node name (inputListener id :: convertedAtts) convertedChilds
+    -- ("input", Just id) ->
+    --   Html.node name (inputListener id :: convertedAtts) convertedChilds
     _ -> 
       Html.node name convertedAtts convertedChilds
 
 
 -- IF you have an id attribute, yes
-inputListener : String -> Html.Attribute Msg
-inputListener id =
-    Html.onInput (Input id)
+-- inputListener : String -> Html.Attribute Msg
+-- inputListener id =
+--     Html.onInput (Input id)
 
 idFromAttributes : List Parser.Attribute -> Maybe String
 idFromAttributes atts =
@@ -208,7 +223,35 @@ toAttribute (name, value) =
   case name of
     "data-click" -> 
       Html.onClick (ServerAction value)
+
+    -- TODO, more complex. What does "update" mean in this context? How do we know it's an input field??
+
+    "data-update" -> 
+      Html.onInput (ServerUpdate value)
+
+    "data-enter" -> 
+      onEnter (ServerAction value)
+
+    "value" -> 
+      Html.value value
+
     "checked" -> 
       Html.checked True
+
     _ ->
       Html.attribute name value
+
+onEnter : msg -> Attribute msg
+onEnter msg =
+  (Html.on "keydown"
+      (Decode.field "key" Decode.string
+          |> Decode.andThen
+              (\key ->
+                  if key == "Enter" then
+                      Decode.succeed msg
+
+                  else
+                      Decode.fail "Not the enter key"
+              )
+      )
+  )

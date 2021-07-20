@@ -2,11 +2,11 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Web where
+module App where
 
 import Control.Concurrent.STM (newTVar, atomically)
 import Control.Monad.IO.Class (MonadIO)
-import Debug.Trace (traceM)
+-- import Debug.Trace (traceM)
 import Data.String.Conversions (cs)
 import Data.Text as Text (stripPrefix, intercalate, Text)
 import Data.Text.IO as Text (readFile)
@@ -32,7 +32,7 @@ import Text.Read (readMaybe)
 
 import Network.HTTP.Types.URI (renderSimpleQuery)
 
-import Wookie.Runtime (Response(..), runAction, command)
+import Wookie.Runtime (Response(..), runAction)
 import Wookie.Router (parsePath)
 import Wookie.Web (page, lucid, static, handle, render, document)
 
@@ -99,7 +99,7 @@ start = do
 
     page "/app/todo/:n" $ do
       n <- param "n" :: ActionM Int
-      liftIO $ print n
+      -- liftIO $ print n
       handle doc $ Todo.page todos
 
     -- if you use "lucid" it doesn't work

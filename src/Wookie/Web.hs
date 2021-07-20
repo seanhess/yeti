@@ -5,7 +5,7 @@
 module Wookie.Web where
 
 
-import Wookie.Runtime (Response(..), runAction, command)
+import Wookie.Runtime (Response(..), runAction, commands)
 import Wookie.Page (Page, PageAction)
 import Wookie.Params as Params (Params(..))
 import Wookie.JS as JS
@@ -59,8 +59,9 @@ response
   => Page params model action ActionM -> ActionM (Response params)
 response pg = do
   ps <- params
-  cmd <- command =<< Scotty.body
-  runAction pg ps cmd
+  cmds <- commands =<< Scotty.body
+  runAction pg ps cmds
+
 
 
 
@@ -108,12 +109,12 @@ render toDocument view = do
     embedContent :: Html () -> Html ()
     embedContent v = do
       div_ [id_ "wookie-root-content"] v
-      script_ [type_ "text/javascript"] JS.build
-      script_ [type_ "text/javascript"] JS.run
+      -- script_ [type_ "text/javascript"] JS.build
+      -- script_ [type_ "text/javascript"] JS.run
 
       -- DEBUGGING MODE
-      -- script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
-      -- script_ [type_ "text/javascript", src_ "/edom/run.js"] ("" :: Text)
+      script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
+      script_ [type_ "text/javascript", src_ "/edom/run.js"] ("" :: Text)
 
 
 

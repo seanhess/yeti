@@ -24,6 +24,7 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Map (Map, (!?))
 import Data.Maybe (mapMaybe)
 import Data.Function ((&))
+import Control.Monad (foldM)
 
 
 
@@ -53,6 +54,7 @@ data Response params = Response
 -- One of the actions could be Load
 data Command action
   = Init
+  | Apply
   | Update action
 
 
@@ -65,28 +67,42 @@ runAction
   :: forall m model params action. (MonadIO m, MonadFail m, PageAction action)
   => Page params model action m
   -> Maybe params
-  -> Command action
+  -> [Command action]
   -> m (Response params)
-runAction (Page params load update view) ps cmd = do
+runAction (Page params load update view) ps cmds = do
 
   -- load the initial model from the parameters
   m <- load ps
 
   -- run either a load or an action
-  m' <- case cmd of
-    Init -> pure m
-    Update a -> update a m
+  -- so I want kind of a monadic fold
+  m' <- foldM (runCommand update) m cmds
 
   -- respond
   pure $ Response (view m') (params m')
 
 
+runCommand :: (MonadIO m, MonadFail m) => (action -> model -> m model) -> model -> Command action -> m model
+runCommand update m cmd =
+  case cmd of
+    Init -> pure m
+    Apply -> pure m
+    Update a -> update a m
 
-command :: MonadFail m => PageAction action => ByteString -> m (Command action)
-command "" = pure Init
-command b =
-  case readAction $ cs b of
+
+
+
+commands :: (MonadFail m, PageAction action) => ByteString -> m [Command action]
+commands "" = pure [Init]
+commands body = do
+  mapM parseCommand $ Text.splitOn "\n" $ cs body
+
+
+parseCommand :: (MonadFail m, PageAction action) => Text -> m (Command action)
+parseCommand "|Apply|" = pure Apply
+parseCommand t =
+  case readAction (cs t) of
     Just a -> pure $ Update a
-    Nothing -> fail $ "Could not parse action: " <> cs b
+    Nothing -> fail $ "Could not parse action: " <> cs t
 
 
