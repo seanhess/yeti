@@ -81,11 +81,11 @@ onEnter = makeAttribute "data-enter" . cs . showAction
 
 
 
-data Apply = Apply
+data Submit = Submit
 
-instance PageAction Apply where
-  showAction _ = "|Apply|"
-  readAction "|Apply|" = Just Apply
+instance PageAction Submit where
+  showAction _ = "|Submit|"
+  readAction "|Submit|" = Just Submit
   readAction _ = Nothing
 
 

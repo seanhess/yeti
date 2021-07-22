@@ -54,7 +54,7 @@ data Response params = Response
 -- One of the actions could be Load
 data Command action
   = Init
-  | Apply
+  | Submit
   | Update action
 
 
@@ -86,7 +86,7 @@ runCommand :: (MonadIO m, MonadFail m) => (action -> model -> m model) -> model 
 runCommand update m cmd =
   case cmd of
     Init -> pure m
-    Apply -> pure m
+    Submit -> pure m
     Update a -> update a m
 
 
@@ -99,7 +99,7 @@ commands body = do
 
 
 parseCommand :: (MonadFail m, PageAction action) => Text -> m (Command action)
-parseCommand "|Apply|" = pure Apply
+parseCommand "|Submit|" = pure Submit
 parseCommand t =
   case readAction (cs t) of
     Just a -> pure $ Update a
