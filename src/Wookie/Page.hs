@@ -25,7 +25,7 @@ import Data.Map (Map)
 data Page params model action m = Page
   { params :: model -> params
   , load   :: Maybe params -> m model
-  , update :: action -> model -> m model
+  , update :: action -> StateT model m ()
   , view   :: model -> Html ()
   }
 

@@ -226,7 +226,7 @@ toAttribute (name, value) =
 
     -- TODO, more complex. What does "update" mean in this context? How do we know it's an input field??
 
-    "data-update" -> 
+    "data-input" -> 
       Html.onInput (ServerUpdate value)
 
     "data-enter" -> 

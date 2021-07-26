@@ -9,19 +9,18 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 module Page.Todo where
 
-import Wookie.Page
-import Wookie.Events (click, FormData(..), Value(..), defaultValue, onUpdate, Submit(..), onEnter)
-
+import Wookie
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
 import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad (forM_)
+import Control.Monad.State.Lazy (StateT, gets, get)
 import Data.Map as Map (lookup, (!?))
 import Data.Maybe (fromMaybe)
 import Data.Text as Text (Text, isInfixOf, toLower)
 import Data.Function ((&))
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
-import Lucid.Html5 hiding (onclick_)
+import Lucid.Html5
 
 
 
@@ -48,15 +47,17 @@ data Todo = Todo
 type Params = (Text, Text)
 
 data Model = Model
-  { todos :: [Todo]
-  , search :: Text
-  , addContent :: Text
+  { _todos :: [Todo]
+  , _search :: Text
+  , _addContent :: Text
   } deriving (Show, Eq)
+
+makeLenses ''Model
 
 
 
 params :: Model -> Params
-params m = (search m, addContent m)
+params m = (m ^. search, m ^. addContent)
 
 
 
@@ -67,9 +68,9 @@ load savedTodos ps = do
   ts <- liftIO $ atomically $
     readTVar savedTodos
   pure $ Model
-    { todos = ts
-    , search = s
-    , addContent = t
+    { _todos = ts
+    , _search = s
+    , _addContent = t
     }
 
 
@@ -85,22 +86,25 @@ instance PageAction Action
 
 
 
-update :: MonadIO m => TVar [Todo] -> Action -> Model -> m Model
-update savedTodos (AddTodo) m = do
-  let new = Todo (addContent m) False
+update :: MonadIO m => TVar [Todo] -> Action -> StateT Model m ()
+update savedTodos (AddTodo) = do
+  m <- get
+  let new = Todo (m ^. addContent) False
   ts <- liftIO $ atomically $ appendTodo savedTodos new
 
-  pure $ m { search = "", addContent = "", todos = ts }
+  search .= ""
+  addContent .= ""
+  todos .= ts
 
-update savedTodos (Delete t) m = do
+update savedTodos (Delete t) = do
   ts <- liftIO $ atomically $ deleteTodo savedTodos t
-  pure $ m { todos = ts }
+  todos .= ts
 
-update _ (Search (Value s)) m = do
-  pure $ m { search = s }
+update _ (Search (Value s)) = do
+  search .= s
 
-update _ (NewTodoInput (Value s)) m = do
-  pure $ m { addContent = s }
+update _ (NewTodoInput (Value s)) = do
+  addContent .= s
 
 
 
@@ -125,27 +129,25 @@ deleteTodo savedTodos t = do
   -- modifyTVar savedTodos (\ts -> ts <> [t])
 
 
--- TODO Fix this apply thing! It's not obvious that you have to do that
--- Or rather, make onUpdate be super loud, like it's obviously different from click, etc
 view :: Model -> Html ()
 view m = div_ $ do
   h3_ "Todos"
 
   div_ [ id_ "add", style_ "margin:10" ] $ do
-    button_ [ click AddTodo ] "Add"
-    input_ [ name_ "add", value_ (addContent m), onUpdate (NewTodoInput), onEnter AddTodo ]
+    button_ [ onClick AddTodo ] "Add"
+    input_ [ name_ "add", value_ (m ^. addContent), onInput (NewTodoInput), onEnter AddTodo ]
 
   div_ [ id_ "search", style_ "margin:10" ] $ do
-    button_ [ click Submit, onEnter Submit ] "Search"
-    input_ [ name_ "search", value_ (search m), onUpdate (Search), onEnter Submit ]
+    button_ [ onClick Submit, onEnter Submit ] "Search"
+    input_ [ name_ "search", value_ (m ^. search), onInput (Search), onEnter Submit ]
 
 
-  let ts = (todos m) & filter (isSearch (search m))
+  let ts = (m ^. todos) & filter (isSearch (m ^. search))
 
   div_ $ do
     forM_ ts $ \todo ->
       div_ $ do
-        span_ $ button_ [ click (Delete (content todo)) ] "X"
+        span_ $ button_ [ onClick (Delete (content todo)) ] "X"
         -- this is going to be a button
         span_ "✓"
         span_ "☑"

@@ -7,7 +7,7 @@ module Wookie.Web where
 
 import Wookie.Runtime (Response(..), runAction, commands)
 import Wookie.Page (Page, PageAction)
-import Wookie.Params as Params (Params(..))
+import Wookie.Params as Params (ToParams(..))
 import Wookie.JS as JS
 import Data.Text.Encoding.Base64 (encodeBase64, decodeBase64)
 import Control.Monad.IO.Class (liftIO)
@@ -45,7 +45,7 @@ page = Scotty.matchAny
 
 
 handle
-  :: forall params model action. (PageAction action, Params params)
+  :: forall params model action. (PageAction action, ToParams params)
   => (Html () -> Html ()) -> Page params model action ActionM -> ActionM ()
 handle doc pg = do
   Response h p' <- response pg
@@ -55,7 +55,7 @@ handle doc pg = do
 
 
 response
-  :: forall params model action. (PageAction action, Params params)
+  :: forall params model action. (PageAction action, ToParams params)
   => Page params model action ActionM -> ActionM (Response params)
 response pg = do
   ps <- params
@@ -68,7 +68,7 @@ response pg = do
 
 
 
-params :: Params params => ActionM (Maybe params)
+params :: ToParams params => ActionM (Maybe params)
 params = do
   -- this may be empty. If it is, then return Nothing
   rps <- rawParams
@@ -80,13 +80,13 @@ params = do
         Right ps ->
           case (Params.decode ps) of
             Nothing -> fail $ "Could not decode params: " <> cs (show rps)
-            Just a -> pure a
+            Just a -> pure $ Just a
 
 
 
 
 
-setParams :: Params params => params -> ActionM ()
+setParams :: ToParams params => params -> ActionM ()
 setParams ps = do
   req <- Scotty.request
   setPageUrl $ pageUrl (cs $ rawPathInfo req) ps
@@ -109,12 +109,12 @@ render toDocument view = do
     embedContent :: Html () -> Html ()
     embedContent v = do
       div_ [id_ "wookie-root-content"] v
-      -- script_ [type_ "text/javascript"] JS.build
-      -- script_ [type_ "text/javascript"] JS.run
+      script_ [type_ "text/javascript"] JS.build
+      script_ [type_ "text/javascript"] JS.run
 
       -- DEBUGGING MODE
-      script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
-      script_ [type_ "text/javascript", src_ "/edom/run.js"] ("" :: Text)
+      -- script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
+      -- script_ [type_ "text/javascript", src_ "/edom/run.js"] ("" :: Text)
 
 
 
@@ -134,7 +134,7 @@ setPageUrl :: Text -> ActionM ()
 setPageUrl = Scotty.setHeader "X-Page-Url" . cs
 
 
-pageUrl :: Params params => String -> params -> Text
+pageUrl :: ToParams params => String -> params -> Text
 pageUrl path ps =
   cs path <> "?p=" <> (encodeBase64 $ Params.encode ps)
 

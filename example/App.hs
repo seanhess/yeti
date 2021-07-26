@@ -20,6 +20,7 @@ import Lucid.Html5
 -- import Counter (view, Model(..), load, update, view)
 -- import App (resolve)
 import qualified Page.Counter as Counter
+import qualified Page.Signup as Signup
 import qualified Page.About as About
 import qualified Page.Todo as Todo
 import Page.Todo (Todo(..))
@@ -93,14 +94,16 @@ start = do
     middleware (delay 100)
     middleware $ staticWithOptions defaultOptions
 
-    -- pages! This feels way more magical than it should, I think :(
     page "/app/counter" $ do
-      handle doc Counter.page
+      handle toDocument Counter.page
+
+    page "/app/signup" $ do
+      handle toDocument Signup.page
 
     page "/app/todo/:n" $ do
       n <- param "n" :: ActionM Int
       -- liftIO $ print n
-      handle doc $ Todo.page todos
+      handle toDocument $ Todo.page todos
 
     -- if you use "lucid" it doesn't work
     get "/app/about" $
@@ -115,7 +118,17 @@ start = do
       html $ "<div id='container'><p>"<> m <>"</p><input type='text'/><p>Hello!</p><button data-click='Action 3'>PRESS</button></div>"
 -- 
 
-doc = document (pure ())
+toDocument :: Html () -> Html ()
+toDocument cont = do
+  html_ $ do
+    head_ $ do
+      meta_ [charset_ "UTF-8"]
+      meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
+      -- it's really css, so let's load it here
+      link_ [type_ "text/css", rel_ "stylesheet", href_ "/example/example.css"]
+
+    body_ $ do
+      cont
 
 
 delay :: Int -> Application -> Application

@@ -25,6 +25,7 @@ import Data.Map (Map, (!?))
 import Data.Maybe (mapMaybe)
 import Data.Function ((&))
 import Control.Monad (foldM)
+import Control.Monad.State.Lazy (StateT, execStateT)
 
 
 
@@ -75,19 +76,18 @@ runAction (Page params load update view) ps cmds = do
   m <- load ps
 
   -- run either a load or an action
-  -- so I want kind of a monadic fold
   m' <- foldM (runCommand update) m cmds
 
   -- respond
   pure $ Response (view m') (params m')
 
 
-runCommand :: (MonadIO m, MonadFail m) => (action -> model -> m model) -> model -> Command action -> m model
+runCommand :: (MonadIO m, MonadFail m) => (action -> StateT model m ()) -> model -> Command action -> m model
 runCommand update m cmd =
   case cmd of
     Init -> pure m
     Submit -> pure m
-    Update a -> update a m
+    Update a -> execStateT (update a) m
 
 
 

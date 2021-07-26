@@ -9,8 +9,7 @@
 module Page.Counter where
 
 
-import Wookie.Page as Page
-import Wookie.Events (click)
+import Wookie
 
 import Data.String.Conversions (cs)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -20,7 +19,7 @@ import Data.Maybe (fromMaybe)
 import Control.Monad.State.Lazy (StateT)
 import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
-import Lucid.Html5 hiding (onclick_)
+import Lucid.Html5
 
 
 
@@ -49,11 +48,13 @@ instance PageAction Action
 type Params = (Integer, Maybe Text, Bool)
 
 data Model = Model
-  { count :: Integer
-  , timestamp :: UTCTime
-  , message :: Maybe Text
-  , checked :: Bool
+  { _count :: Integer
+  , _timestamp :: UTCTime
+  , _message :: Maybe Text
+  , _checked :: Bool
   } deriving (Show, Eq)
+
+makeLenses ''Model
 
 
 
@@ -81,11 +82,11 @@ load ps = do
 
 -- does it have to be IO?
 -- no.... it should be any MonadIO
-update :: MonadIO m => Action -> Model -> m Model
-update Increment m = pure $ m { count = count m + 1 }
-update Decrement m = pure $ m { count = count m - 1 }
-update (Set n)   m = pure $ m { count = n }
-update (Check b) m = pure $ m { checked = b }
+update :: MonadIO m => Action -> StateT Model m ()
+update Increment = count += 1
+update Decrement = count -= 1
+update (Set n)   = count .= 1
+update (Check b) = checked .= b
 
 
 
@@ -95,40 +96,22 @@ update (Check b) m = pure $ m { checked = b }
 view :: Model -> Html ()
 view m = section_ $ do
 
-    button_ [ click Increment] "Increment"
-    button_ [ click Decrement] "Decrement"
-    button_ [ click (Set 5)] "Set 5"
+    button_ [ onClick Increment] "Increment"
+    button_ [ onClick Decrement] "Decrement"
+    button_ [ onClick (Set 5)] "Set 5"
 
     -- see if I can get react to replace this
     p_ $ do
-      span_ (toHtml $ fromMaybe "" $ message m)
+      span_ (toHtml $ fromMaybe "" $ m ^. message)
 
-    p_ [class_ ("message " <> (cs $ show $ count m))] $ do
+    p_ [class_ ("message " <> (cs $ show $ m ^. count))] $ do
       span_ "Count: "
-      span_ (toHtml $ show $ count m)
+      span_ (toHtml $ show $ m ^. count)
 
     p_ $ do
       span_ "Time: "
-      span_ (toHtml $ show $ timestamp m)
+      span_ (toHtml $ show $ m ^. timestamp)
 
-    h3_ "Test Form"
-    div_ $ 
-      form_ $ do
-        div_ $ input_ [ type_ "text", name_ "test" ]
-        div_ $ do
-          if checked m
-            then input_ [ type_ "checkbox", name_ "checkbox", click (Check False), checked_ ]
-            else input_ [ type_ "checkbox", name_ "checkbox", click (Check True) ]
-
-          if checked m
-            then input_ [ type_ "checkbox", name_ "checkbox2", click (Check False) ]
-            else input_ [ type_ "checkbox", name_ "checkbox2", click (Check True), checked_ ]
-
-    -- -- TODO function to generate links based on params
-    -- p_ $ a_ [href_ "/app/counter?count=100"] "Click here to jump to Count = 100"
-    -- p_ $ a_ [click (Set 15), style_ "text-decoration:underline;cursor:pointer"] "Click here to jump to Count = 15"
-    -- p_ $ a_ [href_ "https://www.google.com"] "Google.com"
-    -- p_ $ a_ [href_ "/app/about"] "About"
 
 
 

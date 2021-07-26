@@ -52,8 +52,8 @@ instance Read Value where
 
 
 
-click :: PageAction action => action -> Attribute
-click = makeAttribute "data-click" . cs . showAction
+onClick :: PageAction action => action -> Attribute
+onClick = makeAttribute "data-click" . cs . showAction
 
 
 -- I don't need this to be generic, I can apply the emptiness myself!
@@ -73,8 +73,8 @@ click = makeAttribute "data-click" . cs . showAction
 -- onInput :: PageAction action => (Value -> action) -> Attribute
 -- onInput con = makeAttribute "data-input" $ cs $ stripArgs $ showAction $ con mempty
 
-onUpdate :: PageAction action => (Value -> action) -> Attribute
-onUpdate con = makeAttribute "data-update" $ cs $ stripArgs $ showAction $ con mempty
+onInput :: PageAction action => (Value -> action) -> Attribute
+onInput con = makeAttribute "data-input" $ cs $ stripArgs $ showAction $ con mempty
 
 onEnter :: PageAction action => action -> Attribute
 onEnter = makeAttribute "data-enter" . cs . showAction
@@ -90,8 +90,6 @@ instance PageAction Submit where
 
 
 
-
-defaultValue = makeAttribute "data-default-value"
 
 
 call :: Text -> String -> Text

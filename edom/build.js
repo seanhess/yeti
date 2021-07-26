@@ -9285,7 +9285,7 @@ var $author$project$Main$toAttribute = function (_v0) {
 		case 'data-click':
 			return $elm$html$Html$Events$onClick(
 				$author$project$Main$ServerAction(value));
-		case 'data-update':
+		case 'data-input':
 			return $elm$html$Html$Events$onInput(
 				$author$project$Main$ServerUpdate(value));
 		case 'data-enter':
