@@ -17,6 +17,7 @@ import Data.Maybe (mapMaybe)
 import Data.String.Conversions (cs)
 import Data.ByteString (ByteString)
 import Data.FileEmbed (embedFile)
+import Data.String (IsString(..))
 
 -- ability to add multiple classes
 -- can we jump back and forth?
@@ -35,15 +36,30 @@ import Data.FileEmbed (embedFile)
 
 type ClassName = Text
 type Property = Text
-data Value
-  = Pxv Int
-  | Color Text
+type Value = Text
+
+px :: Int -> Value
+px n = cs (show n) <> "px"
 
 data Att
   = Class ClassName
   | Style Property Value
   | Html Attribute
 
+newtype Hex = Hex Int
+  deriving (Show, Eq)
+
+data Color
+  = RGB Text
+  | RGBA Text Text
+  | Color Text
+  deriving (Show, Eq)
+
+instance IsString Color where
+  fromString s = Color (cs s)
+
+-- black :: Color
+-- black = "#000000"
 
 -- | Given attributes, expect more child input.
 -- instance (Applicative m) => Term Att (HtmlT m a -> HtmlT m a) where
@@ -63,6 +79,11 @@ instance (Applicative m) => UI (HtmlT m a) (HtmlT m a) where
 
 -- we can embed a stylesheet here!
 -- options with layoutWith
+space :: Applicative m => HtmlT m ()
+space =
+  ui "div" [Class "wf", Class "hf"] [] (pure ())
+
+
 layout :: UI arg result => arg -> result
 layout =
   ui "div" [Class "layout", Class "c"]
@@ -81,26 +102,53 @@ el =
 
 
 
+
+button :: UI arg result => arg -> result
+button =
+  ui "button" []
+
+
+
+
+
 -- TODO I feel like this going to come back to bite me
 padding :: Int -> Att
-padding n = Style "padding" (Pxv n)
+padding n = Style "padding" (px n)
 
 spacing :: Int -> Att
-spacing n = Style "gap" (Pxv n)
+spacing n = Style "gap" (px n)
 
--- TODO make better
-background :: Text -> Att
-background t = Style "background" (Color t)
+background :: Color -> Att
+background (RGB v) = Style "background" ("#" <> v)
+background (RGBA v a) = Style "background" ("#" <> v <> a)
+background (Color v) = Style "background" (v)
+
+color :: Color -> Att
+color (RGB v) = Style "color" ("#" <> v)
+color (RGBA v a) = Style "color" ("#" <> v <> a)
+color (Color v) = Style "color" (v)
 
 height :: Length -> Att
-height (Px n) = Style "height" (Pxv n)
+height (Px n) = Style "height" (px n)
 height Fill = Class "hf"
 height Shrink = Class "hc"
 
 width :: Length -> Att
-width (Px n) = Style "width" (Pxv n)
+width (Px n) = Style "width" (px n)
 width Fill = Class "wf"
 width Shrink = Class "wc"
+
+alignLeft :: Att
+alignLeft = Class "al"
+
+alignRight :: Att
+alignRight = Class "ar"
+
+-- centerY :: Att
+-- centerY = Class "cy"
+
+centerX :: Att
+centerX = Class "cx"
 
 
 data Length
@@ -123,11 +171,8 @@ toAttributes als =
       Text.intercalate ";" $ map toStyle ss
 
     toStyle :: (Property, Value) -> Text
-    toStyle (p, v) = p <> ":" <> toValue v
+    toStyle (p, v) = p <> ":" <> v
 
-    toValue :: Value -> Text
-    toValue (Pxv n) = cs (show n) <> "px"
-    toValue (Color t) = t
 
 
     splitAtts :: [ Att ] -> ([ClassName], [(Property, Value)], [Attribute])

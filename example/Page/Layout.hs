@@ -91,22 +91,45 @@ update (Check b) = checked .= b
 -- TODO make your own onclick attribute that accepts an Action, not text
 view :: Model -> Html ()
 view m = layout [ background "white" ] $ do
-  column [ background "blue", height Fill, width Fill ] $ do
-    row [ ] "One"
-    row [ ] "Two"
-    row [ ] "Three"
-    row [ height Fill, background "red" ] "Space is longer"
-    row [ width Fill, background "green" ] $ do
-      el "start"
-      el [ width Fill ] "space"
-      el "end"
-    -- el [ background "red" ] "umm"
-    -- el [ background "green", width (Px 100) ] "two"
 
-    -- row $ do
-    --   el [ width Fill, background "yellow" ] "yL"
-    --   el [ background "gray" ] "hi"
-  -- replicateM_ 200 $ p_ "HI"
+  row [ width Fill, padding 10 ] $ do
+    -- yeah, you specify another set of attributes for "hover"
+    button [ background "red" ] $ do
+      "<"
+    space
+    button [] ">"
+
+  column [ width Fill, padding 10 ] $ do
+    "content"
+
+  space
+
+  row [ width Fill, padding 10, background "RoyalBlue", color "white" ] $ do
+    "tray"
+  
+
+--   column [ background "blue", height Fill, width Fill ] $ do
+--     row [ ] "One"
+--     row [ background (Color "yellow") ] "Two"
+--     row [ ] "Three"
+--     row [ height Fill, width Fill ] $ do
+--       space
+--       el [ background "red", height Fill ] "Space (Wide)"
+--     row [ width Fill, background (Color "green") ] $ do
+--       el [ height (Px 30) ] "start"
+--       el [ height Fill, width Fill, background "AA0000FF" ] "space"
+--       el "end"
+--     row [ background "orange", width Fill ] $ do
+--       space
+--       el "center"
+--       space
+--     -- el [ background "red" ] "umm"
+--     -- el [ background "green", width (Px 100) ] "two"
+
+--     -- row $ do
+--     --   el [ width Fill, background "yellow" ] "yL"
+--     --   el [ background "gray" ] "hi"
+--   -- replicateM_ 200 $ p_ "HI"
 
     -- see if I can get react to replace this
     -- div_ [] $ do

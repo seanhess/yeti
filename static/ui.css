@@ -97,6 +97,7 @@ html, body {
 
 .a.r > .a {
   flex-basis: 0%;
+  min-height: min-content;
 }
 
 .a.c > .a {
@@ -134,9 +135,5 @@ html, body {
   z-index: 0;
 }
 
-
-.hf {
-  flex-grow: 100000;
-}
 
 
