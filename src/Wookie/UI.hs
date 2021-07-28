@@ -4,16 +4,19 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Wookie.UI where
 
 
 import Lucid (Attribute, Html)
-import Lucid.Html5 (classes_, div_, span_, style_)
+import Lucid.Html5 (classes_, div_, span_, style_, rel_)
 import Lucid.Base (Term(termWith), HtmlT)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Maybe (mapMaybe)
 import Data.String.Conversions (cs)
+import Data.ByteString (ByteString)
+import Data.FileEmbed (embedFile)
 
 -- ability to add multiple classes
 -- can we jump back and forth?
@@ -33,7 +36,7 @@ import Data.String.Conversions (cs)
 type ClassName = Text
 type Property = Text
 data Value
-  = Px Int
+  = Pxv Int
   | Color Text
 
 data Att
@@ -51,37 +54,59 @@ class UI arg result | result -> arg where
   ui :: Text -> [Att] -> arg -> result
 
 instance (Applicative m, f ~ HtmlT m a) => UI [ Att ] (f -> HtmlT m a) where
-  ui name as1 as2 = termWith name (toAttributes $ as1 <> as2)
+  ui name as1 as2 = termWith name (toAttributes $ Class "a" : as1 <> as2)
 
 instance (Applicative m) => UI (HtmlT m a) (HtmlT m a) where
-  ui name as1 = termWith name (toAttributes as1)
+  ui name as1 = termWith name (toAttributes $ Class "a" : as1)
 
 
+
+-- we can embed a stylesheet here!
+-- options with layoutWith
+layout :: UI arg result => arg -> result
+layout =
+  ui "div" [Class "layout", Class "c"]
 
 row :: UI arg result => arg -> result
 row =
-  ui "div" [Class "row"]
+  ui "div" [Class "r"]
 
 column :: UI arg result => arg -> result
 column =
-  ui "div" [Class "column"]
+  ui "div" [Class "c"]
 
 el :: UI arg result => arg -> result
 el =
-  ui "div" [Class "el"]
+  ui "div" []
+
 
 
 -- TODO I feel like this going to come back to bite me
 padding :: Int -> Att
-padding n = Style "padding" (Px n)
+padding n = Style "padding" (Pxv n)
 
 spacing :: Int -> Att
-spacing n = Style "gap" (Px n)
+spacing n = Style "gap" (Pxv n)
 
 -- TODO make better
 background :: Text -> Att
 background t = Style "background" (Color t)
 
+height :: Length -> Att
+height (Px n) = Style "height" (Pxv n)
+height Fill = Class "hf"
+height Shrink = Class "hc"
+
+width :: Length -> Att
+width (Px n) = Style "width" (Pxv n)
+width Fill = Class "wf"
+width Shrink = Class "wc"
+
+
+data Length
+  = Fill
+  | Shrink
+  | Px Int
 
 
 
@@ -101,7 +126,7 @@ toAttributes als =
     toStyle (p, v) = p <> ":" <> toValue v
 
     toValue :: Value -> Text
-    toValue (Px n) = cs (show n) <> "px"
+    toValue (Pxv n) = cs (show n) <> "px"
     toValue (Color t) = t
 
 
@@ -129,6 +154,18 @@ toAttributes als =
 -- toClass :: UI -> Text
 -- toClass Row = "row"
 -- toClass El = "el"
+
+
+
+-- | Embed built javascript into file via Data.FileEmbed. Must be recompiled via node to work
+css :: ByteString
+css = $(embedFile "static/ui.css")
+
+stylesheet :: Html ()
+stylesheet =
+  style_ [rel_ "stylesheet"] css
+
+
 
 
 
