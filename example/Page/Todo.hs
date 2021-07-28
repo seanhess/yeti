@@ -24,15 +24,8 @@ import Lucid.Html5
 
 
 
--- 
 
 
-
--- TESTS
--- TODO Pre-render the first page load - complete
--- TODO two counters
--- TODO serialize fragments. Map fragments to specific sub-components. Route Actions to those components.
--- TODO VDOM rendering
 
 
 

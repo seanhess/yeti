@@ -5456,6 +5456,7 @@ var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Main$FailedParse = {$: 'FailedParse'};
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -5466,7 +5467,6 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
-var $elm$core$Debug$log = _Debug_log;
 var $hecrj$html_parser$Html$Parser$Element = F3(
 	function (a, b, c) {
 		return {$: 'Element', a: a, b: b, c: c};
@@ -9156,8 +9156,6 @@ var $hecrj$html_parser$Html$Parser$run = function (str) {
 		A2($hecrj$html_parser$Html$Parser$oneOrMore, 'node', $hecrj$html_parser$Html$Parser$node),
 		str);
 };
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -9190,6 +9188,8 @@ var $elm$virtual_dom$VirtualDom$node = function (tag) {
 		_VirtualDom_noScript(tag));
 };
 var $elm$html$Html$node = $elm$virtual_dom$VirtualDom$node;
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$ServerAction = function (a) {
 	return {$: 'ServerAction', a: a};
 };
@@ -9322,31 +9322,21 @@ var $author$project$Main$toHtml = function (node) {
 			return A3($author$project$Main$toElement, name, atts, childs);
 	}
 };
-var $author$project$Main$viewHtml = function (input) {
-	return A2(
-		$elm$core$Debug$log,
-		'PARSE',
-		function () {
-			var _v0 = $hecrj$html_parser$Html$Parser$run(input);
-			if (_v0.$ === 'Err') {
-				return A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('ERR')
-						]));
-			} else {
-				var nodes = _v0.a;
-				return A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$id('wookie-root-content')
-						]),
-					A2($elm$core$List$map, $author$project$Main$toHtml, nodes));
-			}
-		}());
+var $author$project$Main$parseHtml = function (input) {
+	var _v0 = $hecrj$html_parser$Html$Parser$run(input);
+	if (_v0.$ === 'Err') {
+		return $elm$core$Result$Err($author$project$Main$FailedParse);
+	} else {
+		var nodes = _v0.a;
+		return $elm$core$Result$Ok(
+			A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$id('wookie-root-content')
+					]),
+				A2($elm$core$List$map, $author$project$Main$toHtml, nodes)));
+	}
 };
 var $author$project$Main$init = F3(
 	function (start, url, key) {
@@ -9354,7 +9344,7 @@ var $author$project$Main$init = F3(
 			{
 				html: start,
 				key: key,
-				parsed: $author$project$Main$viewHtml(start),
+				parsed: $author$project$Main$parseHtml(start),
 				updates: $elm$core$Dict$empty,
 				url: url
 			},
@@ -9810,26 +9800,100 @@ var $elm$http$Http$Header = F2(
 		return {$: 'Header', a: a, b: b};
 	});
 var $elm$http$Http$header = $elm$http$Http$Header;
-var $author$project$Main$Error = {$: 'Error'};
+var $author$project$Main$BadStatus = F2(
+	function (a, b) {
+		return {$: 'BadStatus', a: a, b: b};
+	});
+var $author$project$Main$BadUrl = {$: 'BadUrl'};
+var $author$project$Main$MissingParamsHeader = {$: 'MissingParamsHeader'};
+var $author$project$Main$NetworkError = {$: 'NetworkError'};
+var $author$project$Main$ServerError = function (a) {
+	return {$: 'ServerError', a: a};
+};
+var $author$project$Main$Timeout = {$: 'Timeout'};
 var $author$project$Main$onResponse = function (response) {
 	switch (response.$) {
 		case 'GoodStatus_':
 			var meta = response.a;
 			var body = response.b;
-			return $elm$core$Result$Ok(
-				_Utils_Tuple2(
-					A2($elm$core$Dict$get, 'x-page-url', meta.headers),
-					body));
+			var _v1 = A2($elm$core$Dict$get, 'x-params', meta.headers);
+			if (_v1.$ === 'Nothing') {
+				return $elm$core$Result$Err($author$project$Main$MissingParamsHeader);
+			} else {
+				var p = _v1.a;
+				return $elm$core$Result$Ok(
+					_Utils_Tuple2(p, body));
+			}
 		case 'BadUrl_':
-			return $elm$core$Result$Err($author$project$Main$Error);
+			return $elm$core$Result$Err(
+				$author$project$Main$ServerError($author$project$Main$BadUrl));
 		case 'Timeout_':
-			return $elm$core$Result$Err($author$project$Main$Error);
+			return $elm$core$Result$Err(
+				$author$project$Main$ServerError($author$project$Main$Timeout));
 		case 'NetworkError_':
-			return $elm$core$Result$Err($author$project$Main$Error);
+			return $elm$core$Result$Err(
+				$author$project$Main$ServerError($author$project$Main$NetworkError));
 		default:
-			return $elm$core$Result$Err($author$project$Main$Error);
+			var m = response.a;
+			var b = response.b;
+			return $elm$core$Result$Err(
+				$author$project$Main$ServerError(
+					A2($author$project$Main$BadStatus, m, b)));
 	}
 };
+var $elm$url$Url$addPort = F2(
+	function (maybePort, starter) {
+		if (maybePort.$ === 'Nothing') {
+			return starter;
+		} else {
+			var port_ = maybePort.a;
+			return starter + (':' + $elm$core$String$fromInt(port_));
+		}
+	});
+var $elm$url$Url$addPrefixed = F3(
+	function (prefix, maybeSegment, starter) {
+		if (maybeSegment.$ === 'Nothing') {
+			return starter;
+		} else {
+			var segment = maybeSegment.a;
+			return _Utils_ap(
+				starter,
+				_Utils_ap(prefix, segment));
+		}
+	});
+var $elm$url$Url$toString = function (url) {
+	var http = function () {
+		var _v0 = url.protocol;
+		if (_v0.$ === 'Http') {
+			return 'http://';
+		} else {
+			return 'https://';
+		}
+	}();
+	return A3(
+		$elm$url$Url$addPrefixed,
+		'#',
+		url.fragment,
+		A3(
+			$elm$url$Url$addPrefixed,
+			'?',
+			url.query,
+			_Utils_ap(
+				A2(
+					$elm$url$Url$addPort,
+					url.port_,
+					_Utils_ap(http, url.host)),
+				url.path)));
+};
+var $author$project$Main$pageUrl = F2(
+	function (url, params) {
+		return $elm$url$Url$toString(
+			_Utils_update(
+				url,
+				{
+					query: $elm$core$Maybe$Just('p=' + params)
+				}));
+	});
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
 var $elm$http$Http$Request = function (a) {
 	return {$: 'Request', a: a};
@@ -10007,50 +10071,6 @@ var $author$project$Main$serializeValueAction = F2(
 			$elm$json$Json$Encode$string(val)));
 	});
 var $elm$http$Http$stringBody = _Http_pair;
-var $elm$url$Url$addPort = F2(
-	function (maybePort, starter) {
-		if (maybePort.$ === 'Nothing') {
-			return starter;
-		} else {
-			var port_ = maybePort.a;
-			return starter + (':' + $elm$core$String$fromInt(port_));
-		}
-	});
-var $elm$url$Url$addPrefixed = F3(
-	function (prefix, maybeSegment, starter) {
-		if (maybeSegment.$ === 'Nothing') {
-			return starter;
-		} else {
-			var segment = maybeSegment.a;
-			return _Utils_ap(
-				starter,
-				_Utils_ap(prefix, segment));
-		}
-	});
-var $elm$url$Url$toString = function (url) {
-	var http = function () {
-		var _v0 = url.protocol;
-		if (_v0.$ === 'Http') {
-			return 'http://';
-		} else {
-			return 'https://';
-		}
-	}();
-	return A3(
-		$elm$url$Url$addPrefixed,
-		'#',
-		url.fragment,
-		A3(
-			$elm$url$Url$addPrefixed,
-			'?',
-			url.query,
-			_Utils_ap(
-				A2(
-					$elm$url$Url$addPort,
-					url.port_,
-					_Utils_ap(http, url.host)),
-				url.path)));
-};
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -10104,25 +10124,28 @@ var $author$project$Main$update = F2(
 			case 'Loaded':
 				if (msg.a.$ === 'Ok') {
 					var _v1 = msg.a.a;
-					var pageUrl = _v1.a;
+					var params = _v1.a;
 					var content = _v1.b;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{
 								html: content,
-								parsed: $author$project$Main$viewHtml(content)
+								parsed: $author$project$Main$parseHtml(content)
 							}),
-						function () {
-							if (pageUrl.$ === 'Nothing') {
-								return $elm$core$Platform$Cmd$none;
-							} else {
-								var u = pageUrl.a;
-								return A2($elm$browser$Browser$Navigation$pushUrl, model.key, u);
-							}
-						}());
+						A2(
+							$elm$browser$Browser$Navigation$pushUrl,
+							model.key,
+							A2($author$project$Main$pageUrl, model.url, params)));
 				} else {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					var e = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								parsed: $elm$core$Result$Err(e)
+							}),
+						$elm$core$Platform$Cmd$none);
 				}
 			case 'UrlChange':
 				var url = msg.a;
@@ -10135,10 +10158,68 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
 	});
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Main$viewError = function (e) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$span,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Error: ')
+					])),
+				A2(
+				$elm$html$Html$span,
+				_List_Nil,
+				_List_fromArray(
+					[
+						function () {
+						switch (e.$) {
+							case 'FailedParse':
+								return $elm$html$Html$text('Failed Parse');
+							case 'MissingParamsHeader':
+								return $elm$html$Html$text('Missing Params from Server');
+							default:
+								switch (e.a.$) {
+									case 'BadUrl':
+										var _v1 = e.a;
+										return $elm$html$Html$text('Bad url');
+									case 'Timeout':
+										var _v2 = e.a;
+										return $elm$html$Html$text('Timeout');
+									case 'NetworkError':
+										var _v3 = e.a;
+										return $elm$html$Html$text('Network Error');
+									default:
+										var _v4 = e.a;
+										var m = _v4.a;
+										var b = _v4.b;
+										return $elm$html$Html$text('Bad Status');
+								}
+						}
+					}()
+					]))
+			]));
+};
 var $author$project$Main$view = function (model) {
 	return {
 		body: _List_fromArray(
-			[model.parsed]),
+			[
+				function () {
+				var _v0 = model.parsed;
+				if (_v0.$ === 'Ok') {
+					var content = _v0.a;
+					return content;
+				} else {
+					var e = _v0.a;
+					return $author$project$Main$viewError(e);
+				}
+			}()
+			]),
 		title: 'Titulo'
 	};
 };

@@ -27,7 +27,6 @@ import Text.RawString.QQ
 
 static :: Html () -> ActionM ()
 static view =
-  -- setPageUrl $ cs path
   lucid view
 
 
@@ -85,11 +84,15 @@ params = do
 
 
 
-
 setParams :: ToParams params => params -> ActionM ()
 setParams ps = do
-  req <- Scotty.request
-  setPageUrl $ pageUrl (cs $ rawPathInfo req) ps
+  Scotty.setHeader "X-Params" $ cs $ encodeParams ps
+
+
+-- this should be for the page to make sure they match!
+pageUrl :: ToParams params => String -> params -> Text
+pageUrl path ps =
+  cs path <> "?p=" <> encodeParams ps
 
 
 
@@ -109,12 +112,12 @@ render toDocument view = do
     embedContent :: Html () -> Html ()
     embedContent v = do
       div_ [id_ "wookie-root-content"] v
-      script_ [type_ "text/javascript"] JS.build
-      script_ [type_ "text/javascript"] JS.run
+      -- script_ [type_ "text/javascript"] JS.build
+      -- script_ [type_ "text/javascript"] JS.run
 
       -- DEBUGGING MODE
-      -- script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
-      -- script_ [type_ "text/javascript", src_ "/edom/run.js"] ("" :: Text)
+      script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
+      script_ [type_ "text/javascript", src_ "/edom/run.js"] ("" :: Text)
 
 
 
@@ -130,13 +133,10 @@ document extra content = do
       content
       extra
 
-setPageUrl :: Text -> ActionM ()
-setPageUrl = Scotty.setHeader "X-Page-Url" . cs
 
-
-pageUrl :: ToParams params => String -> params -> Text
-pageUrl path ps =
-  cs path <> "?p=" <> (encodeBase64 $ Params.encode ps)
+encodeParams :: ToParams params => params -> Text
+encodeParams ps =
+  (encodeBase64 $ Params.encode ps)
 
 
 -- this can return a maybe text

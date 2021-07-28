@@ -89,7 +89,7 @@ start = do
   -- load embedded js
   todos <- atomically $ newTVar [Todo "Test Item" False]
 
-  scotty 3000 $ do
+  scotty 3030 $ do
     -- delay to simulate real-world conditions
     middleware (delay 100)
     middleware $ staticWithOptions defaultOptions

@@ -3,7 +3,7 @@ module Main exposing (..)
 import Browser exposing (UrlRequest, Document)
 import Browser.Navigation as Browser exposing (Key)
 import Url exposing (Url)
-import Html exposing (Html, div, text, node, Attribute)
+import Html exposing (Html, div, text, node, Attribute, span)
 import Html.Attributes as Html exposing (id)
 import Html.Events as Html
 import Html.Parser as Parser exposing (Node(..))
@@ -11,14 +11,12 @@ import Http exposing (Response)
 import Dict exposing (Dict)
 import Json.Encode as Encode
 import Json.Decode as Decode
-import Debug
 
 -- TODO switch to forms, submit or submit1!
 -- TODO try checkboxes, I want to do something on each click
 -- TODO connect to actual backend
 
 
--- let pageUrl = res.headers.get('X-Page-Url')
 -- var currentUrl = window.location.pathname + window.location.search
 
   -- // TODO titles
@@ -35,14 +33,25 @@ import Debug
 type alias Id = String
 type alias Value = String
 
+type Error
+  = FailedParse
+  | MissingParamsHeader
+  | ServerError ServerError
+
 type ServerError
-  = Error
+  = BadUrl
+  | Timeout
+  | NetworkError
+  | BadStatus Http.Metadata String
+
 
 type alias Action = String
 
+
+
 type alias Model =
   { html : String
-  , parsed : Html Msg
+  , parsed : Result Error (Html Msg)
   , updates : Dict Action Value
   , url : Url
   , key : Key
@@ -62,7 +71,7 @@ main =
 type Msg
   = ServerAction Action 
   | ServerUpdate Action Value
-  | Loaded (Result ServerError (Maybe String, String))
+  | Loaded (Result Error (String, String))
   | UrlChange Url
   | None
 
@@ -79,7 +88,7 @@ init : String -> Url -> Key -> (Model, Cmd Msg)
 init start url key =
   ( { html = start
     , updates = Dict.empty
-    , parsed = viewHtml start
+    , parsed = parseHtml start
     , key = key
     , url = url
     }
@@ -87,23 +96,25 @@ init start url key =
   )
 
 
-onResponse : Response String -> Result ServerError (Maybe String, String)
+onResponse : Response String -> Result Error (String, String)
 onResponse response =
   case response of
     Http.GoodStatus_ meta body ->
-      Ok (Dict.get "x-page-url" meta.headers, body)
+      case Dict.get "x-params" meta.headers of
+        Nothing -> Err MissingParamsHeader
+        Just p -> Ok (p, body)
 
     Http.BadUrl_ _ ->
-      Err Error
+      Err <| ServerError BadUrl
 
     Http.Timeout_ ->
-      Err Error
+      Err <| ServerError Timeout
 
     Http.NetworkError_ ->
-      Err Error
+      Err <| ServerError NetworkError
 
-    Http.BadStatus_ _ _ ->
-      Err Error
+    Http.BadStatus_ m b ->
+      Err <| ServerError <| BadStatus m b
     
 
 
@@ -136,15 +147,15 @@ update msg model =
             }
          )
 
-    Loaded (Ok (pageUrl, content)) ->
-      ( { model | html = content, parsed = viewHtml content }
-      , case pageUrl of
-          Nothing -> Cmd.none
-          Just u -> Browser.pushUrl model.key u
+    Loaded (Ok (params, content)) ->
+      ( { model | html = content, parsed = parseHtml content }
+      ,  Browser.pushUrl model.key (pageUrl model.url params)
       )
 
-    Loaded (Err _) ->
-      (model, Cmd.none)
+    Loaded (Err e) ->
+      ( { model | parsed = Err e}
+      , Cmd.none
+      )
 
     UrlChange url ->
       ( { model | url = url }
@@ -155,25 +166,50 @@ update msg model =
       (model, Cmd.none)
 
 
+-- use the current url, but add the params
+pageUrl : Url -> String -> String
+pageUrl url params =
+  Url.toString { url | query = Just <| "p=" ++ params }
+
 
 view : Model -> Document Msg
 view model =
   -- let test = div [] [ text "Elm Initialized" ]
-  { title = "Titulo", body = [model.parsed] }
+  { title = "Titulo"
+  , body =
+      [ case model.parsed of
+          Ok content -> content
+          Err e -> viewError e
+      ]
+  }
 
-viewHtml : String -> Html Msg
-viewHtml input = 
-  Debug.log "PARSE" <|
-    case (Parser.run input) of
-      Err _ -> div [] [ text "ERR" ]
-      Ok nodes -> 
-        div [ id "wookie-root-content"] <|
-          List.map toHtml nodes
+viewError : Error -> Html Msg
+viewError e =
+  div []
+    [ span [] [ text "Error: " ]
+    , span []
+       [ case e of
+          FailedParse -> text "Failed Parse"
+          MissingParamsHeader -> text "Missing Params from Server"
+          ServerError BadUrl -> text "Bad url"
+          ServerError Timeout -> text "Timeout"
+          ServerError NetworkError -> text "Network Error"
+          ServerError (BadStatus m b) -> text "Bad Status"
+       ]
+    ]
+ 
 
-  -- div []
-  --   [ button [ onClick Load ] [ text "Load" ]
-  --   , div [] [ text model.html ]
-    -- ]
+
+
+
+
+parseHtml : String -> Result Error (Html Msg)
+parseHtml input = 
+  case (Parser.run input) of
+    Err _ -> Err FailedParse
+    Ok nodes -> Ok <|
+      div [ id "wookie-root-content"] <|
+        List.map toHtml nodes
 
 
 

@@ -85,7 +85,7 @@ load ps = do
 update :: MonadIO m => Action -> StateT Model m ()
 update Increment = count += 1
 update Decrement = count -= 1
-update (Set n)   = count .= 1
+update (Set n)   = count .= n
 update (Check b) = checked .= b
 
 
