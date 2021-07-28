@@ -126,6 +126,7 @@ toDocument cont = do
       meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
       -- it's really css, so let's load it here
       link_ [type_ "text/css", rel_ "stylesheet", href_ "/example/example.css"]
+      link_ [type_ "text/css", rel_ "stylesheet", href_ "/example/ui.css"]
 
     body_ $ do
       cont

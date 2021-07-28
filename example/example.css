@@ -1,7 +1,12 @@
-.row {
+.section {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+
+.page {
+  padding: 10px;
+}
+
 
 .message {
   margin-right: 10px;
@@ -18,3 +23,5 @@
   padding: 3px;
   color: red;
 }
+
+

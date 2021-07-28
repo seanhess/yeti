@@ -27,12 +27,6 @@ import Lucid.Html5
 
 
 
--- TESTS
--- TODO Pre-render the first page load - complete
--- TODO two counters
--- TODO serialize fragments. Map fragments to specific sub-components. Route Actions to those components.
--- TODO VDOM rendering
-
 
 
 -- TODO make your own serialization, rather than Show / Read?
@@ -94,21 +88,22 @@ update (Check b) = checked .= b
 -- what about nested resolvers?
 -- TODO make your own onclick attribute that accepts an Action, not text
 view :: Model -> Html ()
-view m = section_ $ do
+view m = section_ [ class_ "page" ] $ do
 
-    button_ [ onClick Increment] "Increment"
-    button_ [ onClick Decrement] "Decrement"
-    button_ [ onClick (Set 5)] "Set 5"
+    div_ [ class_ "section" ] $ do
+      button_ [ onClick Increment] "Increment"
+      button_ [ onClick Decrement] "Decrement"
+      button_ [ onClick (Set 5)] "Set 5"
 
     -- see if I can get react to replace this
-    p_ $ do
+    div_ [ class_ "section" ] $ do
       span_ (toHtml $ fromMaybe "" $ m ^. message)
 
-    p_ [class_ ("message " <> (cs $ show $ m ^. count))] $ do
+    div_ [ class_ "section" ] $ do
       span_ "Count: "
       span_ (toHtml $ show $ m ^. count)
 
-    p_ $ do
+    div_ [ class_ "section" ] $ do
       span_ "Time: "
       span_ (toHtml $ show $ m ^. timestamp)
 
