@@ -9345,6 +9345,7 @@ var $author$project$Main$init = F3(
 				html: start,
 				key: key,
 				parsed: $author$project$Main$parseHtml(start),
+				requestId: 0,
 				updates: $elm$core$Dict$empty,
 				url: url
 			},
@@ -9359,9 +9360,15 @@ var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$none;
 };
-var $author$project$Main$Loaded = function (a) {
-	return {$: 'Loaded', a: a};
+var $author$project$Main$CannotBuildUrl = function (a) {
+	return {$: 'CannotBuildUrl', a: a};
 };
+var $author$project$Main$Loaded = F3(
+	function (a, b, c) {
+		return {$: 'Loaded', a: a, b: b, c: c};
+	});
+var $author$project$Main$RequestAction = {$: 'RequestAction'};
+var $author$project$Main$RequestLoadUrl = {$: 'RequestLoadUrl'};
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -9800,6 +9807,7 @@ var $elm$http$Http$Header = F2(
 		return {$: 'Header', a: a, b: b};
 	});
 var $elm$http$Http$header = $elm$http$Http$Header;
+var $author$project$Main$nextRequestId = $elm$core$Basics$add(1);
 var $author$project$Main$BadStatus = F2(
 	function (a, b) {
 		return {$: 'BadStatus', a: a, b: b};
@@ -10097,6 +10105,7 @@ var $author$project$Main$update = F2(
 						}),
 					_List_Nil,
 					model.updates);
+				var rid = $author$project$Main$nextRequestId(model.requestId);
 				var body = A2(
 					$elm$core$String$join,
 					'\n',
@@ -10107,11 +10116,14 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{updates: $elm$core$Dict$empty}),
+						{requestId: rid, updates: $elm$core$Dict$empty}),
 					$elm$http$Http$request(
 						{
 							body: A2($elm$http$Http$stringBody, 'text/plain', body),
-							expect: A2($elm$http$Http$expectStringResponse, $author$project$Main$Loaded, $author$project$Main$onResponse),
+							expect: A2(
+								$elm$http$Http$expectStringResponse,
+								A2($author$project$Main$Loaded, rid, $author$project$Main$RequestAction),
+								$author$project$Main$onResponse),
 							headers: _List_fromArray(
 								[
 									A2($elm$http$Http$header, 'accept', 'application/vdom')
@@ -10122,23 +10134,42 @@ var $author$project$Main$update = F2(
 							url: $elm$url$Url$toString(model.url)
 						}));
 			case 'Loaded':
-				if (msg.a.$ === 'Ok') {
-					var _v1 = msg.a.a;
+				if (msg.c.$ === 'Ok') {
+					var rt = msg.b;
+					var _v1 = msg.c.a;
 					var params = _v1.a;
 					var content = _v1.b;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								html: content,
-								parsed: $author$project$Main$parseHtml(content)
-							}),
-						A2(
-							$elm$browser$Browser$Navigation$pushUrl,
-							model.key,
-							A2($author$project$Main$pageUrl, model.url, params)));
+					var urlString = A2($author$project$Main$pageUrl, model.url, params);
+					var _v2 = $elm$url$Url$fromString(urlString);
+					if (_v2.$ === 'Nothing') {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									parsed: $elm$core$Result$Err(
+										$author$project$Main$CannotBuildUrl(urlString))
+								}),
+							$elm$core$Platform$Cmd$none);
+					} else {
+						var url = _v2.a;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									html: content,
+									parsed: $author$project$Main$parseHtml(content),
+									url: url
+								}),
+							function () {
+								if (rt.$ === 'RequestAction') {
+									return A2($elm$browser$Browser$Navigation$pushUrl, model.key, urlString);
+								} else {
+									return $elm$core$Platform$Cmd$none;
+								}
+							}());
+					}
 				} else {
-					var e = msg.a.a;
+					var e = msg.c.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -10149,11 +10180,27 @@ var $author$project$Main$update = F2(
 				}
 			case 'UrlChange':
 				var url = msg.a;
+				var rid = $author$project$Main$nextRequestId(model.requestId);
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{url: url}),
-					$elm$core$Platform$Cmd$none);
+						{requestId: rid, url: url}),
+					_Utils_eq(model.url, url) ? $elm$core$Platform$Cmd$none : $elm$http$Http$request(
+						{
+							body: A2($elm$http$Http$stringBody, 'text/plain', ''),
+							expect: A2(
+								$elm$http$Http$expectStringResponse,
+								A2($author$project$Main$Loaded, rid, $author$project$Main$RequestLoadUrl),
+								$author$project$Main$onResponse),
+							headers: _List_fromArray(
+								[
+									A2($elm$http$Http$header, 'accept', 'application/vdom')
+								]),
+							method: 'GET',
+							timeout: $elm$core$Maybe$Nothing,
+							tracker: $elm$core$Maybe$Nothing,
+							url: $elm$url$Url$toString(url)
+						}));
 			default:
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
@@ -10183,7 +10230,7 @@ var $author$project$Main$viewError = function (e) {
 								return $elm$html$Html$text('Failed Parse');
 							case 'MissingParamsHeader':
 								return $elm$html$Html$text('Missing Params from Server');
-							default:
+							case 'ServerError':
 								switch (e.a.$) {
 									case 'BadUrl':
 										var _v1 = e.a;
@@ -10200,6 +10247,9 @@ var $author$project$Main$viewError = function (e) {
 										var b = _v4.b;
 										return $elm$html$Html$text('Bad Status');
 								}
+							default:
+								var s = e.a;
+								return $elm$html$Html$text('Bad Url Construction: ' + s);
 						}
 					}()
 					]))

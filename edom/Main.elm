@@ -37,6 +37,7 @@ type Error
   = FailedParse
   | MissingParamsHeader
   | ServerError ServerError
+  | CannotBuildUrl String
 
 type ServerError
   = BadUrl
@@ -48,11 +49,18 @@ type ServerError
 type alias Action = String
 
 
+type RequestType
+  = RequestAction
+  | RequestLoadUrl
+
+type alias RequestId = Int
+
 
 type alias Model =
   { html : String
   , parsed : Result Error (Html Msg)
   , updates : Dict Action Value
+  , requestId : RequestId
   , url : Url
   , key : Key
   }
@@ -71,7 +79,7 @@ main =
 type Msg
   = ServerAction Action 
   | ServerUpdate Action Value
-  | Loaded (Result Error (String, String))
+  | Loaded RequestId RequestType (Result Error (String, String))
   | UrlChange Url
   | None
 
@@ -91,6 +99,7 @@ init start url key =
     , parsed = parseHtml start
     , key = key
     , url = url
+    , requestId = 0
     }
   , Cmd.none
   )
@@ -135,7 +144,8 @@ update msg model =
     ServerAction action ->
       let updates = Dict.foldl (\act val items -> serializeValueAction act val :: items) [] model.updates
           body = String.join "\n" (updates ++ [action])
-      in ( { model | updates = Dict.empty }
+          rid = nextRequestId model.requestId
+      in ( { model | updates = Dict.empty, requestId = rid }
          , Http.request
             { method = "POST"
             , headers = [Http.header "accept" "application/vdom"]
@@ -143,28 +153,51 @@ update msg model =
             , body = Http.stringBody "text/plain" body
             , timeout = Nothing
             , tracker = Nothing
-            , expect = Http.expectStringResponse Loaded onResponse
+            , expect = Http.expectStringResponse (Loaded rid RequestAction) onResponse
             }
          )
 
-    Loaded (Ok (params, content)) ->
-      ( { model | html = content, parsed = parseHtml content }
-      ,  Browser.pushUrl model.key (pageUrl model.url params)
-      )
+    Loaded _ rt (Ok (params, content)) ->
+      let urlString = pageUrl model.url params
+      in case Url.fromString urlString of
+          Nothing -> ( { model | parsed = Err (CannotBuildUrl urlString) }, Cmd.none )
+          Just url -> 
+            ( { model | html = content, parsed = parseHtml content, url = url }
+            ,  case rt of
+                 RequestAction ->
+                   Browser.pushUrl model.key urlString
+                 RequestLoadUrl ->
+                  Cmd.none
+            )
 
-    Loaded (Err e) ->
+    Loaded _ _ (Err e) ->
       ( { model | parsed = Err e}
       , Cmd.none
       )
 
     UrlChange url ->
-      ( { model | url = url }
-      , Cmd.none
+      -- only re-load if the url has changed
+      -- otherwise, we were the ones that chnag 
+      let rid = nextRequestId model.requestId
+      in ( { model | url = url, requestId = rid }
+      , if model.url == url
+          then Cmd.none
+          else Http.request
+                { method = "GET"
+                , headers = [Http.header "accept" "application/vdom"]
+                , url = Url.toString url
+                , body = Http.stringBody "text/plain" ""
+                , timeout = Nothing
+                , tracker = Nothing
+                , expect = Http.expectStringResponse (Loaded rid RequestLoadUrl) onResponse
+                }
       )
 
     None ->
       (model, Cmd.none)
 
+nextRequestId : RequestId -> RequestId
+nextRequestId = (+) 1
 
 -- use the current url, but add the params
 pageUrl : Url -> String -> String
@@ -195,6 +228,7 @@ viewError e =
           ServerError Timeout -> text "Timeout"
           ServerError NetworkError -> text "Network Error"
           ServerError (BadStatus m b) -> text "Bad Status"
+          CannotBuildUrl s -> text ("Bad Url Construction: " ++ s)
        ]
     ]
  
