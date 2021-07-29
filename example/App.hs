@@ -20,7 +20,6 @@ import Lucid.Html5
 -- import Counter (view, Model(..), load, update, view)
 -- import App (resolve)
 import qualified Page.Counter as Counter
-import qualified Page.Layout as Layout
 import qualified Page.Signup as Signup
 import qualified Page.About as About
 import qualified Page.Todo as Todo
@@ -110,9 +109,6 @@ start = do
     get "/app/about" $
       static $ About.view
 
-    get "/app/layout" $
-      handle toDocument Layout.page
-
     get "/hello/:name" $ do
       name <- param "name"
       html $ mconcat ["Hello: ", name]
@@ -128,9 +124,8 @@ toDocument cont = do
     head_ $ do
       meta_ [charset_ "UTF-8"]
       meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
-      -- it's really css, so let's load it here
       link_ [type_ "text/css", rel_ "stylesheet", href_ "/example/example.css"]
-      link_ [type_ "text/css", rel_ "stylesheet", href_ "/static/ui.css"]
+      -- link_ [type_ "text/css", rel_ "stylesheet", href_ "/static/ui.css"]
 
     body_ $ do
       cont

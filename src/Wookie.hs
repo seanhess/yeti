@@ -16,7 +16,6 @@ import Wookie.Page
 import Wookie.Events
 import Wookie.Params
 import Wookie.Web
-import Wookie.UI ()
 
 
 

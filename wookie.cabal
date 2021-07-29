@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7a5a4b364e422eb74acd8e2a5067d0b3f5848074285f6a602c8a97b159bbbe32
+-- hash: f28fb67f5a764338baaf7c06020e90da4fe0b69cca5137188612af5d150a6016
 
 name:           wookie
 version:        0.1.0.0
@@ -33,7 +33,6 @@ library
       Wookie.Params
       Wookie.Router
       Wookie.Runtime
-      Wookie.UI
       Wookie.Web
   other-modules:
       Paths_wookie
@@ -69,7 +68,6 @@ executable wookie-exe
       App
       Page.About
       Page.Counter
-      Page.Layout
       Page.Signup
       Page.Todo
       Paths_wookie
