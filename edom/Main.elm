@@ -11,6 +11,7 @@ import Http exposing (Response)
 import Dict exposing (Dict)
 import Json.Encode as Encode
 import Json.Decode as Decode
+-- import Debug
 
 -- TODO switch to forms, submit or submit1!
 -- TODO try checkboxes, I want to do something on each click
@@ -61,6 +62,7 @@ type alias Model =
   , parsed : Result Error (Html Msg)
   , updates : Dict Action Value
   , requestId : RequestId
+  , requestPending : Bool
   , url : Url
   , key : Key
   }
@@ -100,6 +102,7 @@ init start url key =
     , key = key
     , url = url
     , requestId = 0
+    , requestPending = False
     }
   , Cmd.none
   )
@@ -145,24 +148,26 @@ update msg model =
       let updates = Dict.foldl (\act val items -> serializeValueAction act val :: items) [] model.updates
           body = String.join "\n" (updates ++ [action])
           rid = nextRequestId model.requestId
-      in ( { model | updates = Dict.empty, requestId = rid }
-         , Http.request
-            { method = "POST"
-            , headers = [Http.header "accept" "application/vdom"]
-            , url = Url.toString model.url
-            , body = Http.stringBody "text/plain" body
-            , timeout = Nothing
-            , tracker = Nothing
-            , expect = Http.expectStringResponse (Loaded rid RequestAction) onResponse
-            }
-         )
+      in if model.requestPending
+            then ( model, Cmd.none )
+            else ( { model | updates = Dict.empty, requestId = rid, requestPending = True }
+                 , Http.request
+                     { method = "POST"
+                     , headers = [Http.header "accept" "application/vdom"]
+                     , url = Url.toString model.url
+                     , body = Http.stringBody "text/plain" body
+                     , timeout = Nothing
+                     , tracker = Nothing
+                     , expect = Http.expectStringResponse (Loaded rid RequestAction) onResponse
+                     }
+                 )
 
     Loaded _ rt (Ok (params, content)) ->
       let urlString = pageUrl model.url params
       in case Url.fromString urlString of
-          Nothing -> ( { model | parsed = Err (CannotBuildUrl urlString) }, Cmd.none )
+          Nothing -> ( { model | parsed = Err (CannotBuildUrl urlString), requestPending = False }, Cmd.none )
           Just url -> 
-            ( { model | html = content, parsed = parseHtml content, url = url }
+            ( { model | html = content, parsed = parseHtml content, url = url, requestPending = False }
             ,  case rt of
                  RequestAction ->
                    Browser.pushUrl model.key urlString
@@ -176,13 +181,11 @@ update msg model =
       )
 
     UrlChange url ->
-      -- only re-load if the url has changed
-      -- otherwise, we were the ones that chnag 
       let rid = nextRequestId model.requestId
-      in ( { model | url = url, requestId = rid }
-      , if model.url == url
-          then Cmd.none
-          else Http.request
+      in if model.url == url || model.requestPending
+        then ( model, Cmd.none )
+        else ( { model | url = url, requestId = rid, requestPending = True }
+             , Http.request
                 { method = "GET"
                 , headers = [Http.header "accept" "application/vdom"]
                 , url = Url.toString url
@@ -191,7 +194,7 @@ update msg model =
                 , tracker = Nothing
                 , expect = Http.expectStringResponse (Loaded rid RequestLoadUrl) onResponse
                 }
-      )
+             )
 
     None ->
       (model, Cmd.none)

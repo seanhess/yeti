@@ -9346,6 +9346,7 @@ var $author$project$Main$init = F3(
 				key: key,
 				parsed: $author$project$Main$parseHtml(start),
 				requestId: 0,
+				requestPending: false,
 				updates: $elm$core$Dict$empty,
 				url: url
 			},
@@ -9807,6 +9808,7 @@ var $elm$http$Http$Header = F2(
 		return {$: 'Header', a: a, b: b};
 	});
 var $elm$http$Http$header = $elm$http$Http$Header;
+var $elm$core$Debug$log = _Debug_log;
 var $author$project$Main$nextRequestId = $elm$core$Basics$add(1);
 var $author$project$Main$BadStatus = F2(
 	function (a, b) {
@@ -10113,10 +10115,10 @@ var $author$project$Main$update = F2(
 						updates,
 						_List_fromArray(
 							[action])));
-				return _Utils_Tuple2(
+				return A2($elm$core$Debug$log, 'ServerAction', model.requestPending) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{requestId: rid, updates: $elm$core$Dict$empty}),
+						{requestId: rid, requestPending: true, updates: $elm$core$Dict$empty}),
 					$elm$http$Http$request(
 						{
 							body: A2($elm$http$Http$stringBody, 'text/plain', body),
@@ -10147,7 +10149,8 @@ var $author$project$Main$update = F2(
 								model,
 								{
 									parsed: $elm$core$Result$Err(
-										$author$project$Main$CannotBuildUrl(urlString))
+										$author$project$Main$CannotBuildUrl(urlString)),
+									requestPending: false
 								}),
 							$elm$core$Platform$Cmd$none);
 					} else {
@@ -10158,6 +10161,7 @@ var $author$project$Main$update = F2(
 								{
 									html: content,
 									parsed: $author$project$Main$parseHtml(content),
+									requestPending: false,
 									url: url
 								}),
 							function () {
@@ -10181,11 +10185,11 @@ var $author$project$Main$update = F2(
 			case 'UrlChange':
 				var url = msg.a;
 				var rid = $author$project$Main$nextRequestId(model.requestId);
-				return _Utils_Tuple2(
+				return (_Utils_eq(model.url, url) || model.requestPending) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{requestId: rid, url: url}),
-					_Utils_eq(model.url, url) ? $elm$core$Platform$Cmd$none : $elm$http$Http$request(
+						{requestId: rid, requestPending: true, url: url}),
+					$elm$http$Http$request(
 						{
 							body: A2($elm$http$Http$stringBody, 'text/plain', ''),
 							expect: A2(

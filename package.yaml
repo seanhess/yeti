@@ -21,13 +21,16 @@ description:         Please see the README on GitHub at <https://github.com/sean
 dependencies:
 - base >= 4.7 && < 5
 - aeson
-- bytestring
 - base64
+- bytestring
 - containers
+- data-default
+- file-embed
 - http-types
 - lens
 - lucid
 - mtl
+- raw-strings-qq
 - scotty
 - stm
 - string-conversions
@@ -36,9 +39,6 @@ dependencies:
 - unordered-containers
 - vector
 - wai
-- data-default
-- raw-strings-qq
-- file-embed
 - wai-middleware-static
 
 library:

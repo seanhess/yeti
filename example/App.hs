@@ -91,7 +91,7 @@ start = do
 
   scotty 3030 $ do
     -- delay to simulate real-world conditions
-    middleware (delay 100)
+    middleware (delay 500)
     middleware $ staticWithOptions defaultOptions
 
     page "/app/counter" $ do
