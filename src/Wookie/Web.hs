@@ -10,13 +10,14 @@ import Wookie.Page (Page, PageAction)
 import Wookie.Params as Params (ToParams(..))
 import Wookie.JS as JS
 import Data.Text.Encoding.Base64 (encodeBase64, decodeBase64)
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.IO.Class (liftIO, MonadIO)
 import Data.Function ((&))
 import Data.String.Conversions (cs)
 import Data.Text as Text (Text, intercalate)
 import Data.List as List (lookup)
-import Web.Scotty (ActionM, ScottyM, RoutePattern)
-import qualified Web.Scotty as Scotty
+import Web.Scotty (RoutePattern)
+import Web.Scotty.Trans (ActionT, ScottyT, ScottyError)
+import qualified Web.Scotty.Trans as Scotty
 import Lucid (renderBS, Html)
 import Lucid.Html5
 import Network.Wai (rawPathInfo)
@@ -25,7 +26,7 @@ import Text.RawString.QQ
 
 
 
-static :: Html () -> ActionM ()
+static :: (ScottyError e, Monad m) => Html () -> ActionT e m ()
 static view =
   lucid view
 
@@ -38,14 +39,15 @@ static view =
 
 
 -- Only accepts base paths, don't use params!
-page :: RoutePattern -> ActionM () -> ScottyM ()
+page :: (ScottyError e, MonadIO m) => RoutePattern -> ActionT e m () -> ScottyT e m ()
 page = Scotty.matchAny
 
 
 
+-- handle handles it if you're in actionM
 handle
-  :: forall params model action. (PageAction action, ToParams params)
-  => (Html () -> Html ()) -> Page params model action ActionM -> ActionM ()
+  :: forall params model action e m. (PageAction action, ToParams params, MonadIO m, ScottyError e)
+  => (Html () -> Html ()) -> Page params model action (ActionT e m) -> ActionT e m ()
 handle doc pg = do
   Response h p' <- response pg
   setParams p'
@@ -54,8 +56,8 @@ handle doc pg = do
 
 
 response
-  :: forall params model action. (PageAction action, ToParams params)
-  => Page params model action ActionM -> ActionM (Response params)
+  :: forall params model action e m. (PageAction action, ToParams params, MonadIO m, ScottyError e)
+  => Page params model action (ActionT e m) -> ActionT e m (Response params)
 response pg = do
   ps <- params
   cmds <- commands =<< Scotty.body
@@ -67,7 +69,7 @@ response pg = do
 
 
 
-params :: ToParams params => ActionM (Maybe params)
+params :: (Monad m, ScottyError e) => ToParams params => ActionT e m (Maybe params)
 params = do
   -- this may be empty. If it is, then return Nothing
   rps <- rawParams
@@ -84,7 +86,7 @@ params = do
 
 
 
-setParams :: ToParams params => params -> ActionM ()
+setParams :: (ToParams params, Monad m) => params -> ActionT e m ()
 setParams ps = do
   Scotty.setHeader "X-Params" $ cs $ encodeParams ps
 
@@ -102,7 +104,7 @@ pageUrl path ps =
 -- Accept encoding!
 -- If they ask for Html, give them the whole thing
 -- if they ask for Vdom, just give them the one part
-render :: (Html() -> Html ()) -> Html () -> ActionM ()
+render :: (Monad m, ScottyError e) => (Html() -> Html ()) -> Html () -> ActionT e m ()
 render toDocument view = do
   Scotty.header "Accept" >>= \case
     Just "application/vdom" -> lucid view
@@ -140,14 +142,14 @@ encodeParams ps =
 
 
 -- this can return a maybe text
-rawParams :: ActionM (Maybe Text)
+rawParams :: (Monad m, ScottyError e) => ActionT e m (Maybe Text)
 rawParams = do
   ps <- Scotty.params
   pure $ cs <$> List.lookup "p" ps
 
 
 
-lucid :: Html a -> ActionM ()
+lucid :: ScottyError e => Monad m => Html a -> ActionT e m ()
 lucid h = do
   Scotty.setHeader "Content-Type" "text/html"
   Scotty.raw . Lucid.renderBS $ h
