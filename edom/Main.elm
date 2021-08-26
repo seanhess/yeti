@@ -271,11 +271,7 @@ toElement : ElementName -> List Parser.Attribute -> List Parser.Node -> Html Msg
 toElement name atts childs =
   let convertedAtts = List.map toAttribute atts
       convertedChilds = List.map toHtml childs
-  in case (name, idFromAttributes atts) of
-    -- ("input", Just id) ->
-    --   Html.node name (inputListener id :: convertedAtts) convertedChilds
-    _ -> 
-      Html.node name convertedAtts convertedChilds
+  in Html.node name convertedAtts convertedChilds
 
 
 -- IF you have an id attribute, yes
@@ -295,7 +291,7 @@ toAttribute : (AttributeName, AttributeValue) -> Html.Attribute Msg
 toAttribute (name, value) =
   case name of
     "data-click" -> 
-      Html.onClick (ServerAction value)
+      Html.onClick (toMessage value)
 
     -- TODO, more complex. What does "update" mean in this context? How do we know it's an input field??
 
@@ -303,7 +299,7 @@ toAttribute (name, value) =
       Html.onInput (ServerUpdate value)
 
     "data-enter" -> 
-      onEnter (ServerAction value)
+      onEnter (toMessage value)
 
     "value" -> 
       Html.value value
@@ -313,6 +309,11 @@ toAttribute (name, value) =
 
     _ ->
       Html.attribute name value
+
+
+toMessage : AttributeValue -> Msg
+toMessage val = ServerAction val
+
 
 onEnter : msg -> Attribute msg
 onEnter msg =

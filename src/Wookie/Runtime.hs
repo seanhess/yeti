@@ -20,7 +20,6 @@ import qualified Data.Text.Lazy as TL (Text)
 import GHC.Generics (Generic)
 import Lucid (Html, renderBS)
 import Text.Read (readMaybe)
-import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Map (Map, (!?))
 import Data.Maybe (mapMaybe)
 import Data.Function ((&))
@@ -61,11 +60,13 @@ data Command action
 
 -- type View model = (model -> Html ())
 -- type Update model action m = (action -> Model -> m Model)
+--
+--
 
 
 -- | Load the page from route params, then apply the action
 runAction
-  :: forall m model params action. (MonadIO m, MonadFail m, PageAction action)
+  :: forall m model params action. (Monad m, PageAction action)
   => Page params model action m
   -> Maybe params
   -> [Command action]
@@ -82,7 +83,7 @@ runAction (Page params load update view) ps cmds = do
   pure $ Response (view m') (params m')
 
 
-runCommand :: (MonadIO m, MonadFail m) => (action -> StateT model m ()) -> model -> Command action -> m model
+runCommand :: (Monad m) => (action -> StateT model m ()) -> model -> Command action -> m model
 runCommand update m cmd =
   case cmd of
     Init -> pure m
