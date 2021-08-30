@@ -9156,53 +9156,35 @@ var $hecrj$html_parser$Html$Parser$run = function (str) {
 		A2($hecrj$html_parser$Html$Parser$oneOrMore, 'node', $hecrj$html_parser$Html$Parser$node),
 		str);
 };
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
-var $author$project$Main$idFromAttributes = function (atts) {
-	var _v0 = A2(
-		$elm$core$List$filter,
-		function (_v1) {
-			var name = _v1.a;
-			return name === 'id';
-		},
-		atts);
-	if (!_v0.b) {
-		return $elm$core$Maybe$Nothing;
-	} else {
-		var _v2 = _v0.a;
-		var id = _v2.b;
-		return $elm$core$Maybe$Just(id);
-	}
-};
 var $elm$virtual_dom$VirtualDom$node = function (tag) {
 	return _VirtualDom_node(
 		_VirtualDom_noScript(tag));
 };
 var $elm$html$Html$node = $elm$virtual_dom$VirtualDom$node;
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$ServerAction = function (a) {
-	return {$: 'ServerAction', a: a};
+var $elm$virtual_dom$VirtualDom$nodeNS = function (tag) {
+	return _VirtualDom_nodeNS(
+		_VirtualDom_noScript(tag));
 };
-var $author$project$Main$ServerUpdate = F2(
-	function (a, b) {
-		return {$: 'ServerUpdate', a: a, b: b};
-	});
+var $elm$svg$Svg$node = $elm$virtual_dom$VirtualDom$nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
+var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $elm$virtual_dom$VirtualDom$attribute = F2(
 	function (key, value) {
 		return A2(
 			_VirtualDom_attribute,
 			_VirtualDom_noOnOrFormAction(key),
 			_VirtualDom_noJavaScriptOrHtmlUri(value));
+	});
+var $author$project$Main$svgToAttribute = function (_v0) {
+	var name = _v0.a;
+	var value = _v0.b;
+	return A2($elm$virtual_dom$VirtualDom$attribute, name, value);
+};
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$ServerUpdate = F2(
+	function (a, b) {
+		return {$: 'ServerUpdate', a: a, b: b};
 	});
 var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
 var $elm$json$Json$Encode$bool = _Json_wrap;
@@ -9277,6 +9259,12 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 			$elm$html$Html$Events$alwaysStop,
 			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
+var $author$project$Main$ServerAction = function (a) {
+	return {$: 'ServerAction', a: a};
+};
+var $author$project$Main$toMessage = function (val) {
+	return $author$project$Main$ServerAction(val);
+};
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$toAttribute = function (_v0) {
 	var name = _v0.a;
@@ -9284,13 +9272,13 @@ var $author$project$Main$toAttribute = function (_v0) {
 	switch (name) {
 		case 'data-click':
 			return $elm$html$Html$Events$onClick(
-				$author$project$Main$ServerAction(value));
+				$author$project$Main$toMessage(value));
 		case 'data-input':
 			return $elm$html$Html$Events$onInput(
 				$author$project$Main$ServerUpdate(value));
 		case 'data-enter':
 			return $author$project$Main$onEnter(
-				$author$project$Main$ServerAction(value));
+				$author$project$Main$toMessage(value));
 		case 'value':
 			return $elm$html$Html$Attributes$value(value);
 		case 'checked':
@@ -9299,13 +9287,23 @@ var $author$project$Main$toAttribute = function (_v0) {
 			return A2($elm$html$Html$Attributes$attribute, name, value);
 	}
 };
+var $author$project$Main$svgElement = F3(
+	function (name, atts, childs) {
+		var convertedChilds = A2($elm$core$List$map, $author$project$Main$toHtml, childs);
+		var convertedAtts = A2($elm$core$List$map, $author$project$Main$toAttribute, atts);
+		return A3($elm$svg$Svg$node, name, convertedAtts, convertedChilds);
+	});
+var $author$project$Main$svgRoot = F2(
+	function (atts, childs) {
+		return A2(
+			$elm$svg$Svg$svg,
+			A2($elm$core$List$map, $author$project$Main$svgToAttribute, atts),
+			A2($elm$core$List$map, $author$project$Main$toSvg, childs));
+	});
 var $author$project$Main$toElement = F3(
 	function (name, atts, childs) {
 		var convertedChilds = A2($elm$core$List$map, $author$project$Main$toHtml, childs);
 		var convertedAtts = A2($elm$core$List$map, $author$project$Main$toAttribute, atts);
-		var _v1 = _Utils_Tuple2(
-			name,
-			$author$project$Main$idFromAttributes(atts));
 		return A3($elm$html$Html$node, name, convertedAtts, convertedChilds);
 	});
 var $author$project$Main$toHtml = function (node) {
@@ -9316,10 +9314,30 @@ var $author$project$Main$toHtml = function (node) {
 		case 'Comment':
 			return $elm$html$Html$text('');
 		default:
+			if (node.a === 'svg') {
+				var atts = node.b;
+				var childs = node.c;
+				return A2($author$project$Main$svgRoot, atts, childs);
+			} else {
+				var name = node.a;
+				var atts = node.b;
+				var childs = node.c;
+				return A3($author$project$Main$toElement, name, atts, childs);
+			}
+	}
+};
+var $author$project$Main$toSvg = function (node) {
+	switch (node.$) {
+		case 'Text':
+			var s = node.a;
+			return $elm$html$Html$text(s);
+		case 'Comment':
+			return $elm$html$Html$text('');
+		default:
 			var name = node.a;
 			var atts = node.b;
 			var childs = node.c;
-			return A3($author$project$Main$toElement, name, atts, childs);
+			return A3($author$project$Main$svgElement, name, atts, childs);
 	}
 };
 var $author$project$Main$parseHtml = function (input) {
@@ -9808,7 +9826,6 @@ var $elm$http$Http$Header = F2(
 		return {$: 'Header', a: a, b: b};
 	});
 var $elm$http$Http$header = $elm$http$Http$Header;
-var $elm$core$Debug$log = _Debug_log;
 var $author$project$Main$nextRequestId = $elm$core$Basics$add(1);
 var $author$project$Main$BadStatus = F2(
 	function (a, b) {
@@ -10115,7 +10132,7 @@ var $author$project$Main$update = F2(
 						updates,
 						_List_fromArray(
 							[action])));
-				return A2($elm$core$Debug$log, 'ServerAction', model.requestPending) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+				return model.requestPending ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{requestId: rid, requestPending: true, updates: $elm$core$Dict$empty}),

@@ -1,9 +1,11 @@
 module Main exposing (..)
 
+import VirtualDom
 import Browser exposing (UrlRequest, Document)
 import Browser.Navigation as Browser exposing (Key)
 import Url exposing (Url)
 import Html exposing (Html, div, text, node, Attribute, span)
+import Svg exposing (Svg)
 import Html.Attributes as Html exposing (id)
 import Html.Events as Html
 import Html.Parser as Parser exposing (Node(..))
@@ -255,15 +257,28 @@ type alias AttributeName = String
 type alias AttributeValue = String
 
 
-toHtml : Node -> Html Msg
+toHtml : Parser.Node -> Html Msg
 toHtml node =
   case node of
     (Text s) ->
       text s
     (Comment _) ->
       text ""
+    (Element "svg" atts childs) ->
+      svgRoot atts childs
     (Element name atts childs) ->
       toElement name atts childs
+
+toSvg : Parser.Node -> Svg Msg
+toSvg node =
+  case node of
+    (Text s) ->
+      text s
+    (Comment _) ->
+      text ""
+    (Element name atts childs) ->
+      svgElement name atts childs
+
 
 
 
@@ -273,6 +288,19 @@ toElement name atts childs =
       convertedChilds = List.map toHtml childs
   in Html.node name convertedAtts convertedChilds
 
+svgRoot : List Parser.Attribute -> List Parser.Node -> Html Msg
+svgRoot atts childs =
+  Svg.svg (List.map svgToAttribute atts) (List.map toSvg childs)
+
+svgToAttribute : (AttributeName, AttributeValue) -> Svg.Attribute Msg
+svgToAttribute (name, value) = VirtualDom.attribute name value
+
+svgElement : ElementName -> List Parser.Attribute -> List Parser.Node -> Html Msg
+svgElement name atts childs =
+  let convertedAtts = List.map toAttribute atts
+      convertedChilds = List.map toHtml childs
+  in Svg.node name convertedAtts convertedChilds
+  
 
 -- IF you have an id attribute, yes
 -- inputListener : String -> Html.Attribute Msg
