@@ -73,15 +73,18 @@ params :: (Monad m, ScottyError e) => ToParams params => ActionT e m (Maybe para
 params = do
   -- this may be empty. If it is, then return Nothing
   rps <- rawParams
-  case rps of
-    Nothing -> pure Nothing
-    Just raw -> do
-      case (decodeBase64 raw) of
-        Left e -> fail $ "Could not decode params: " <> cs e
-        Right ps ->
-          case (Params.decode ps) of
-            Nothing -> fail $ "Could not decode params: " <> cs (show rps)
-            Just a -> pure $ Just a
+  pure $ do
+    raw <- rps
+    bps <- decode64 raw
+    ps <- Params.decode bps
+    pure ps
+  where
+    decode64 rw =
+      case (decodeBase64 rw) of
+        -- this should never happen, fail
+        Left e -> fail $ "Could not decode params: Invalid Base64 - " <> cs e
+        Right ps -> Just ps
+
 
 
 

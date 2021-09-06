@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -12,8 +13,6 @@ import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text as Text (Text, length, any)
 import Data.Char (isDigit, isAlpha, isPunctuation, isUpper, isLower)
 import Data.Maybe (fromMaybe, catMaybes)
-import Control.Monad.State.Lazy (StateT, get)
-import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
 import Lucid.Html5 hiding (onclick_)
 
@@ -31,13 +30,11 @@ instance PageAction Action
 
 
 data Params = Params
-  { _message :: Text
-  , _username :: Text
-  , _pass1 :: Text
-  , _pass2 :: Text
+  { message :: Text
+  , username :: Text
+  , pass1 :: Text
+  , pass2 :: Text
   } deriving (Show, Eq, Read, ToParams)
-
-makeLenses ''Params
 
 
 type Username = Text
@@ -56,12 +53,11 @@ data Validation = Validation
   } deriving (Show, Eq)
 
 data Model = Model
-  { _params :: Params
-  , _timestamp :: UTCTime
-  , _signup :: Signup
+  { params :: Params
+  , timestamp :: UTCTime
+  , signup :: Signup
   } deriving (Show, Eq)
 
-makeLenses ''Model
 
 passwordsMatch :: Text -> Text -> Bool
 passwordsMatch = (==)
@@ -94,14 +90,16 @@ load mps = do
 
 
 
-update :: MonadIO m => Action -> StateT Model m ()
-update (EditUsername (Value t)) = (params.username) .= t
-update (EditPass1 (Value t)) = (params.pass1) .= t
-update (EditPass2 (Value t)) = (params.pass2) .= t
-update SignUp = do
-  m <- get
-  v <- validate (m ^. params . username) ( m ^. params . pass1) (m ^.params.pass2)
-  signup .= if isValid v then Valid else Working v
+update :: MonadIO m => Action -> Model -> m Model
+update (EditUsername (Value t)) m =
+  pure $ m { params = m.params { username = t }}
+update (EditPass1 (Value t)) m =
+  pure $ m { params = m.params { pass1 = t }}
+update (EditPass2 (Value t)) m =
+  pure $ m { params = m.params { pass2 = t }}
+update SignUp m = do
+  v <- validate m.params.username m.params.pass1 m.params.pass2
+  pure $ m { signup = if isValid v then Valid else Working v }
 
 
 validate :: Monad m => Text -> Text -> Text -> m Validation
@@ -124,7 +122,7 @@ isValid v = not (passwordsDoNotMatch v || usernameTooShort v || usernameIsTaken 
 
 view :: Model -> Html ()
 view m = section_ $ do
-  case m ^. signup of
+  case m.signup of
     Working v -> workingView m v
     Valid -> validView
 
@@ -135,18 +133,18 @@ workingView m v = do
   div_ [ class_ $ if (validUser v) then "section" else "section error" ] $ do
     div_ $ label_ [ for_ "username" ] "Username"
     div_ $ do
-      input_ [ name_ "username", type_ "text", value_ (m ^. params . username), onInput (EditUsername) ]
+      input_ [ name_ "username", type_ "text", value_ (m.params.username), onInput (EditUsername) ]
       mapM_ (span_ [ class_ "message" ] . toHtml) (userErrorMessages v)
 
   div_ [ class_ $ if (validPass v) then "section" else "section error" ] $ do
     div_ $ label_ [ for_ "password1" ] "Password"
     div_ $ do
-      input_ [ name_ "password1", type_ "password", value_ (m ^. params . pass1), onInput (EditPass1) ]
+      input_ [ name_ "password1", type_ "password", value_ (m.params.pass1), onInput (EditPass1) ]
       mapM_ (span_ [ class_ "message" ] . toHtml) (passErrorMessages v)
 
   div_ [ class_ $ if (validPass v) then "section" else "section error" ] $ do
     div_ $ label_ [ for_ "password2" ] "Re-type Password"
-    div_ $ input_ [ name_ "password2", type_ "password", value_ (m ^. params . pass2), onInput (EditPass2) ]
+    div_ $ input_ [ name_ "password2", type_ "password", value_ (m.params.pass2), onInput (EditPass2) ]
 
   div_ [ class_ "row" ] $
     button_ [ onClick SignUp ] "Sign Up"
@@ -171,7 +169,7 @@ validView = do
 
 
 page :: MonadIO m => Page Params Model Action m
-page = Page _params load update view
+page = Page params load update view
 
 
 -- Simulated Effects ------------------------------

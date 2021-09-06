@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f28fb67f5a764338baaf7c06020e90da4fe0b69cca5137188612af5d150a6016
+-- hash: a60c6482ed645a07ed45b1e598b5fec869fdeebe8e90ebc124803c6ca3f2824d
 
 name:           wookie
 version:        0.1.0.0
@@ -87,6 +87,8 @@ executable wookie-exe
     , lucid
     , mtl
     , raw-strings-qq
+    , record-dot-preprocessor
+    , record-hasfield
     , scotty
     , stm
     , string-conversions

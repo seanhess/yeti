@@ -24,7 +24,6 @@ import Data.Map (Map, (!?))
 import Data.Maybe (mapMaybe)
 import Data.Function ((&))
 import Control.Monad (foldM)
-import Control.Monad.State.Lazy (StateT, execStateT)
 
 
 
@@ -83,12 +82,12 @@ runAction (Page params load update view) ps cmds = do
   pure $ Response (view m') (params m')
 
 
-runCommand :: (Monad m) => (action -> StateT model m ()) -> model -> Command action -> m model
+runCommand :: (Monad m) => (action -> model -> m model) -> model -> Command action -> m model
 runCommand update m cmd =
   case cmd of
     Init -> pure m
     Submit -> pure m
-    Update a -> execStateT (update a) m
+    Update a -> update a m
 
 
 

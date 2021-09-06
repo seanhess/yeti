@@ -13,7 +13,6 @@ module Wookie.Page
 import Data.String.Conversions (cs)
 import Data.Text as Text (Text)
 import Data.List as List
-import Control.Monad.State.Lazy (StateT)
 import Lucid (Html)
 import Text.Read (readMaybe)
 
@@ -25,7 +24,7 @@ import Data.Map (Map)
 data Page params model action m = Page
   { params :: model -> params
   , load   :: Maybe params -> m model
-  , update :: action -> StateT model m ()
+  , update :: action -> model -> m model
   , view   :: model -> Html ()
   }
 

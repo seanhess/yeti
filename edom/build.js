@@ -10183,7 +10183,9 @@ var $author$project$Main$update = F2(
 								}),
 							function () {
 								if (rt.$ === 'RequestAction') {
-									return A2($elm$browser$Browser$Navigation$pushUrl, model.key, urlString);
+									return (!_Utils_eq(
+										$elm$url$Url$fromString(urlString),
+										$elm$core$Maybe$Just(model.url))) ? A2($elm$browser$Browser$Navigation$pushUrl, model.key, urlString) : $elm$core$Platform$Cmd$none;
 								} else {
 									return $elm$core$Platform$Cmd$none;
 								}

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -11,10 +12,8 @@ module Page.Todo where
 
 import Wookie
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
-import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad (forM_)
-import Control.Monad.State.Lazy (StateT, gets, get)
 import Data.Map as Map (lookup, (!?))
 import Data.Maybe (fromMaybe)
 import Data.Text as Text (Text, isInfixOf, toLower)
@@ -40,17 +39,15 @@ data Todo = Todo
 type Params = (Text, Text)
 
 data Model = Model
-  { _todos :: [Todo]
-  , _search :: Text
-  , _addContent :: Text
+  { todos :: [Todo]
+  , search :: Text
+  , addContent :: Text
   } deriving (Show, Eq)
-
-makeLenses ''Model
 
 
 
 params :: Model -> Params
-params m = (m ^. search, m ^. addContent)
+params m = (m.search, m.addContent)
 
 
 
@@ -61,9 +58,9 @@ load savedTodos ps = do
   ts <- liftIO $ atomically $
     readTVar savedTodos
   pure $ Model
-    { _todos = ts
-    , _search = s
-    , _addContent = t
+    { todos = ts
+    , search = s
+    , addContent = t
     }
 
 
@@ -79,25 +76,25 @@ instance PageAction Action
 
 
 
-update :: MonadIO m => TVar [Todo] -> Action -> StateT Model m ()
-update savedTodos (AddTodo) = do
-  m <- get
-  let new = Todo (m ^. addContent) False
+update :: MonadIO m => TVar [Todo] -> Action -> Model -> m Model
+update savedTodos (AddTodo) m = do
+  let new = Todo (m.addContent) False
   ts <- liftIO $ atomically $ appendTodo savedTodos new
+  pure $ m
+    { search = ""
+    , addContent = ""
+    , todos = ts
+    }
 
-  search .= ""
-  addContent .= ""
-  todos .= ts
-
-update savedTodos (Delete t) = do
+update savedTodos (Delete t) m = do
   ts <- liftIO $ atomically $ deleteTodo savedTodos t
-  todos .= ts
+  pure $ m { todos = ts }
 
-update _ (Search (Value s)) = do
-  search .= s
+update _ (Search (Value s)) m = do
+  pure $ m { search = s }
 
-update _ (NewTodoInput (Value s)) = do
-  addContent .= s
+update _ (NewTodoInput (Value s)) m = do
+  pure $ m { addContent = s }
 
 
 
@@ -128,14 +125,14 @@ view m = div_ $ do
 
   div_ [ id_ "add", style_ "margin:10" ] $ do
     button_ [ onClick AddTodo ] "Add"
-    input_ [ name_ "add", value_ (m ^. addContent), onInput (NewTodoInput), onEnter AddTodo ]
+    input_ [ name_ "add", value_ (m.addContent), onInput (NewTodoInput), onEnter AddTodo ]
 
   div_ [ id_ "search", style_ "margin:10" ] $ do
     button_ [ onClick Submit, onEnter Submit ] "Search"
-    input_ [ name_ "search", value_ (m ^. search), onInput (Search), onEnter Submit ]
+    input_ [ name_ "search", value_ (m.search), onInput (Search), onEnter Submit ]
 
 
-  let ts = (m ^. todos) & filter (isSearch (m ^. search))
+  let ts = m.todos & filter (isSearch m.search)
 
   div_ $ do
     forM_ ts $ \todo ->

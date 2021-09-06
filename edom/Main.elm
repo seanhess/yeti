@@ -13,7 +13,6 @@ import Http exposing (Response)
 import Dict exposing (Dict)
 import Json.Encode as Encode
 import Json.Decode as Decode
--- import Debug
 
 -- TODO switch to forms, submit or submit1!
 -- TODO try checkboxes, I want to do something on each click
@@ -172,7 +171,9 @@ update msg model =
             ( { model | html = content, parsed = parseHtml content, url = url, requestPending = False }
             ,  case rt of
                  RequestAction ->
-                   Browser.pushUrl model.key urlString
+                   if Url.fromString urlString /= Just model.url
+                     then Browser.pushUrl model.key urlString
+                     else Cmd.none
                  RequestLoadUrl ->
                   Cmd.none
             )

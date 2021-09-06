@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -16,71 +17,50 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text (Text)
 import Data.Maybe (fromMaybe)
-import Control.Monad.State.Lazy (StateT)
 import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
 import Lucid.Html5
 
 
 
--- 
-
-
-
-
-
--- TODO make your own serialization, rather than Show / Read?
 data Action
   = Increment
   | Decrement
   | Set Integer
-  | Check Bool
+  | GetTime
   deriving (Show, Read)
 instance PageAction Action
 
-
-type Params = (Integer, Maybe Text, Bool)
+type Params = (Integer, Maybe Text)
 
 data Model = Model
-  { _count :: Integer
-  , _timestamp :: UTCTime
-  , _message :: Maybe Text
-  , _checked :: Bool
+  { count :: Integer
+  , timestamp :: UTCTime
+  , message :: Maybe Text
   } deriving (Show, Eq)
 
-makeLenses ''Model
-
-
-
-
-
--- instance Page Model Params where
---    loadPage = load
---    toParams = params
 
 
 params :: Model -> Params
-params (Model c _ msg ck) = (c, msg, ck)
-
-
+params m = (m.count, m.message)
 
 
 load :: MonadIO m => Maybe Params -> m Model
 load ps = do
-  let (c, msg, ck) = fromMaybe (0, Nothing, False) ps
+  let (c, msg) = fromMaybe (0, Nothing) ps
   t <- liftIO $ Time.getCurrentTime
-  pure $ Model c t msg ck
-
-
+  pure $ Model c t msg
 
 
 -- does it have to be IO?
 -- no.... it should be any MonadIO
-update :: MonadIO m => Action -> StateT Model m ()
-update Increment = count += 1
-update Decrement = count -= 1
-update (Set n)   = count .= n
-update (Check b) = checked .= b
+update :: MonadIO m => Action -> Model -> m Model
+update Increment m = pure $ m { count = count m + 1 }
+update Decrement m = pure $ m { count = count m - 1 }
+update (Set n)   m = pure $ m { count = n }
+
+-- just refreshes the time, example of db update action, doesn't change state
+update GetTime   m = pure m
 
 
 
@@ -94,18 +74,19 @@ view m = section_ [ class_ "page" ] $ do
       button_ [ onClick Increment] "Increment"
       button_ [ onClick Decrement] "Decrement"
       button_ [ onClick (Set 5)] "Set 5"
+      button_ [ onClick GetTime ] "Get Time"
 
     -- see if I can get react to replace this
     div_ [ class_ "section" ] $ do
-      span_ (toHtml $ fromMaybe "" $ m ^. message)
+      span_ (toHtml $ fromMaybe "" $ message m)
 
     div_ [ class_ "section" ] $ do
       span_ "Count: "
-      span_ (toHtml $ show $ m ^. count)
+      span_ (toHtml $ show $ count m)
 
     div_ [ class_ "section" ] $ do
       span_ "Time: "
-      span_ (toHtml $ show $ m ^. timestamp)
+      span_ (toHtml $ show $ timestamp m)
 
 
 

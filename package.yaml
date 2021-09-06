@@ -56,6 +56,8 @@ executables:
     - -Wincomplete-patterns
     # - -Wall
     dependencies:
+    - record-dot-preprocessor
+    - record-hasfield
     - wookie
 
 tests:
