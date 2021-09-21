@@ -21,6 +21,7 @@ import qualified Web.Scotty.Trans as Scotty
 import Lucid (renderBS, Html)
 import Lucid.Html5
 import Network.Wai (rawPathInfo)
+import Control.Monad (when)
 
 import Text.RawString.QQ
 
@@ -42,17 +43,19 @@ static view =
 page :: (ScottyError e, MonadIO m) => RoutePattern -> ActionT e m () -> ScottyT e m ()
 page = Scotty.matchAny
 
-
+data Render = Render
+  { embedJS :: Bool
+  , toDoc :: Html () -> Html ()
+  }
 
 -- handle handles it if you're in actionM
 handle
   :: forall params model action e m. (PageAction action, ToParams params, MonadIO m, ScottyError e)
-  => (Html () -> Html ()) -> Page params model action (ActionT e m) -> ActionT e m ()
-handle doc pg = do
+  => Render -> Page params model action (ActionT e m) -> ActionT e m ()
+handle (Render js doc) pg = do
   Response h p' <- response pg
   setParams p'
-  render doc h
-
+  render js doc h
 
 
 response
@@ -102,13 +105,18 @@ pageUrl path ps =
 
 
 
+
+
 -- TODO Vdom encoding
 -- How can I tell if they already have it? By the url?
 -- Accept encoding!
 -- If they ask for Html, give them the whole thing
 -- if they ask for Vdom, just give them the one part
-render :: (Monad m, ScottyError e) => (Html() -> Html ()) -> Html () -> ActionT e m ()
-render toDocument view = do
+-- TODO they should embed the html itself?
+-- do we choose how to embed it or not?
+
+render :: (Monad m, ScottyError e) => Bool -> (Html() -> Html ()) -> Html () -> ActionT e m ()
+render embJS toDocument view = do
   Scotty.header "Accept" >>= \case
     Just "application/vdom" -> lucid view
     _ -> lucid $ toDocument $ embedContent view
@@ -117,8 +125,8 @@ render toDocument view = do
     embedContent :: Html () -> Html ()
     embedContent v = do
       div_ [id_ "wookie-root-content"] v
-      script_ [type_ "text/javascript"] JS.build
-      script_ [type_ "text/javascript"] JS.run
+      when embJS $ do
+        script_ [type_ "text/javascript"] JS.scripts
 
       -- DEBUGGING MODE
       -- script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
@@ -127,8 +135,8 @@ render toDocument view = do
 
 
 -- | Convenience toDocument function to pass to render. Allows you to add stylesheets and javascript easily
-document :: Html () -> Html () -> Html ()
-document extra content = do
+document :: Html () -> Render
+document extra = Render True $ \content -> do
   html_ $ do
     head_ $ do
       meta_ [charset_ "UTF-8"]

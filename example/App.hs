@@ -36,7 +36,7 @@ import Network.HTTP.Types.URI (renderSimpleQuery)
 
 import Wookie.Runtime (Response(..), runAction)
 import Wookie.Router (parsePath)
-import Wookie.Web (page, lucid, static, handle, render, document)
+import Wookie.Web (page, lucid, static, handle, render, document, Render(..))
 
 
 -- TODO back button doesn't work: history.onpopstate? Just call it again with the current url. The url is updating
@@ -89,6 +89,7 @@ start = do
 
   -- load embedded js
   todos <- atomically $ newTVar [Todo "Test Item" False]
+  let cfg = Render True toDocument
 
   scotty 3030 $ do
     -- delay to simulate real-world conditions
@@ -96,15 +97,15 @@ start = do
     middleware $ staticWithOptions defaultOptions
 
     page "/app/counter" $ do
-      handle toDocument Counter.page
+      handle cfg Counter.page
 
     page "/app/signup" $ do
-      handle toDocument Signup.page
+      handle cfg Signup.page
 
     page "/app/todo/:n" $ do
       n <- param "n" :: ActionM Int
       -- liftIO $ print n
-      handle toDocument $ Todo.page todos
+      handle cfg $ Todo.page todos
 
     -- if you use "lucid" it doesn't work
     get "/app/about" $
