@@ -26,6 +26,7 @@ view = div_ $ do
 
   -- do URLs manually, but serialize the state
   p_ $ a_ [href_ $ pageUrl "/app/counter" params] "Counter 77"
+  p_ $ a_ [href_ "https://google.com"] "Google"
 
 
 

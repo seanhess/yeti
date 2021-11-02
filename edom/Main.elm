@@ -14,10 +14,10 @@ import Dict exposing (Dict)
 import Json.Encode as Encode
 import Json.Decode as Decode
 
+
 -- TODO switch to forms, submit or submit1!
 -- TODO try checkboxes, I want to do something on each click
 -- TODO connect to actual backend
-
 
 -- var currentUrl = window.location.pathname + window.location.search
 
@@ -37,7 +37,7 @@ type alias Value = String
 
 type Error
   = FailedParse
-  | MissingParamsHeader
+  | MissingHeader String
   | ServerError ServerError
   | CannotBuildUrl String
 
@@ -59,7 +59,8 @@ type alias RequestId = Int
 
 
 type alias Model =
-  { html : String
+  { html : Body
+  , title : Title 
   , parsed : Result Error (Html Msg)
   , updates : Dict Action Value
   , requestId : RequestId
@@ -68,7 +69,7 @@ type alias Model =
   , key : Key
   }
 
-main : Program String Model Msg
+main : Program (Title, Body) Model Msg
 main =
   Browser.application
     { init = init
@@ -82,7 +83,7 @@ main =
 type Msg
   = ServerAction Action 
   | ServerUpdate Action Value
-  | Loaded RequestId RequestType (Result Error (String, String))
+  | Loaded RequestId RequestType (Result Error (Params, Body))
   | UrlChange Url
   | None
 
@@ -95,9 +96,10 @@ onUrlRequest _ = None
 
 
 -- "render" the existing html as it stands, and stand by for updates
-init : String -> Url -> Key -> (Model, Cmd Msg)
-init start url key =
+init : (Title, Body) -> Url -> Key -> (Model, Cmd Msg)
+init (title, start) url key =
   ( { html = start
+    , title = title
     , updates = Dict.empty
     , parsed = parseHtml start
     , key = key
@@ -109,13 +111,18 @@ init start url key =
   )
 
 
-onResponse : Response String -> Result Error (String, String)
+
+type alias Body = String
+type alias Params = String
+type alias Title = String
+
+onResponse : Response String -> Result Error (Params, Body)
 onResponse response =
   case response of
     Http.GoodStatus_ meta body ->
-      case Dict.get "x-params" meta.headers of
-        Nothing -> Err MissingParamsHeader
-        Just p -> Ok (p, body)
+      case (getHeader "x-params" meta.headers) of
+        (Ok p) -> Ok (p, body)
+        (Err e) -> Err e
 
     Http.BadUrl_ _ ->
       Err <| ServerError BadUrl
@@ -128,6 +135,13 @@ onResponse response =
 
     Http.BadStatus_ m b ->
       Err <| ServerError <| BadStatus m b
+
+getHeader : String -> Dict String String -> Result Error String
+getHeader h heads =
+  case Dict.get h heads of
+    Nothing -> Err (MissingHeader h)
+    Just p -> Ok p
+
     
 
 
@@ -214,7 +228,7 @@ pageUrl url params =
 view : Model -> Document Msg
 view model =
   -- let test = div [] [ text "Elm Initialized" ]
-  { title = "Titulo"
+  { title = model.title
   , body =
       [ case model.parsed of
           Ok content -> content
@@ -229,11 +243,11 @@ viewError e =
     , span []
        [ case e of
           FailedParse -> text "Failed Parse"
-          MissingParamsHeader -> text "Missing Params from Server"
+          MissingHeader h -> text ("Missing Header from Server: " ++ h)
           ServerError BadUrl -> text "Bad url"
           ServerError Timeout -> text "Timeout"
           ServerError NetworkError -> text "Network Error"
-          ServerError (BadStatus m b) -> text "Bad Status"
+          ServerError (BadStatus _ _) -> text "Bad Status"
           CannotBuildUrl s -> text ("Bad Url Construction: " ++ s)
        ]
     ]

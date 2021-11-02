@@ -124,6 +124,7 @@ toDocument :: Html () -> Html ()
 toDocument cont = do
   html_ $ do
     head_ $ do
+      title_ "Example"
       meta_ [charset_ "UTF-8"]
       meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
       link_ [type_ "text/css", rel_ "stylesheet", href_ "/example/example.css"]

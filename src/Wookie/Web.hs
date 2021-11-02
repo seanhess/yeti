@@ -18,7 +18,7 @@ import Data.List as List (lookup)
 import Web.Scotty (RoutePattern)
 import Web.Scotty.Trans (ActionT, ScottyT, ScottyError)
 import qualified Web.Scotty.Trans as Scotty
-import Lucid (renderBS, Html)
+import Lucid (renderBS, Html, toHtml)
 import Lucid.Html5
 import Network.Wai (rawPathInfo)
 import Control.Monad (when)
@@ -118,8 +118,10 @@ pageUrl path ps =
 render :: (Monad m, ScottyError e) => Bool -> (Html() -> Html ()) -> Html () -> ActionT e m ()
 render embJS toDocument view = do
   Scotty.header "Accept" >>= \case
-    Just "application/vdom" -> lucid view
-    _ -> lucid $ toDocument $ embedContent view
+    Just "application/vdom" -> do
+      lucid view
+    _ -> do
+      lucid $ toDocument $ embedContent view
   where
     -- render the root node and embed the javascript
     embedContent :: Html () -> Html ()
@@ -135,10 +137,11 @@ render embJS toDocument view = do
 
 
 -- | Convenience toDocument function to pass to render. Allows you to add stylesheets and javascript easily
-document :: Html () -> Render
-document extra = Render True $ \content -> do
+document :: Text -> Html () -> Render
+document t extra = Render True $ \content -> do
   html_ $ do
     head_ $ do
+      title_ (toHtml t)
       meta_ [charset_ "UTF-8"]
       meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
 
