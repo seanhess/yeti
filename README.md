@@ -9,6 +9,8 @@ Build Elm
 
 Then go resave JS.hs, or change to non-embed for testing
 
+To build for production add --optimize
+
 Todo
 -----
 

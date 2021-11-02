@@ -1,6 +1,6 @@
 .stack-work/
 .DS_Store
 node_modules
-.ghcid
+ghcid.txt
 dist/
 *~
