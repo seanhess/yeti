@@ -2,8 +2,21 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Wookie.Web where
-
+module Wookie.Web
+  ( handle
+  , Render(..)
+  , render
+  , static
+  , def
+  , page
+  , response
+  , params
+  , pageUrl
+  , document
+  , encodeParams
+  , rawParams
+  , lucid
+  ) where
 
 import Wookie.Runtime (Response(..), runAction, commands)
 import Wookie.Page (Page, PageAction)
@@ -22,6 +35,7 @@ import Lucid (renderBS, Html, toHtml)
 import Lucid.Html5
 import Network.Wai (rawPathInfo)
 import Control.Monad (when)
+import Data.Default (Default, def)
 
 import Text.RawString.QQ
 
@@ -48,6 +62,9 @@ data Render = Render
   , toDoc :: Html () -> Html ()
   }
 
+instance Default Render where
+  def = Render True (document "" "")
+
 -- handle handles it if you're in actionM
 handle
   :: forall params model action e m. (PageAction action, ToParams params, MonadIO m, ScottyError e)
@@ -65,7 +82,6 @@ response pg = do
   ps <- params
   cmds <- commands =<< Scotty.body
   runAction pg ps cmds
-
 
 
 
@@ -137,8 +153,8 @@ render embJS toDocument view = do
 
 
 -- | Convenience toDocument function to pass to render. Allows you to add stylesheets and javascript easily
-document :: Text -> Html () -> Render
-document t extra = Render True $ \content -> do
+document :: Text -> Html () -> (Html () -> Html ())
+document t extra content = do
   html_ $ do
     head_ $ do
       title_ (toHtml t)
