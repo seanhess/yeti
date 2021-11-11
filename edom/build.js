@@ -3977,12 +3977,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 			{
 				_VirtualDom_divertHrefToApp = divertHrefToApp;
 				var doc = view(model);
-				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.O);
+				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.P);
 				var patches = _VirtualDom_diff(currNode, nextNode);
 				bodyNode = _VirtualDom_applyPatches(bodyNode, currNode, patches, sendToApp);
 				currNode = nextNode;
 				_VirtualDom_divertHrefToApp = 0;
-				(title !== doc.N) && (_VirtualDom_doc.title = title = doc.N);
+				(title !== doc.O) && (_VirtualDom_doc.title = title = doc.O);
 			});
 		}
 	);
@@ -4512,8 +4512,8 @@ var _Http_toTask = F3(function(router, toTask, request)
 
 		_Http_configureRequest(xhr, request);
 
-		request.O.a && xhr.setRequestHeader('Content-Type', request.O.a);
-		xhr.send(request.O.b);
+		request.P.a && xhr.setRequestHeader('Content-Type', request.P.a);
+		xhr.send(request.P.b);
 
 		return function() { xhr.c = true; xhr.abort(); };
 	});
@@ -4524,7 +4524,7 @@ var _Http_toTask = F3(function(router, toTask, request)
 
 function _Http_configureRequest(xhr, request)
 {
-	for (var headers = request.Q; headers.b; headers = headers.b) // WHILE_CONS
+	for (var headers = request.R; headers.b; headers = headers.b) // WHILE_CONS
 	{
 		xhr.setRequestHeader(headers.a.a, headers.a.b);
 	}
@@ -4554,7 +4554,7 @@ function _Http_toMetadata(xhr)
 		p: xhr.responseURL,
 		be: xhr.status,
 		bf: xhr.statusText,
-		Q: _Http_parseHeaders(xhr.getAllResponseHeaders())
+		R: _Http_parseHeaders(xhr.getAllResponseHeaders())
 	};
 }
 
@@ -4660,7 +4660,10 @@ function _Http_track(router, xhr, tracker)
 			aL: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
-}var $author$project$Main$UrlChange = function (a) {
+}var $author$project$Main$LinkClicked = function (a) {
+	return {$: 4, a: a};
+};
+var $author$project$Main$UrlChange = function (a) {
 	return {$: 3, a: a};
 };
 var $elm$core$List$cons = _List_cons;
@@ -9274,21 +9277,17 @@ var $author$project$Main$init = F3(
 		var start = _v0.b;
 		return _Utils_Tuple2(
 			{
-				R: start,
-				S: key,
+				S: start,
+				N: key,
 				C: $author$project$Main$parseHtml(start),
 				D: 0,
 				v: false,
-				N: title,
+				O: title,
 				F: $elm$core$Dict$empty,
 				p: url
 			},
 			$elm$core$Platform$Cmd$none);
 	});
-var $author$project$Main$None = {$: 4};
-var $author$project$Main$onUrlRequest = function (_v0) {
-	return $author$project$Main$None;
-};
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (_v0) {
@@ -9741,6 +9740,7 @@ var $elm$http$Http$Header = F2(
 		return {$: 0, a: a, b: b};
 	});
 var $elm$http$Http$header = $elm$http$Http$Header;
+var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $author$project$Main$nextRequestId = $elm$core$Basics$add(1);
 var $author$project$Main$BadStatus = F2(
 	function (a, b) {
@@ -9771,7 +9771,7 @@ var $author$project$Main$onResponse = function (response) {
 		case 4:
 			var meta = response.a;
 			var body = response.b;
-			var _v1 = A2($author$project$Main$getHeader, 'x-params', meta.Q);
+			var _v1 = A2($author$project$Main$getHeader, 'x-params', meta.R);
 			if (!_v1.$) {
 				var p = _v1.a;
 				return $elm$core$Result$Ok(
@@ -9988,9 +9988,9 @@ var $elm$http$Http$cmdMap = F2(
 			return $elm$http$Http$Request(
 				{
 					aX: r.aX,
-					O: r.O,
+					P: r.P,
 					ag: A2(_Http_mapExpect, func, r.ag),
-					Q: r.Q,
+					R: r.R,
 					aq: r.aq,
 					aP: r.aP,
 					aQ: r.aQ,
@@ -10017,7 +10017,7 @@ var $elm$http$Http$subscription = _Platform_leaf('Http');
 var $elm$http$Http$request = function (r) {
 	return $elm$http$Http$command(
 		$elm$http$Http$Request(
-			{aX: false, O: r.O, ag: r.ag, Q: r.Q, aq: r.aq, aP: r.aP, aQ: r.aQ, p: r.p}));
+			{aX: false, P: r.P, ag: r.ag, R: r.R, aq: r.aq, aP: r.aP, aQ: r.aQ, p: r.p}));
 };
 var $author$project$Main$serializeValueAction = F2(
 	function (act, val) {
@@ -10067,12 +10067,12 @@ var $author$project$Main$update = F2(
 						{D: rid, v: true, F: $elm$core$Dict$empty}),
 					$elm$http$Http$request(
 						{
-							O: A2($elm$http$Http$stringBody, 'text/plain', body),
+							P: A2($elm$http$Http$stringBody, 'text/plain', body),
 							ag: A2(
 								$elm$http$Http$expectStringResponse,
 								A2($author$project$Main$Loaded, rid, 0),
 								$author$project$Main$onResponse),
-							Q: _List_fromArray(
+							R: _List_fromArray(
 								[
 									A2($elm$http$Http$header, 'accept', 'application/vdom')
 								]),
@@ -10105,7 +10105,7 @@ var $author$project$Main$update = F2(
 							_Utils_update(
 								model,
 								{
-									R: content,
+									S: content,
 									C: $author$project$Main$parseHtml(content),
 									v: false,
 									p: url
@@ -10114,7 +10114,7 @@ var $author$project$Main$update = F2(
 								if (!rt) {
 									return (!_Utils_eq(
 										$elm$url$Url$fromString(urlString),
-										$elm$core$Maybe$Just(model.p))) ? A2($elm$browser$Browser$Navigation$pushUrl, model.S, urlString) : $elm$core$Platform$Cmd$none;
+										$elm$core$Maybe$Just(model.p))) ? A2($elm$browser$Browser$Navigation$pushUrl, model.N, urlString) : $elm$core$Platform$Cmd$none;
 								} else {
 									return $elm$core$Platform$Cmd$none;
 								}
@@ -10139,12 +10139,12 @@ var $author$project$Main$update = F2(
 						{D: rid, v: true, p: url}),
 					$elm$http$Http$request(
 						{
-							O: A2($elm$http$Http$stringBody, 'text/plain', ''),
+							P: A2($elm$http$Http$stringBody, 'text/plain', ''),
 							ag: A2(
 								$elm$http$Http$expectStringResponse,
 								A2($author$project$Main$Loaded, rid, 1),
 								$author$project$Main$onResponse),
-							Q: _List_fromArray(
+							R: _List_fromArray(
 								[
 									A2($elm$http$Http$header, 'accept', 'application/vdom')
 								]),
@@ -10154,7 +10154,21 @@ var $author$project$Main$update = F2(
 							p: $elm$url$Url$toString(url)
 						}));
 			default:
-				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				var urlRequest = msg.a;
+				if (!urlRequest.$) {
+					var url = urlRequest.a;
+					return _Utils_Tuple2(
+						model,
+						A2(
+							$elm$browser$Browser$Navigation$pushUrl,
+							model.N,
+							$elm$url$Url$toString(url)));
+				} else {
+					var href = urlRequest.a;
+					return _Utils_Tuple2(
+						model,
+						$elm$browser$Browser$Navigation$load(href));
+				}
 		}
 	});
 var $elm$html$Html$span = _VirtualDom_node('span');
@@ -10208,7 +10222,7 @@ var $author$project$Main$viewError = function (e) {
 };
 var $author$project$Main$view = function (model) {
 	return {
-		O: _List_fromArray(
+		P: _List_fromArray(
 			[
 				function () {
 				var _v0 = model.C;
@@ -10221,11 +10235,11 @@ var $author$project$Main$view = function (model) {
 				}
 			}()
 			]),
-		N: model.N
+		O: model.O
 	};
 };
 var $author$project$Main$main = $elm$browser$Browser$application(
-	{a4: $author$project$Main$init, a7: $author$project$Main$UrlChange, a8: $author$project$Main$onUrlRequest, bg: $author$project$Main$subscriptions, bh: $author$project$Main$update, bi: $author$project$Main$view});
+	{a4: $author$project$Main$init, a7: $author$project$Main$UrlChange, a8: $author$project$Main$LinkClicked, bg: $author$project$Main$subscriptions, bh: $author$project$Main$update, bi: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	A2(
 		$elm$json$Json$Decode$andThen,

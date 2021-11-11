@@ -76,7 +76,7 @@ main =
     , update = update
     , subscriptions = subscriptions
     , view = view
-    , onUrlRequest = onUrlRequest
+    , onUrlRequest = LinkClicked
     , onUrlChange = UrlChange
     }
 
@@ -85,14 +85,11 @@ type Msg
   | ServerUpdate Action Value
   | Loaded RequestId RequestType (Result Error (Params, Body))
   | UrlChange Url
-  | None
+  | LinkClicked UrlRequest
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
   Sub.none
-
-onUrlRequest : UrlRequest -> Msg
-onUrlRequest _ = None
 
 
 -- "render" the existing html as it stands, and stand by for updates
@@ -213,8 +210,17 @@ update msg model =
                 }
              )
 
-    None ->
-      (model, Cmd.none)
+    -- an actual link trigger by the user interacting with the browser
+    LinkClicked urlRequest ->
+      case urlRequest of
+        Browser.Internal url ->
+          ( model, Browser.pushUrl model.key (Url.toString url) )
+
+        Browser.External href ->
+          ( model, Browser.load href )
+
+    -- None ->
+    --   (model, Cmd.none)
 
 nextRequestId : RequestId -> RequestId
 nextRequestId = (+) 1
