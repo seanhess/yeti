@@ -1,13 +1,6 @@
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedLists #-}
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveAnyClass #-}
 module Page.Todo where
 
 import Juniper
@@ -23,46 +16,16 @@ import Lucid.Html5
 
 
 
-
-
-
-
-
-
-
-data Todo = Todo
-  { content :: Text
-  , completed :: Bool
-  } deriving (Show, Eq)
-
-
-type Params = (Text, Text)
-
 data Model = Model
   { todos :: [Todo]
   , search :: Text
   , addContent :: Text
-  } deriving (Show, Eq)
+  } deriving (Show, Read, ToParams)
 
-
-
-params :: Model -> Params
-params m = (m.search, m.addContent)
-
-
-
-
-load :: MonadIO m => TVar [Todo] -> Maybe Params -> m Model
-load savedTodos ps = do
-  let (s,t) = fromMaybe (("", "")) ps :: Params
-  ts <- liftIO $ atomically $
-    readTVar savedTodos
-  pure $ Model
-    { todos = ts
-    , search = s
-    , addContent = t
-    }
-
+data Todo = Todo
+  { content :: Text
+  , completed :: Bool
+  } deriving (Show, Read)
 
 
 
@@ -71,8 +34,23 @@ data Action
   | NewTodoInput Value
   | Delete Text
   | Search Value
-  deriving (Show, Read)
-instance PageAction Action
+  deriving (Show, Read, PageAction)
+
+
+
+
+
+load :: MonadIO m => TVar [Todo] -> m Model
+load savedTodos = do
+  ts <- liftIO $ atomically $ readTVar savedTodos
+  pure $ Model
+    { todos = ts
+    , search = ""
+    , addContent = ""
+    }
+
+
+
 
 
 
@@ -116,8 +94,6 @@ deleteTodo savedTodos t = do
 
 
 
-  -- modifyTVar savedTodos (\ts -> ts <> [t])
-
 
 view :: Model -> Html ()
 view m = div_ $ do
@@ -154,10 +130,5 @@ isSearch t (Todo t' _) = Text.isInfixOf (Text.toLower t) (Text.toLower t')
 
 
 
-page :: MonadIO m => TVar [Todo] -> Page Params Model Action m
-page savedTodos =
-  Page
-    params
-    (load savedTodos)
-    (update savedTodos)
-    view
+page :: MonadIO m => TVar [Todo] -> Page Model Model Action m
+page savedTodos = simplePage (load savedTodos) (update savedTodos) view

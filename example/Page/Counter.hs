@@ -1,12 +1,6 @@
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedLists #-}
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 module Page.Counter where
 
 
@@ -23,14 +17,6 @@ import Lucid.Html5
 
 
 
-data Action
-  = Increment
-  | Decrement
-  | Set Integer
-  | GetTime
-  deriving (Show, Read)
-instance PageAction Action
-
 type Params = (Integer, Maybe Text)
 
 data Model = Model
@@ -39,21 +25,24 @@ data Model = Model
   , message :: Maybe Text
   } deriving (Show, Eq)
 
+data Action
+  = Increment
+  | Decrement
+  | Set Integer
+  | GetTime
+  deriving (Show, Read)
+instance PageAction Action
 
 
 params :: Model -> Params
 params m = (m.count, m.message)
 
-
-load :: MonadIO m => Maybe Params -> m Model
-load ps = do
+reload :: MonadIO m => Maybe Params -> m Model
+reload ps = do
   let (c, msg) = fromMaybe (0, Nothing) ps
   t <- liftIO $ Time.getCurrentTime
   pure $ Model c t msg
 
-
--- does it have to be IO?
--- no.... it should be any MonadIO
 update :: MonadIO m => Action -> Model -> m Model
 update Increment m = pure $ m { count = count m + 1 }
 update Decrement m = pure $ m { count = count m - 1 }
@@ -63,10 +52,6 @@ update (Set n)   m = pure $ m { count = n }
 update GetTime   m = pure m
 
 
-
--- it will then get replaced with EXACTLY what's in that resolver
--- what about nested resolvers?
--- TODO make your own onclick attribute that accepts an Action, not text
 view :: Model -> Html ()
 view m = section_ [ class_ "page" ] $ do
 
@@ -97,4 +82,4 @@ view m = section_ [ class_ "page" ] $ do
 
 
 page :: MonadIO m => Page Params Model Action m
-page = Page params load update view
+page = Page params reload update view

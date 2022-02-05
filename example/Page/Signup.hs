@@ -1,9 +1,7 @@
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE TemplateHaskell #-}
 module Page.Signup where
-
 
 import Juniper
 
@@ -16,18 +14,13 @@ import Data.Maybe (fromMaybe, catMaybes)
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
 import Lucid.Html5 hiding (onclick_)
 
--- TODO serialize fragments. Map fragments to specific sub-components. Route Actions to those components.
--- TODO params inside a model instead of mapping. Serialize to JSON now that they are hidden?
 
+-- TODO promote params to first class? So the update can update the params OR the model?
+-- we would need helper functions I think to update each one separately, but that's no so bad
+-- view would need to take both
 
-data Action
-  = EditUsername Value
-  | EditPass1 Value
-  | EditPass2 Value
-  | SignUp
-  deriving (Show, Read)
-instance PageAction Action
-
+-- Params vs Model?
+-- State vs Model?
 
 data Params = Params
   { message :: Text
@@ -52,11 +45,21 @@ data Validation = Validation
   , usernameTooShort :: Bool
   } deriving (Show, Eq)
 
+
+-- EXAMPLE of params inside a model. It keeps them easy to separate, no?
 data Model = Model
   { params :: Params
   , timestamp :: UTCTime
   , signup :: Signup
   } deriving (Show, Eq)
+
+
+data Action
+  = EditUsername Value
+  | EditPass1 Value
+  | EditPass2 Value
+  | SignUp
+  deriving (Show, Read, PageAction)
 
 
 passwordsMatch :: Text -> Text -> Bool
@@ -81,8 +84,8 @@ validPass :: Validation -> Bool
 validPass v = (not $ passwordInvalid v) && (not $ passwordsDoNotMatch v)
 
 
-load :: MonadIO m => Maybe Params -> m Model
-load mps = do
+reload :: MonadIO m => Maybe Params -> m Model
+reload mps = do
   let p = fromMaybe (Params "hello" "" "" "") mps
   t <- liftIO $ Time.getCurrentTime
   let v = Validation False False False False
@@ -169,7 +172,12 @@ validView = do
 
 
 page :: MonadIO m => Page Params Model Action m
-page = Page params load update view
+page = Page params reload update view
+
+
+
+
+
 
 
 -- Simulated Effects ------------------------------
