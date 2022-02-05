@@ -23,7 +23,7 @@ import Json.Decode as Decode
 
   -- // TODO titles
   -- if (pageUrl != currentUrl) {
-  --   let title = "Wookie Tab Title"
+  --   let title = "Juniper Tab Title"
   --   console.log(" - ", "pageUrl", pageUrl)
   --   window.history.pushState({pageUrl: pageUrl}, title, pageUrl)
   -- }
@@ -268,7 +268,7 @@ parseHtml input =
   case (Parser.run input) of
     Err _ -> Err FailedParse
     Ok nodes -> Ok <|
-      div [ id "wookie-root-content"] <|
+      div [ id "juniper-root-content"] <|
         List.map toHtml nodes
 
 
@@ -305,7 +305,7 @@ toSvg node =
 
 toElement : ElementName -> List Parser.Attribute -> List Parser.Node -> Html Msg
 toElement name atts childs =
-  let convertedAtts = List.map toAttribute atts
+  let convertedAtts = List.concatMap toAttribute atts
       convertedChilds = List.map toHtml childs
   in Html.node name convertedAtts convertedChilds
 
@@ -318,7 +318,7 @@ svgToAttribute (name, value) = VirtualDom.attribute name value
 
 svgElement : ElementName -> List Parser.Attribute -> List Parser.Node -> Html Msg
 svgElement name atts childs =
-  let convertedAtts = List.map toAttribute atts
+  let convertedAtts = List.concatMap toAttribute atts
       convertedChilds = List.map toHtml childs
   in Svg.node name convertedAtts convertedChilds
   
@@ -336,33 +336,35 @@ idFromAttributes atts =
 
 
 -- TODO: parse data-click, etc
-toAttribute : (AttributeName, AttributeValue) -> Html.Attribute Msg
+toAttribute : (AttributeName, AttributeValue) -> List (Html.Attribute Msg)
 toAttribute (name, value) =
   case name of
     "data-click" -> 
-      Html.onClick (toMessage value)
+      [Html.onClick (ServerAction value)]
 
     -- TODO, more complex. What does "update" mean in this context? How do we know it's an input field??
 
     "data-input" -> 
-      Html.onInput (ServerUpdate value)
+      [Html.onInput (ServerUpdate value), onEnter (ServerAction submit), Html.onBlur (ServerAction submit)]
 
-    "data-enter" -> 
-      onEnter (toMessage value)
+    -- "data-enter" -> 
+    --   [onEnter (toMessage value)]
+
+    -- "data-blur" -> 
+    --   [Html.onBlur (toMessage value)]
 
     "value" -> 
-      Html.value value
+      [Html.value value]
 
     "checked" -> 
-      Html.checked True
+      [Html.checked True]
 
     _ ->
-      Html.attribute name value
+      [Html.attribute name value]
 
 
-toMessage : AttributeValue -> Msg
-toMessage val = ServerAction val
-
+submit : AttributeValue
+submit = "|Submit|"
 
 onEnter : msg -> Attribute msg
 onEnter msg =

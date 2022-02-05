@@ -3,14 +3,12 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: a60c6482ed645a07ed45b1e598b5fec869fdeebe8e90ebc124803c6ca3f2824d
 
-name:           wookie
+name:           juniper
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/seanhess/wookie#readme>
-homepage:       https://github.com/seanhess/wookie#readme
-bug-reports:    https://github.com/seanhess/wookie/issues
+description:    Please see the README on GitHub at <https://github.com/seanhess/juniper#readme>
+homepage:       https://github.com/seanhess/juniper#readme
+bug-reports:    https://github.com/seanhess/juniper/issues
 author:         Sean Hess
 maintainer:     seanhess@gmail.com
 copyright:      All Rights Reserved
@@ -22,20 +20,20 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/seanhess/wookie
+  location: https://github.com/seanhess/juniper
 
 library
   exposed-modules:
-      Wookie
-      Wookie.Events
-      Wookie.JS
-      Wookie.Page
-      Wookie.Params
-      Wookie.Router
-      Wookie.Runtime
-      Wookie.Web
+      Juniper
+      Juniper.Events
+      Juniper.JS
+      Juniper.Page
+      Juniper.Params
+      Juniper.Router
+      Juniper.Runtime
+      Juniper.Web
   other-modules:
-      Paths_wookie
+      Paths_juniper
   hs-source-dirs:
       src
   build-depends:
@@ -62,15 +60,16 @@ library
     , wai-middleware-static
   default-language: Haskell2010
 
-executable wookie-exe
+executable juniper-exe
   main-is: Main.hs
   other-modules:
       App
       Page.About
       Page.Counter
+      Page.Focus
       Page.Signup
       Page.Todo
-      Paths_wookie
+      Paths_juniper
   hs-source-dirs:
       example
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wname-shadowing -Wincomplete-patterns
@@ -83,6 +82,7 @@ executable wookie-exe
     , data-default
     , file-embed
     , http-types
+    , juniper
     , lens
     , lucid
     , mtl
@@ -98,14 +98,13 @@ executable wookie-exe
     , vector
     , wai
     , wai-middleware-static
-    , wookie
   default-language: Haskell2010
 
-test-suite wookie-test
+test-suite juniper-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_wookie
+      Paths_juniper
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -118,6 +117,7 @@ test-suite wookie-test
     , data-default
     , file-embed
     , http-types
+    , juniper
     , lens
     , lucid
     , mtl
@@ -131,5 +131,4 @@ test-suite wookie-test
     , vector
     , wai
     , wai-middleware-static
-    , wookie
   default-language: Haskell2010

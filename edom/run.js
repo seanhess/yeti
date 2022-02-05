@@ -1,6 +1,6 @@
 
-  var startHtml = document.getElementById('wookie-root-content').innerHTML
+  var startHtml = document.getElementById('juniper-root-content').innerHTML
   var app = Elm.Main.init({
-    node: document.getElementById('wookie-root-content'),
+    node: document.getElementById('juniper-root-content'),
     flags: [document.title, startHtml]
   });

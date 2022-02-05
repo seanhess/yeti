@@ -23,6 +23,7 @@ import qualified Page.Counter as Counter
 import qualified Page.Signup as Signup
 import qualified Page.About as About
 import qualified Page.Todo as Todo
+import qualified Page.Focus as Focus
 import Page.Todo (Todo(..))
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
@@ -34,9 +35,9 @@ import Text.Read (readMaybe)
 
 import Network.HTTP.Types.URI (renderSimpleQuery)
 
-import Wookie.Runtime (Response(..), runAction)
-import Wookie.Router (parsePath)
-import Wookie.Web (page, lucid, static, handle, render, document, Render(..))
+import Juniper.Runtime (Response(..), runAction)
+import Juniper.Router (parsePath)
+import Juniper.Web (page, lucid, static, handle, render, document, Render(..))
 
 
 -- TODO back button doesn't work: history.onpopstate? Just call it again with the current url. The url is updating
@@ -93,7 +94,7 @@ start = do
 
   scotty 3030 $ do
     -- delay to simulate real-world conditions
-    middleware (delay 500)
+    -- middleware (delay 500)
     middleware $ staticWithOptions defaultOptions
 
     page "/app/counter" $ do
@@ -101,6 +102,9 @@ start = do
 
     page "/app/signup" $ do
       handle cfg Signup.page
+
+    page "/app/focus" $ do
+      handle cfg Focus.page
 
     page "/app/todo/:n" $ do
       n <- param "n" :: ActionM Int

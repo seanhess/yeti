@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleInstances #-}
-module Wookie.Params where
+module Juniper.Params where
 
 import Data.String.Conversions (cs, ConvertibleStrings)
 import qualified Data.Text as Text

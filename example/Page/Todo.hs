@@ -10,7 +10,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 module Page.Todo where
 
-import Wookie
+import Juniper
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad (forM_)

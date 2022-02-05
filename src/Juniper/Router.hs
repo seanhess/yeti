@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Wookie.Router
+module Juniper.Router
   ( Path(..)
   , RoutePath(..)
   , renderPath

@@ -1,6 +1,6 @@
-name:                wookie
+name:                juniper
 version:             0.1.0.0
-github:              "seanhess/wookie"
+github:              "seanhess/juniper"
 license:             BSD3
 author:              "Sean Hess"
 maintainer:          "seanhess@gmail.com"
@@ -16,7 +16,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/seanhess/wookie#readme>
+description:         Please see the README on GitHub at <https://github.com/seanhess/juniper#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -45,7 +45,7 @@ library:
   source-dirs: src
 
 executables:
-  wookie-exe:
+  juniper-exe:
     main:                Main.hs
     source-dirs:         example
     ghc-options:
@@ -58,10 +58,10 @@ executables:
     dependencies:
     - record-dot-preprocessor
     - record-hasfield
-    - wookie
+    - juniper
 
 tests:
-  wookie-test:
+  juniper-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -69,4 +69,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - wookie
+    - juniper

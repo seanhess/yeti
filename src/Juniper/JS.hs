@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Wookie.JS where
+module Juniper.JS where
 import Data.ByteString (ByteString)
 import Data.FileEmbed (embedFile)
 

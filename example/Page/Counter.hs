@@ -10,7 +10,7 @@
 module Page.Counter where
 
 
-import Wookie
+import Juniper
 
 import Data.String.Conversions (cs)
 import Control.Monad.IO.Class (MonadIO, liftIO)

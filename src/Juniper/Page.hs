@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MonoLocalBinds #-}
 
-module Wookie.Page
+module Juniper.Page
  ( Page(Page)
  , PageAction(..)
  , stripArgs

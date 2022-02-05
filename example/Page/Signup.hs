@@ -5,7 +5,7 @@
 module Page.Signup where
 
 
-import Wookie
+import Juniper
 
 import Data.String.Conversions (cs)
 import Control.Monad.IO.Class (MonadIO, liftIO)

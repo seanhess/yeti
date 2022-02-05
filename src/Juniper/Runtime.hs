@@ -6,10 +6,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Wookie.Runtime where
+module Juniper.Runtime where
 
 
-import Wookie.Page (Page(..), PageAction(..))
+import Juniper.Page (Page(..), PageAction(..))
 
 import Data.Aeson (ToJSON(..), FromJSON(..))
 import Data.ByteString.Lazy (ByteString)

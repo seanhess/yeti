@@ -4,7 +4,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Page.About where
 
-import Wookie.Web (pageUrl)
+import Juniper.Web (pageUrl)
 
 -- TODO we need an external "Routes" file so we don't get circular referenes
 import Page.Counter as Counter (Params)

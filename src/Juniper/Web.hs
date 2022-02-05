@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Wookie.Web
+module Juniper.Web
   ( handle
   , Render(..)
   , render
@@ -18,10 +18,10 @@ module Wookie.Web
   , lucid
   ) where
 
-import Wookie.Runtime (Response(..), runAction, commands)
-import Wookie.Page (Page, PageAction)
-import Wookie.Params as Params (ToParams(..))
-import Wookie.JS as JS
+import Juniper.Runtime (Response(..), runAction, commands)
+import Juniper.Page (Page, PageAction)
+import Juniper.Params as Params (ToParams(..))
+import Juniper.JS as JS
 import Data.Text.Encoding.Base64 (encodeBase64, decodeBase64)
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Data.Function ((&))
@@ -142,7 +142,7 @@ render embJS toDocument view = do
     -- render the root node and embed the javascript
     embedContent :: Html () -> Html ()
     embedContent v = do
-      div_ [id_ "wookie-root-content"] v
+      div_ [id_ "juniper-root-content"] v
       when embJS $ do
         script_ [type_ "text/javascript"] JS.scripts
 
