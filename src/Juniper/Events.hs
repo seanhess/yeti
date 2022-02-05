@@ -5,12 +5,13 @@ module Juniper.Events where
 
 import Data.Aeson (encode)
 
+import Data.List as List
+import Data.Map as Map (Map, null, empty)
 import Data.String.Conversions (cs)
 import Data.Text as Text (Text, null)
-import Juniper.Page (PageAction(..), stripArgs)
+import Juniper.Page (PageAction(..))
 import Lucid.Base (makeAttribute, Attribute)
 import Lucid.Html5 (onchange_)
-import Data.Map as Map (Map, null, empty)
 
 
 type Name = Text
@@ -97,4 +98,10 @@ instance PageAction Submit where
 
 call :: Text -> String -> Text
 call fun action = mconcat [fun, "(", cs action, ")"]
+
+
+
+stripArgs :: String -> String
+stripArgs = List.dropWhileEnd isArg
+  where isArg c = c == ' ' || c == '_'
 

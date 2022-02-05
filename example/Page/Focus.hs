@@ -23,34 +23,27 @@ import Lucid (Html, toHtml, toHtmlRaw, renderBS)
 import Lucid.Html5
 
 
-
-data Action
-  = One Value
-  | Two Value
-  deriving (Show, Read)
-instance PageAction Action
-
 data Model = Model
   { one :: Text
   , two :: Text
   } deriving (Show, Read, Eq, ToParams)
 
+data Action
+  = One Value
+  | Two Value
+  deriving (Show, Read, PageAction)
 
 
+page :: MonadIO m => Page Model Model Action m
+page = simplePage load update view
 
-load :: MonadIO m => Maybe Model -> m Model
-load (Just m) = pure m
-load Nothing = do
+load :: MonadIO m => m Model
+load = do
   pure $ Model "a" "b"
 
-
--- does it have to be IO?
--- no.... it should be any MonadIO
 update :: MonadIO m => Action -> Model -> m Model
 update (One (Value t)) m = pure $ m { one = t }
 update (Two (Value t)) m = pure $ m { two = t }
-
-
 
 view :: Model -> Html ()
 view m = section_ [ class_ "page" ] $ do
@@ -60,16 +53,5 @@ view m = section_ [ class_ "page" ] $ do
       div_ $ input_ [ value_ m.two, onInput Two ]
       div_ $ toHtml $ m.one <> " " <> m.two
 
-
-
-
-
-
-
-
-
-
-page :: MonadIO m => Page Model Model Action m
-page = Page id load update view
 
 

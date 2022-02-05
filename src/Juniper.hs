@@ -1,5 +1,6 @@
 module Juniper
  ( Page(Page)
+ , simplePage
  , PageAction
  , Submit(..)
  , ToParams(..)
