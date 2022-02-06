@@ -62,11 +62,11 @@ page = simplePage load update view
 
 ### Signup Form
 
-[https://github.com/seanhess/juniper/blob/main/example/Page/Signup.hs](Code)
+[Code](https://github.com/seanhess/juniper/blob/main/example/Page/Signup.hs)
 
 ### Todos
 
-[https://github.com/seanhess/juniper/blob/main/example/Page/Todo.hs](Code)
+[Code](https://github.com/seanhess/juniper/blob/main/example/Page/Todo.hs)
 
 
 
