@@ -10,9 +10,11 @@ Today we have React and Elm, which update a view based on a changing state. Thes
 
 Juniper is an implementation of Elm running on a Haskell server. State is maintained in the URL, all logic runs on the server, then then views are rendered efficiently via virtual dom on the client.
 
-- **One Application** - There's no need to think about an API. You can render your data models directly. Write all your logic in Haskell
-- **Isolated Views** - Each page is an independent application. You can reuse code of course.
-- **Virtual DOM** - The rendered HTML is diffed by an Elm application running on the client. Only the parts that have changed are re-rendered
+**One Application** - There's no need to think about an API. You can render your data models directly. Write all your logic in Haskell
+
+**Isolated Views** - Each page is an independent application. You can reuse code of course.
+
+**Virtual DOM** - The rendered HTML is diffed by an Elm application running on the client. Only the parts that have changed are re-rendered
 
 ## Examples
 
