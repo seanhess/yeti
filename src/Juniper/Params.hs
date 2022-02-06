@@ -14,7 +14,7 @@ import Data.Time.Format (defaultTimeLocale, formatTime, parseTimeM)
 
 
 
--- TODO use megaparsec
+-- TODO better serialization than read/show?
 class ToParams a where
   encode :: a -> Text
   decode :: Text -> Maybe a
@@ -43,7 +43,5 @@ instance (Show a, Show b, Show c, Read a, Read b, Read c) => ToParams (a, b, c)
 
 instance (Show a, Show b, Show c, Show d, Read a, Read b, Read c, Read d) => ToParams (a, b, c, d)
 
--- this will decode Maybe Text as ""
--- instance (ToParams a, Show a, Read a) => ToParams (Maybe a)
 
 
