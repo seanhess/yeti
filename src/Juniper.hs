@@ -11,8 +11,11 @@ module Juniper
  , onInput, onClick, onEnter --, onBlur
  , scripts
  , Html
+ , FromJSON, ToJSON, Generic
  ) where
 
+import Data.Aeson (FromJSON, ToJSON)
+import GHC.Generics (Generic)
 import Juniper.Page
 import Juniper.Events
 import Juniper.Params

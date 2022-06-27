@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Page.Focus where
 
 
@@ -19,7 +20,7 @@ import Lucid.Html5
 data Model = Model
   { one :: Text
   , two :: Text
-  } deriving (Show, Read, Eq, ToParams)
+  } deriving (Generic, ToJSON, FromJSON, Eq, ToParams)
 
 data Action
   = One Value

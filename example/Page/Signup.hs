@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Page.Signup where
 
 import Juniper
@@ -27,7 +28,7 @@ data Params = Params
   , username :: Text
   , pass1 :: Text
   , pass2 :: Text
-  } deriving (Show, Eq, Read, ToParams)
+  } deriving (Show, Eq, Generic, ToJSON, FromJSON, ToParams)
 
 
 type Username = Text

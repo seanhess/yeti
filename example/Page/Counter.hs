@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Page.Counter where
 
 import Control.Monad.IO.Class (MonadIO)
@@ -10,7 +11,7 @@ import Lucid.Html5
 
 data Model = Model
   { count :: Integer
-  } deriving (Show, Read, ToParams)
+  } deriving (Generic, ToJSON, FromJSON, ToParams)
 
 data Action
   = Increment

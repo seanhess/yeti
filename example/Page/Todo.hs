@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Page.Todo where
 
 import Juniper
@@ -20,12 +21,12 @@ data Model = Model
   { todos :: [Todo]
   , search :: Text
   , addContent :: Text
-  } deriving (Show, Read, ToParams)
+  } deriving (Generic, ToJSON, FromJSON, ToParams)
 
 data Todo = Todo
   { content :: Text
   , completed :: Bool
-  } deriving (Show, Read)
+  } deriving (Generic, ToJSON, FromJSON)
 
 
 
