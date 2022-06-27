@@ -80,8 +80,8 @@ onInput con = makeAttribute "data-input" $ cs $ stripArgs $ showAction $ con mem
 onEnter :: PageAction action => action -> Attribute
 onEnter = makeAttribute "data-enter" . cs . showAction
 
-onBlur :: PageAction action => action -> Attribute
-onBlur = makeAttribute "data-blur" . cs . showAction
+-- onBlur :: PageAction action => action -> Attribute
+-- onBlur = makeAttribute "data-blur" . cs . showAction
 
 
 

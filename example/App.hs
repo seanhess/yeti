@@ -106,8 +106,8 @@ start = do
     page "/app/focus" $ do
       handle cfg Focus.page
 
-    page "/app/todo/:n" $ do
-      n <- param "n" :: ActionM Int
+    page "/app/todo" $ do
+      -- n <- param "n" :: ActionM Int
       -- liftIO $ print n
       handle cfg $ Todo.page todos
 
@@ -122,6 +122,13 @@ start = do
     page "/test/:message" $ do
       m <- param "message" :: ActionM TL.Text
       html $ "<div id='container'><p>"<> m <>"</p><input type='text'/><p>Hello!</p><button data-click='Action 3'>PRESS</button></div>"
+
+    get "/" $ do
+      html $ cs $ renderBS $ ol_ [] $ do
+        li_ $ a_ [href_ "/app/counter"] "Counter"
+        li_ $ a_ [href_ "/app/signup"] "Signup"
+        li_ $ a_ [href_ "/app/focus"] "Focus"
+        li_ $ a_ [href_ "/app/todo"] "Todo"
 
 
 toDocument :: Html () -> Html ()

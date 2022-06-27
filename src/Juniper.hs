@@ -8,7 +8,7 @@ module Juniper
  , page
  , handle
  , Render(..)
- , onInput, onClick, onEnter, onBlur
+ , onInput, onClick, onEnter --, onBlur
  , scripts
  , Html
  ) where

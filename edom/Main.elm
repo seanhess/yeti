@@ -335,20 +335,18 @@ idFromAttributes atts =
     ((_,id)::_) -> Just id
 
 
--- TODO: parse data-click, etc
 toAttribute : (AttributeName, AttributeValue) -> List (Html.Attribute Msg)
 toAttribute (name, value) =
   case name of
     "data-click" -> 
       [Html.onClick (ServerAction value)]
 
-    -- TODO, more complex. What does "update" mean in this context? How do we know it's an input field??
-
     "data-input" -> 
+      -- automatically commit changes on enter or blur for inputs
       [Html.onInput (ServerUpdate value), onEnter (ServerAction submit), Html.onBlur (ServerAction submit)]
 
-    -- "data-enter" -> 
-    --   [onEnter (toMessage value)]
+    "data-enter" -> 
+      [onEnter (ServerAction value)]
 
     -- "data-blur" -> 
     --   [Html.onBlur (toMessage value)]

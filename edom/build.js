@@ -9310,6 +9310,12 @@ var $author$project$Main$toAttribute = function (_v0) {
 					$elm$html$Html$Events$onBlur(
 					$author$project$Main$ServerAction($author$project$Main$submit))
 				]);
+		case 'data-enter':
+			return _List_fromArray(
+				[
+					$author$project$Main$onEnter(
+					$author$project$Main$ServerAction(value))
+				]);
 		case 'value':
 			return _List_fromArray(
 				[
