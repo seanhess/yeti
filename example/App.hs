@@ -25,6 +25,7 @@ import qualified Page.Signup as Signup
 import qualified Page.About as About
 import qualified Page.Todo as Todo
 import qualified Page.Focus as Focus
+import qualified Page.Article as Article
 import Page.Todo (Todo(..))
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
@@ -36,9 +37,8 @@ import Text.Read (readMaybe)
 
 import Network.HTTP.Types.URI (renderSimpleQuery)
 
-import Juniper.Runtime (Response(..), runAction)
 import Juniper.Router (parsePath)
-import Juniper.Web (page, lucid, static, handle, render, document, Render(..))
+import Juniper.Web (page, lucid, static, handle, document, Render(..))
 
 
 -- TODO back button doesn't work: history.onpopstate? Just call it again with the current url. The url is updating
@@ -112,9 +112,14 @@ start = do
       -- liftIO $ print n
       handle cfg $ Todo.page todos
 
+    page "/app/article/:id" $ do
+      i <- param "id"
+      handle cfg $ Article.page i
+
     -- if you use "lucid" it doesn't work
     get "/app/about" $
       static $ About.view
+
 
     get "/hello/:name" $ do
       name <- param "name"

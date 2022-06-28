@@ -14,10 +14,6 @@ data Model = Model
   { count :: Integer
   } deriving (Generic, ToJSON, FromJSON, ToParams)
 
-instance HasParams Model () where
-  toParams _ = ()
-  defParams = ()
-
 data Action
   = Increment
   | Decrement

@@ -38,6 +38,7 @@ dependencies:
 - text
 - time
 - unordered-containers
+- url
 - vector
 - wai
 - wai-middleware-static

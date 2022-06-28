@@ -23,10 +23,6 @@ data Model = Model
   , two :: Text
   } deriving (Generic, ToJSON, FromJSON, Eq, ToParams)
 
-instance HasParams Model () where
-  toParams _ = ()
-  defParams = ()
-
 data Action
   = One Value
   | Two Value

@@ -16,10 +16,6 @@ import Data.Function ((&))
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
 import Lucid.Html5
 
--- the only parameter is the search text
-data Params = Params
-  { search :: Text
-  } deriving (Generic, ToJSON, FromJSON, ToParams)
 
 data Model = Model
   { todos :: [Todo]
@@ -27,14 +23,14 @@ data Model = Model
   , addContent :: Text
   } deriving (Generic, ToJSON, FromJSON, ToParams)
 
-instance HasParams Model Params where
-  toParams m = Params m.search
-  defParams = Params ""
+-- the only parameter is the search text
+data Params = Params
+  { search :: Text
+  } deriving (Generic, ToJSON, FromJSON, ToParams)
 
--- each one has to mention all of them!
--- instance ToParams Model Params where
---   params :: Model -> Params
---   params = (.search)
+toParams :: Model -> Params
+toParams m = Params m.search
+
 
 data Todo = Todo
   { content :: Text
@@ -52,13 +48,14 @@ data Action
 
 
 
--- only calls load if the model is missing
-load :: MonadIO m => TVar [Todo] -> Params -> m Model
-load savedTodos p = do
+-- you have to load even if no params were specified
+load :: MonadIO m => TVar [Todo] -> Maybe Params -> m Model
+load savedTodos mps = do
+  let ps = fromMaybe (Params "") $ mps
   ts <- liftIO $ atomically $ readTVar savedTodos
   pure $ Model
     { todos = ts
-    , search = p.search
+    , search = ps.search
     , addContent = ""
     }
 

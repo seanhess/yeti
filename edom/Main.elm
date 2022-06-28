@@ -61,6 +61,7 @@ type alias RequestId = Int
 type alias Model =
   { html : Body
   , title : Title 
+  , state : State
   , parsed : Result Error (Html Msg)
   , updates : Dict Action Value
   , requestId : RequestId
@@ -69,7 +70,7 @@ type alias Model =
   , key : Key
   }
 
-main : Program (Title, Body) Model Msg
+main : Program (Title, Body, State) Model Msg
 main =
   Browser.application
     { init = init
@@ -93,10 +94,12 @@ subscriptions _ =
 
 
 -- "render" the existing html as it stands, and stand by for updates
-init : (Title, Body) -> Url -> Key -> (Model, Cmd Msg)
-init (title, start) url key =
+-- no... I want the state from the request NOW. How can I get it? Passed in from the JS?
+init : (Title, Body, State) -> Url -> Key -> (Model, Cmd Msg)
+init (title, start, state) url key =
   ( { html = start
     , title = title
+    , state = state
     , updates = Dict.empty
     , parsed = parseHtml start
     , key = key
@@ -111,7 +114,9 @@ init (title, start) url key =
 
 type alias Body = String
 type alias Params = String
+type alias State = String
 type alias Title = String
+type alias Content = String
 
 onResponse : Response String -> Result Error (Params, Body)
 onResponse response =
@@ -146,6 +151,11 @@ serializeValueAction : Action -> Value -> String
 serializeValueAction act val =
   (act ++ " " ++ Encode.encode 0 (Encode.string val))
 
+requestBody : Action -> Model -> Body
+requestBody action model =
+  let updates = Dict.foldl (\act val items -> serializeValueAction act val :: items) [] model.updates
+      body = String.join "\n" (model.state :: updates ++ [action])
+  in body
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -157,9 +167,7 @@ update msg model =
       )
 
     ServerAction action ->
-      let updates = Dict.foldl (\act val items -> serializeValueAction act val :: items) [] model.updates
-          body = String.join "\n" (updates ++ [action])
-          rid = nextRequestId model.requestId
+      let rid = nextRequestId model.requestId
       in if model.requestPending
             then ( model, Cmd.none )
             else ( { model | updates = Dict.empty, requestId = rid, requestPending = True }
@@ -167,19 +175,20 @@ update msg model =
                      { method = "POST"
                      , headers = [Http.header "accept" "application/vdom"]
                      , url = Url.toString model.url
-                     , body = Http.stringBody "text/plain" body
+                     , body = Http.stringBody "text/plain" (requestBody action model)
                      , timeout = Nothing
                      , tracker = Nothing
                      , expect = Http.expectStringResponse (Loaded rid RequestAction) onResponse
                      }
                  )
 
-    Loaded _ rt (Ok (params, content)) ->
+    Loaded _ rt (Ok (params, body)) ->
       let urlString = pageUrl model.url params
+          (state, content) = parseBody body
       in case Url.fromString urlString of
           Nothing -> ( { model | parsed = Err (CannotBuildUrl urlString), requestPending = False }, Cmd.none )
           Just url -> 
-            ( { model | html = content, parsed = parseHtml content, url = url, requestPending = False }
+            ( { model | html = content, parsed = parseHtml content, url = url, state = state, requestPending = False }
             ,  case rt of
                  RequestAction ->
                    if Url.fromString urlString /= Just model.url
@@ -222,13 +231,20 @@ update msg model =
     -- None ->
     --   (model, Cmd.none)
 
+parseBody : Body -> (State, Content)
+parseBody b = 
+  let ls = String.lines b
+      st = String.join "" <| List.take 1 ls
+      ct = String.join "\n" <| List.drop 1 ls
+  in (st, ct)
+
 nextRequestId : RequestId -> RequestId
 nextRequestId = (+) 1
 
 -- use the current url, but add the params
 pageUrl : Url -> String -> String
 pageUrl url params =
-  Url.toString { url | query = Just <| "p=" ++ params }
+  Url.toString { url | query = Just params }
 
 
 view : Model -> Document Msg

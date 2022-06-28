@@ -18,7 +18,7 @@ data Page params model action m = Page
   }
 
 
-type Load   params model m = params -> m model
+type Load   params model m = Maybe params -> m model
 type Params params model   = model -> params
 type Update action model m = action -> model -> m model
 type View          model   = model -> Html ()

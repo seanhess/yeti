@@ -18,13 +18,6 @@ import Lucid (Html, toHtml, toHtmlRaw, renderBS)
 import Lucid.Html5 hiding (onclick_)
 
 
--- TODO promote params to first class? So the update can update the params OR the model?
--- we would need helper functions I think to update each one separately, but that's no so bad
--- view would need to take both
-
--- Params vs Model?
--- State vs Model?
-
 -- data Params = Params
 --   { message :: Text
 --   , username :: Text
@@ -32,9 +25,7 @@ import Lucid.Html5 hiding (onclick_)
 --   , pass2 :: Text
 --   } deriving (Show, Eq, Generic, ToJSON, FromJSON, ToParams)
 
-
 type Username = Text
-
 
 data Signup
   = Working Validation
@@ -57,10 +48,6 @@ data Model = Model
   , timestamp :: UTCTime
   , signup :: Signup
   } deriving (Show, Eq, Generic, FromJSON, ToJSON)
-
-instance HasParams Model () where
-  toParams _ = ()
-  defParams = ()
 
 
 data Action

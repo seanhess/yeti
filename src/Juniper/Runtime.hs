@@ -45,32 +45,39 @@ data Command action
   | Update action
 
 
+run
+  :: (Monad m, FromJSON model, PageAction action)
+  => Page params model action m
+  -> Maybe params
+  -> Maybe model
+  -> [Command action]
+  -> m model
+run pg mps Nothing _     = runLoad pg mps
+run pg mps (Just m) cmds = runActions pg m cmds
+
 -- if we only have params, no model, and no commands
 runLoad
   :: forall m model params action. (Monad m, PageAction action)
   => Page params model action m
-  -> params 
-  -> m (Response params)
+  -> Maybe params 
+  -> m model
 runLoad (Page params load update view) ps = do
-
-  m <- load ps
-
-  pure $ Response (view m) (params m)
+  load ps
 
 
 -- we can only run actions if we already have a model
-runAction
+runActions
   :: forall m model params action. (Monad m, PageAction action)
   => Page params model action m
   -> model
   -> [Command action]
-  -> m (Response params)
-runAction (Page params load update view) m cmds = do
+  -> m model
+runActions (Page params load update view) m cmds = do
+  foldM (runCommand update) m cmds
 
-  m' <- foldM (runCommand update) m cmds
 
-  -- respond
-  pure $ Response (view m') (params m')
+response :: Page params model action m -> model -> Response params
+response pg m = Response (pg.view m) (pg.params m)
 
 
 runCommand :: (Monad m) => (action -> model -> m model) -> model -> Command action -> m model
