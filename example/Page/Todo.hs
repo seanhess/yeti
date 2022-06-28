@@ -21,12 +21,12 @@ data Model = Model
   { todos :: [Todo]
   , search :: Text
   , addContent :: Text
-  } deriving (Generic, ToJSON, FromJSON, ToParams)
+  } deriving (Read, Show, ToState)
 
 -- the only parameter is the search text
 data Params = Params
   { search :: Text
-  } deriving (Generic, ToJSON, FromJSON, ToParams)
+  } deriving (Generic, ToParams)
 
 toParams :: Model -> Params
 toParams m = Params m.search
@@ -35,7 +35,7 @@ toParams m = Params m.search
 data Todo = Todo
   { content :: Text
   , completed :: Bool
-  } deriving (Generic, ToJSON, FromJSON)
+  } deriving (Read, Show)
 
 data Action
   = AddTodo

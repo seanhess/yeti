@@ -18,7 +18,7 @@ data Model = Model
   { article  :: Article
   , comment :: Text
   , comments :: [Text]
-  } deriving (Generic, ToJSON, FromJSON)
+  } deriving (Show, Read, ToState)
 
 fakeDatabase :: [(Id, Article)]
 fakeDatabase = map (\a -> (a.articleId, a))
@@ -33,7 +33,7 @@ type Id = Text
 data Article = Article
   { articleId :: Id
   , articleText :: Text
-  } deriving (Generic, ToJSON, FromJSON)
+  } deriving (Read, Show)
 
 
 data Action

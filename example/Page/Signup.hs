@@ -30,14 +30,14 @@ type Username = Text
 data Signup
   = Working Validation
   | Valid
-  deriving (Show, Eq, Generic, FromJSON, ToJSON)
+  deriving (Show, Read, Eq)
 
 data Validation = Validation
   { passwordsDoNotMatch :: Bool
   , passwordInvalid :: Bool
   , usernameIsTaken :: Bool
   , usernameTooShort :: Bool
-  } deriving (Show, Eq, Generic, FromJSON, ToJSON)
+  } deriving (Show, Read, Eq)
 
 
 -- EXAMPLE of params inside a model. It keeps them easy to separate, no?
@@ -47,7 +47,7 @@ data Model = Model
   , pass2 :: Text
   , timestamp :: UTCTime
   , signup :: Signup
-  } deriving (Show, Eq, Generic, FromJSON, ToJSON)
+  } deriving (Show, Read, Eq, ToState)
 
 
 data Action

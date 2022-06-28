@@ -17,8 +17,8 @@ import Juniper.Runtime as Runtime (Response(..))
 import qualified Juniper.Runtime as Runtime
 import Juniper.Page (Page, PageAction)
 import Juniper.Params as Params (ToParams(..))
+import Juniper.State as State (ToState(..))
 import Juniper.JS as JS
-import Data.Aeson (FromJSON, ToJSON)
 import Data.ByteString.Lazy (ByteString)
 import Data.Text.Encoding.Base64 (encodeBase64, decodeBase64)
 import Data.Text as Text (intercalate, dropWhile)
@@ -57,7 +57,7 @@ instance Default Render where
 
 -- handle handles it if you're in actionM
 handle
-  :: forall params model action e m. (FromJSON model, ToJSON model, ToParams params, PageAction action, MonadIO m, ScottyError e)
+  :: forall params model action e m. (ToState model, ToParams params, PageAction action, MonadIO m, ScottyError e)
   => Render
   -> Page params model action (ActionT e m)
   -> ActionT e m ()
@@ -91,28 +91,31 @@ pageUrl path ps =
 -- TODO they should embed the html itself?
 -- do we choose how to embed it or not?
 
-respond :: (Monad m, ScottyError e, ToJSON model, ToParams params) => Bool -> (Html() -> Html ()) -> params -> model -> Html () -> ActionT e m ()
+respond :: (Monad m, ScottyError e, ToState model, ToParams params) => Bool -> (Html() -> Html ()) -> params -> model -> Html () -> ActionT e m ()
 respond embJS toDocument ps model view = do
 
   setParams
 
   Scotty.header "Accept" >>= \case
     Just "application/vdom" -> do
-      vdom stateJSON view
+      vdom stateString view
       
     _ -> do
       lucid $ toDocument $ embedContent view
 
   where
-    stateJSON = Aeson.encode model
-    stateString = Aeson.encode (cs stateJSON :: Text)
+    stateString :: Text
+    stateString = State.encode model
+
+    stateJSON :: ByteString
+    stateJSON = Aeson.encode (cs stateString :: Text)
 
     setParams = 
       Scotty.setHeader "X-Params" $ cs $ Params.encode ps
 
     embedStateScript :: Html ()
     embedStateScript = 
-      script_ [type_ "text/javascript", id_ "juniper-state" ] ("let juniperState = " <> stateString)
+      script_ [type_ "text/javascript", id_ "juniper-state" ] ("let juniperState = " <> stateJSON)
 
 
     -- render the root node and embed the javascript
@@ -129,6 +132,13 @@ respond embJS toDocument ps model view = do
       -- DEBUGGING MODE
       -- script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
       -- script_ [type_ "text/javascript", src_ "/edom/run.js"] ("" :: Text)
+
+    vdom :: (ScottyError e, Monad m) => Text -> Html () -> ActionT e m ()
+    vdom s h = do
+      Scotty.setHeader "Content-Type" "application/vdom"
+      Scotty.raw $
+        cs s <> "\n" <> (Lucid.renderBS h)
+
 
 
 
@@ -160,11 +170,6 @@ lucid h = do
   Scotty.setHeader "Content-Type" "text/html"
   Scotty.raw . Lucid.renderBS $ h
 
-vdom :: (ScottyError e, Monad m) => ByteString -> Html () -> ActionT e m ()
-vdom s h = do
-  Scotty.setHeader "Content-Type" "application/vdom"
-  Scotty.raw $
-    s <> "\n" <> (Lucid.renderBS h)
 
 
       

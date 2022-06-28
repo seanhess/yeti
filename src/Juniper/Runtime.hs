@@ -3,9 +3,9 @@ module Juniper.Runtime where
 
 import Juniper.Prelude
 import Juniper.Page (Page(..), PageAction(..))
+import Juniper.State as State (ToState(..))
 
 import qualified Data.Aeson as Aeson
-import Data.Aeson (ToJSON(..), FromJSON(..))
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as TL (Text)
@@ -15,13 +15,6 @@ import Text.Read (readMaybe)
 import Data.Map ((!?))
 import Control.Monad (foldM)
 
-
-
-data Message = Message
-  { action :: Text
-  , url :: Text
-  } deriving (Show, Eq, Generic)
-instance FromJSON Message
 
 
 data Response params = Response
@@ -46,7 +39,7 @@ data Command action
 
 
 run
-  :: (Monad m, FromJSON model, PageAction action)
+  :: (Monad m, ToState model, PageAction action)
   => Page params model action m
   -> Maybe params
   -> Maybe model
@@ -89,12 +82,15 @@ runCommand update m cmd =
 
 
 
-parseBody :: (MonadFail m, PageAction action, FromJSON model) => ByteString -> m (Maybe model, [Command action])
+parseBody :: (MonadIO m, MonadFail m, PageAction action, ToState model) => ByteString -> m (Maybe model, [Command action])
 parseBody body = do
+  putStrLn "PARSE BODY"
   case BSL.split newline body of
     [] -> pure (Nothing, [])
     (ml:cls) -> do
       -- the first line is always the model, you can't run actions without it
+      putStrLn "-body"
+      putStrLn $ cs ml
       m <- parseModel ml
 
       -- each other line contains an action
@@ -104,11 +100,12 @@ parseBody body = do
   where newline = 10 -- fromEnum '\n'
 
 
-parseModel :: (MonadFail m, FromJSON model) => ByteString -> m model
+parseModel :: (MonadFail m, MonadIO m, ToState model) => ByteString -> m model
 parseModel inp = do
-  case Aeson.eitherDecode inp of
-    Left e -> fail $ "Could not parse model: " <> e <> "\n from input: " <> cs inp
-    Right m -> pure m
+  putStrLn $ cs inp
+  case State.decode (cs inp) of
+    Nothing -> fail $ "Could not parse model: " <> cs inp
+    Just m -> pure m
 
 
 

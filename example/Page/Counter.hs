@@ -12,7 +12,7 @@ import Lucid.Html5
 
 data Model = Model
   { count :: Integer
-  } deriving (Generic, ToJSON, FromJSON, ToParams)
+  } deriving (Read, Show, ToState)
 
 data Action
   = Increment

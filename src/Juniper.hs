@@ -3,7 +3,8 @@ module Juniper
  , simplePage
  , PageAction
  , Submit(..)
- , ToParams(..)
+ , ToParams
+ , ToState
  , Value(..)
  , page
  , handle
@@ -19,6 +20,7 @@ import GHC.Generics (Generic)
 import Juniper.Page
 import Juniper.Events
 import Juniper.Params
+import Juniper.State
 import Juniper.Web
 import Juniper.JS (scripts)
 import Lucid (Html)

@@ -21,7 +21,7 @@ import Lucid.Html5
 data Model = Model
   { one :: Text
   , two :: Text
-  } deriving (Generic, ToJSON, FromJSON, Eq, ToParams)
+  } deriving (Read, Show, ToState, Eq)
 
 data Action
   = One Value
