@@ -1,7 +1,6 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Juniper.JS where
+
+import Juniper.Prelude
 import Data.ByteString (ByteString)
 import Data.FileEmbed (embedFile)
 

@@ -4,8 +4,10 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Page.Signup where
 
+import Prelude
 import Juniper
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.String.Conversions (cs)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
@@ -23,12 +25,12 @@ import Lucid.Html5 hiding (onclick_)
 -- Params vs Model?
 -- State vs Model?
 
-data Params = Params
-  { message :: Text
-  , username :: Text
-  , pass1 :: Text
-  , pass2 :: Text
-  } deriving (Show, Eq, Generic, ToJSON, FromJSON, ToParams)
+-- data Params = Params
+--   { message :: Text
+--   , username :: Text
+--   , pass1 :: Text
+--   , pass2 :: Text
+--   } deriving (Show, Eq, Generic, ToJSON, FromJSON, ToParams)
 
 
 type Username = Text
@@ -37,22 +39,28 @@ type Username = Text
 data Signup
   = Working Validation
   | Valid
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
 data Validation = Validation
   { passwordsDoNotMatch :: Bool
   , passwordInvalid :: Bool
   , usernameIsTaken :: Bool
   , usernameTooShort :: Bool
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
 
 -- EXAMPLE of params inside a model. It keeps them easy to separate, no?
 data Model = Model
-  { params :: Params
+  { username :: Text
+  , pass1 :: Text
+  , pass2 :: Text
   , timestamp :: UTCTime
   , signup :: Signup
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic, FromJSON, ToJSON)
+
+instance HasParams Model () where
+  toParams _ = ()
+  defParams = ()
 
 
 data Action
@@ -85,24 +93,23 @@ validPass :: Validation -> Bool
 validPass v = (not $ passwordInvalid v) && (not $ passwordsDoNotMatch v)
 
 
-reload :: MonadIO m => Maybe Params -> m Model
-reload mps = do
-  let p = fromMaybe (Params "hello" "" "" "") mps
+load :: MonadIO m => m Model
+load = do
   t <- liftIO $ Time.getCurrentTime
   let v = Validation False False False False
-  pure $ Model p t (Working v)
+  pure $ Model "" "" "" t (Working v)
 
 
 
 update :: MonadIO m => Action -> Model -> m Model
 update (EditUsername (Value t)) m =
-  pure $ m { params = m.params { username = t }}
+  pure $ m { username = t }
 update (EditPass1 (Value t)) m =
-  pure $ m { params = m.params { pass1 = t }}
+  pure $ m { pass1 = t }
 update (EditPass2 (Value t)) m =
-  pure $ m { params = m.params { pass2 = t }}
+  pure $ m { pass2 = t }
 update SignUp m = do
-  v <- validate m.params.username m.params.pass1 m.params.pass2
+  v <- validate m.username m.pass1 m.pass2
   pure $ m { signup = if isValid v then Valid else Working v }
 
 
@@ -137,18 +144,18 @@ workingView m v = do
   div_ [ class_ $ if (validUser v) then "section" else "section error" ] $ do
     div_ $ label_ [ for_ "username" ] "Username"
     div_ $ do
-      input_ [ name_ "username", type_ "text", value_ (m.params.username), onInput (EditUsername) ]
+      input_ [ name_ "username", type_ "text", value_ (m.username), onInput (EditUsername) ]
       mapM_ (span_ [ class_ "message" ] . toHtml) (userErrorMessages v)
 
   div_ [ class_ $ if (validPass v) then "section" else "section error" ] $ do
     div_ $ label_ [ for_ "password1" ] "Password"
     div_ $ do
-      input_ [ name_ "password1", type_ "password", value_ (m.params.pass1), onInput (EditPass1) ]
+      input_ [ name_ "password1", type_ "password", value_ (m.pass1), onInput (EditPass1) ]
       mapM_ (span_ [ class_ "message" ] . toHtml) (passErrorMessages v)
 
   div_ [ class_ $ if (validPass v) then "section" else "section error" ] $ do
     div_ $ label_ [ for_ "password2" ] "Re-type Password"
-    div_ $ input_ [ name_ "password2", type_ "password", value_ (m.params.pass2), onInput (EditPass2) ]
+    div_ $ input_ [ name_ "password2", type_ "password", value_ (m.pass2), onInput (EditPass2) ]
 
   div_ [ class_ "row" ] $
     button_ [ onClick SignUp ] "Sign Up"
@@ -172,8 +179,8 @@ validView = do
   p_ "Thanks for signing up!"
 
 
-page :: MonadIO m => Page Params Model Action m
-page = Page params reload update view
+page :: MonadIO m => Page () Model Action m
+page = simplePage load update view
 
 
 
@@ -187,6 +194,7 @@ checkIsUsernameUsed :: Applicative m => Username -> m Bool
 checkIsUsernameUsed n = do
     pure $ n `elem` existing
   where
+    existing :: [Username]
     existing = ["henry", "david", "bob", "alison", "clarice", "stephanie"]
 
 

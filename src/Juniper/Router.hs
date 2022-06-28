@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Juniper.Router
   ( Path(..)
   , RoutePath(..)
@@ -10,12 +9,9 @@ module Juniper.Router
   ) where
 
 
+import Juniper.Prelude
 import Data.String (IsString(..))
 import Text.Read (readMaybe)
-import Data.Function ((&))
-import Control.Applicative ((<|>))
-import Data.Maybe (fromMaybe, mapMaybe)
-import Data.String.Conversions (cs)
 import Data.Map as Map (Map, toList, fromList, lookup)
 import Data.Text as Text (Text, intercalate, splitOn, stripPrefix, stripSuffix)
 

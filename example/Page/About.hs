@@ -6,6 +6,7 @@ import Juniper.Web (pageUrl)
 -- TODO we need an external "Routes" file so we don't get circular referenes
 -- import Page.Counter as Counter (Params)
 
+import Prelude
 import Data.Text (Text)
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
 import Lucid.Html5

@@ -1,19 +1,37 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleInstances #-}
+
 module Juniper.Params where
 
-import Data.String.Conversions (cs, ConvertibleStrings)
+import Juniper.Prelude
 import qualified Data.Text as Text
-import Data.Text (Text)
-import Data.Function ((&))
-import Text.Read (readMaybe)
-import Data.Maybe (mapMaybe)
 import Data.Time.Calendar (Day)
 import Data.Time.Format (defaultTimeLocale, formatTime, parseTimeM)
 import Data.ByteString.Lazy (ByteString)
 import Data.Aeson (ToJSON, FromJSON)
 import qualified Data.Aeson as Aeson
+
+import qualified Data.Text.Lazy as LT
+
+
+
+class HasParams m p | p -> m where
+  toParams :: m -> p
+
+  defParams :: p
+
+  -- this shouldn't be the scotty type, but it's close, so why not?
+  encParams :: p -> [(LT.Text, LT.Text)]
+
+  default encParams :: p -> [(LT.Text, LT.Text)]
+  encParams _ = []
+
+  decParams :: [(LT.Text, LT.Text)] -> Maybe p
+
+  default decParams :: [(LT.Text, LT.Text)] -> Maybe p
+  decParams _ = Nothing
+
 
 
 

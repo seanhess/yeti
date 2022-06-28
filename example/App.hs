@@ -4,6 +4,7 @@
 
 module App where
 
+import Prelude
 import Control.Concurrent.STM (newTVar, atomically)
 import Control.Monad.IO.Class (MonadIO)
 -- import Debug.Trace (traceM)

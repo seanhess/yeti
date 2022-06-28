@@ -29,6 +29,7 @@ library
       Juniper.JS
       Juniper.Page
       Juniper.Params
+      Juniper.Prelude
       Juniper.Router
       Juniper.Runtime
       Juniper.Web
@@ -36,6 +37,34 @@ library
       Paths_juniper
   hs-source-dirs:
       src
+  default-extensions:
+      ApplicativeDo
+      DataKinds
+      DeriveGeneric
+      DefaultSignatures
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralizedNewtypeDeriving
+      KindSignatures
+      MultiParamTypeClasses
+      NamedFieldPuns
+      NoImplicitPrelude
+      OverloadedLists
+      OverloadedStrings
+      QuasiQuotes
+      RecordWildCards
+      ScopedTypeVariables
+      TemplateHaskell
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      TypeSynonymInstances
+      UndecidableInstances
+      PolyKinds
+  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -F -pgmF=record-dot-preprocessor -fdefer-typed-holes
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -47,6 +76,7 @@ library
     , http-types
     , lens
     , lucid
+    , megaparsec
     , mtl
     , raw-strings-qq
     , scotty
@@ -72,7 +102,34 @@ executable juniper-exe
       Paths_juniper
   hs-source-dirs:
       example
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wname-shadowing -Wincomplete-patterns
+  default-extensions:
+      ApplicativeDo
+      DataKinds
+      DeriveGeneric
+      DefaultSignatures
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralizedNewtypeDeriving
+      KindSignatures
+      MultiParamTypeClasses
+      NamedFieldPuns
+      NoImplicitPrelude
+      OverloadedLists
+      OverloadedStrings
+      QuasiQuotes
+      RecordWildCards
+      ScopedTypeVariables
+      TemplateHaskell
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      TypeSynonymInstances
+      UndecidableInstances
+      PolyKinds
+  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -F -pgmF=record-dot-preprocessor -fdefer-typed-holes -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -85,6 +142,7 @@ executable juniper-exe
     , juniper
     , lens
     , lucid
+    , megaparsec
     , mtl
     , raw-strings-qq
     , record-dot-preprocessor
@@ -107,7 +165,34 @@ test-suite juniper-test
       Paths_juniper
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:
+      ApplicativeDo
+      DataKinds
+      DeriveGeneric
+      DefaultSignatures
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralizedNewtypeDeriving
+      KindSignatures
+      MultiParamTypeClasses
+      NamedFieldPuns
+      NoImplicitPrelude
+      OverloadedLists
+      OverloadedStrings
+      QuasiQuotes
+      RecordWildCards
+      ScopedTypeVariables
+      TemplateHaskell
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      TypeSynonymInstances
+      UndecidableInstances
+      PolyKinds
+  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -F -pgmF=record-dot-preprocessor -fdefer-typed-holes -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -120,6 +205,7 @@ test-suite juniper-test
     , juniper
     , lens
     , lucid
+    , megaparsec
     , mtl
     , raw-strings-qq
     , scotty

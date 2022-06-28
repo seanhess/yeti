@@ -5,6 +5,7 @@
 module Page.Todo where
 
 import Juniper
+import Juniper.Prelude
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad (forM_)
@@ -15,7 +16,10 @@ import Data.Function ((&))
 import Lucid (Html, toHtml, toHtmlRaw, renderBS)
 import Lucid.Html5
 
-
+-- the only parameter is the search text
+data Params = Params
+  { search :: Text
+  } deriving (Generic, ToJSON, FromJSON, ToParams)
 
 data Model = Model
   { todos :: [Todo]
@@ -23,12 +27,19 @@ data Model = Model
   , addContent :: Text
   } deriving (Generic, ToJSON, FromJSON, ToParams)
 
+instance HasParams Model Params where
+  toParams m = Params m.search
+  defParams = Params ""
+
+-- each one has to mention all of them!
+-- instance ToParams Model Params where
+--   params :: Model -> Params
+--   params = (.search)
+
 data Todo = Todo
   { content :: Text
   , completed :: Bool
   } deriving (Generic, ToJSON, FromJSON)
-
-
 
 data Action
   = AddTodo
@@ -41,12 +52,13 @@ data Action
 
 
 
-load :: MonadIO m => TVar [Todo] -> m Model
-load savedTodos = do
+-- only calls load if the model is missing
+load :: MonadIO m => TVar [Todo] -> Params -> m Model
+load savedTodos p = do
   ts <- liftIO $ atomically $ readTVar savedTodos
   pure $ Model
     { todos = ts
-    , search = ""
+    , search = p.search
     , addContent = ""
     }
 
@@ -70,7 +82,7 @@ update savedTodos (Delete t) m = do
   pure $ m { todos = ts }
 
 update _ (Search (Value s)) m = do
-  pure $ m { search = s }
+  pure $ (m :: Model) { search = s }
 
 update _ (NewTodoInput (Value s)) m = do
   pure $ m { addContent = s }
@@ -131,5 +143,5 @@ isSearch t (Todo t' _) = Text.isInfixOf (Text.toLower t) (Text.toLower t')
 
 
 
-page :: MonadIO m => TVar [Todo] -> Page Model Model Action m
-page savedTodos = simplePage (load savedTodos) (update savedTodos) view
+page :: MonadIO m => TVar [Todo] -> Page Params Model Action m
+page savedTodos = Page toParams (load savedTodos) (update savedTodos) view

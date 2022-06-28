@@ -1,51 +1,37 @@
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE MonoLocalBinds #-}
-
 module Juniper.Page
  ( Page(Page)
  , PageAction(..)
  , simplePage
  ) where
 
-import Data.String.Conversions (cs)
-import Data.Text as Text (Text)
+import Juniper.Prelude
 import Lucid (Html)
 import Text.Read (readMaybe)
-
-
-import Data.Map (Map)
 
 
 
 data Page params model action m = Page
   { params :: Params params model
-  , reload :: Reload params model m
+  , load   :: Load params model m
   , update :: Update action model m
   , view   :: View          model
   }
 
-type Reload params model m = Maybe params -> m model
+
+type Load   params model m = params -> m model
 type Params params model   = model -> params
-type Load          model m = m model
 type Update action model m = action -> model -> m model
 type View          model   = model -> Html ()
 
 
+-- a page without params
 simplePage
   :: forall action model m. Applicative m
-  => Load model m
+  => m model
   -> Update action model m
   -> View model
-  -> Page model model action m
-simplePage it up vw = Page id initLoad up vw
-  where
-    initLoad :: Reload model model m
-    initLoad (Just m) = pure m
-    initLoad Nothing = it
+  -> Page () model action m
+simplePage int up vw = Page (const ()) (const int) up vw
 
 -- like show, but custom, and we know what we support
 

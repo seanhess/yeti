@@ -4,14 +4,19 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Page.Counter where
 
-import Control.Monad.IO.Class (MonadIO)
+import Prelude
 import Juniper
+import Control.Monad.IO.Class (MonadIO)
 import Lucid (Html, toHtml)
 import Lucid.Html5
 
 data Model = Model
   { count :: Integer
   } deriving (Generic, ToJSON, FromJSON, ToParams)
+
+instance HasParams Model () where
+  toParams _ = ()
+  defParams = ()
 
 data Action
   = Increment
@@ -34,5 +39,5 @@ view m = section_ [ class_ "page" ] $ do
       button_ [ onClick Decrement] "Decrement"
 
 
-page :: MonadIO m => Page Model Model Action m
+page :: MonadIO m => Page () Model Action m
 page = simplePage load update view

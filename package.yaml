@@ -29,6 +29,7 @@ dependencies:
 - http-types
 - lens
 - lucid
+- megaparsec
 - mtl
 - raw-strings-qq
 - scotty
@@ -41,6 +42,43 @@ dependencies:
 - wai
 - wai-middleware-static
 
+ghc-options:
+  - -Wincomplete-patterns
+  - -Wdodgy-exports
+  - -Wdodgy-imports
+  - -Wincomplete-record-updates
+  - -Wname-shadowing
+  - -F -pgmF=record-dot-preprocessor
+  - -fdefer-typed-holes
+
+default-extensions:
+  - ApplicativeDo
+  - DataKinds
+  - DeriveGeneric
+  - DefaultSignatures
+  - DuplicateRecordFields
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GADTs
+  - GeneralizedNewtypeDeriving
+  - KindSignatures
+  - MultiParamTypeClasses
+  - NamedFieldPuns
+  - NoImplicitPrelude
+  - OverloadedLists
+  - OverloadedStrings
+  - QuasiQuotes
+  - RecordWildCards
+  - ScopedTypeVariables
+  - TemplateHaskell
+  - TypeApplications
+  - TypeFamilies
+  - TypeOperators
+  - TypeSynonymInstances
+  - UndecidableInstances
+  - PolyKinds
+
 library:
   source-dirs: src
 
@@ -52,8 +90,6 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    - -Wname-shadowing
-    - -Wincomplete-patterns
     # - -Wall
     dependencies:
     - record-dot-preprocessor

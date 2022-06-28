@@ -1,8 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Juniper.Events where
 
-
+import Juniper.Prelude
 import Data.Aeson (encode)
 
 import Data.List as List

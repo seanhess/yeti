@@ -1,7 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 module Juniper.Web
   ( handle
   , Render(..)
@@ -18,15 +16,14 @@ module Juniper.Web
   , lucid
   ) where
 
-import Juniper.Runtime (Response(..), runAction, commands)
+import Juniper.Prelude
+import Juniper.Runtime (Response(..), runAction, runLoad, parseBody, Command)
 import Juniper.Page (Page, PageAction)
-import Juniper.Params as Params (ToParams(..))
+import Juniper.Params as Params (ToParams(..), HasParams(..))
 import Juniper.JS as JS
+import Data.Aeson (FromJSON)
 import Data.Text.Encoding.Base64 (encodeBase64, decodeBase64)
-import Control.Monad.IO.Class (liftIO, MonadIO)
-import Data.Function ((&))
-import Data.String.Conversions (cs)
-import Data.Text as Text (Text, intercalate)
+import Data.Text as Text (intercalate)
 import Data.List as List (lookup)
 import Web.Scotty (RoutePattern)
 import Web.Scotty.Trans (ActionT, ScottyT, ScottyError)
@@ -34,8 +31,10 @@ import qualified Web.Scotty.Trans as Scotty
 import Lucid (renderBS, Html, toHtml)
 import Lucid.Html5
 import Network.Wai (rawPathInfo)
-import Control.Monad (when)
 import Data.Default (Default, def)
+
+import qualified Data.HashMap.Strict as HM
+import qualified Data.Aeson as Aeson
 
 import Text.RawString.QQ
 
@@ -67,7 +66,7 @@ instance Default Render where
 
 -- handle handles it if you're in actionM
 handle
-  :: forall params model action e m. (PageAction action, ToParams params, MonadIO m, ScottyError e)
+  :: forall params model action e m. (FromJSON model, HasParams model params, PageAction action, ToParams params, MonadIO m, ScottyError e)
   => Render -> Page params model action (ActionT e m) -> ActionT e m ()
 handle (Render js doc) pg = do
   Response h p' <- response pg
@@ -76,33 +75,44 @@ handle (Render js doc) pg = do
 
 
 response
-  :: forall params model action e m. (PageAction action, ToParams params, MonadIO m, ScottyError e)
+  :: forall params model action e m. (FromJSON model, PageAction action, HasParams model params, ToParams params, MonadIO m, ScottyError e)
   => Page params model action (ActionT e m) -> ActionT e m (Response params)
 response pg = do
   ps <- params
-  cmds <- commands =<< Scotty.body
-  runAction pg ps cmds
+  (mm, cmds) <- parseBody =<< Scotty.body
+  case mm of
+    Nothing -> runLoad pg ps
+    Just m -> runAction pg m cmds
 
-
-
-
-
-
-params :: (Monad m, ScottyError e) => ToParams params => ActionT e m (Maybe params)
+params :: (Monad m, HasParams model params) => ActionT e m params
 params = do
-  -- this may be empty. If it is, then return Nothing
-  rps <- rawParams
-  pure $ do
-    raw <- rps
-    bps <- decode64 raw
-    ps <- Params.decode bps
-    pure ps
-  where
-    decode64 rw =
-      case (decodeBase64 rw) of
-        -- this should never happen, fail
-        Left e -> fail $ "Could not decode params: Invalid Base64 - " <> cs e
-        Right ps -> Just ps
+  ps <- Scotty.params
+  pure $ fromMaybe defParams $ decParams ps
+
+-- parseParams :: HasParams model params => [(Text, Text)] -> params
+-- parseParams ps = fromMaybe defParams $ do
+--   -- 1 convert to JSON, then parse the json
+--   -- 2 default to your parameters
+--   Object $ HM.fromList
+
+-- parse params. If we don't have them, use the defaults
+-- oh, we aren't parsing them this way any more
+
+-- params :: (Monad m, ScottyError e, TestParams model params) => ActionT e m params
+-- params = do
+--   -- this may be empty. If it is, then return defaults
+--   rps <- rawParams
+--   pure $ fromMaybe defaults $ do
+--     raw <- rps
+--     bps <- decode64 raw
+--     ps <- Params.decode bps
+--     pure ps
+--   where
+--     decode64 rw =
+--       case (decodeBase64 rw) of
+--         -- this should never happen, fail
+--         Left e -> fail $ "Could not decode params: Invalid Base64 - " <> cs e
+--         Right ps -> Just ps
 
 
 

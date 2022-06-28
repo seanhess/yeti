@@ -5,6 +5,7 @@
 module Page.Focus where
 
 
+import Prelude
 import Juniper
 
 import Data.String.Conversions (cs)
@@ -22,13 +23,17 @@ data Model = Model
   , two :: Text
   } deriving (Generic, ToJSON, FromJSON, Eq, ToParams)
 
+instance HasParams Model () where
+  toParams _ = ()
+  defParams = ()
+
 data Action
   = One Value
   | Two Value
   deriving (Show, Read, PageAction)
 
 
-page :: MonadIO m => Page Model Model Action m
+page :: MonadIO m => Page () Model Action m
 page = simplePage load update view
 
 load :: MonadIO m => m Model
