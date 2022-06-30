@@ -9,6 +9,7 @@ import Text.Read (readMaybe)
 import Data.List as List (lookup)
 import Data.Proxy (Proxy(..))
 import qualified Data.Text as Text
+import Numeric (showFFloat)
 
 import GHC.Generics
 
@@ -29,6 +30,14 @@ instance ToParam String where
 
 instance ToParam Int where
   toParam t = cs $ show t
+  fromParam t = readMaybe $ cs t
+
+instance ToParam Integer where
+  toParam t = cs $ show t
+  fromParam t = readMaybe $ cs t
+
+instance ToParam Float where
+  toParam n = cs $ showFFloat (Just 2) n ""
   fromParam t = readMaybe $ cs t
 
 instance ToParam Day where
@@ -54,16 +63,10 @@ class ToParams params where
   default decode :: (Generic params, GenEncode (Rep params)) => QueryText -> Maybe params
   decode qs = to <$> genDecode qs
 
--- The default for simplePage uses () as the params
 instance ToParams () where
+  -- The default for simplePage uses () as the params
   encode _ = []
   decode _ = Just ()
-
--- instance (ToParam a, ToParam b) => ToParams (a, b) where
---   encode (a, b) = [("a", Just $ toParam a), ("b", Just $ toParam b)]
-
---   -- can I use the generic instance for this?
---   decode qs = Just ()
 
 
 
@@ -116,11 +119,6 @@ instance (GenEncode a, GenEncode b) => GenEncode (a :*: b) where
     a <- genDecode q
     b <- genDecode q
     pure $ a :*: b
-
-
--- instance (ToJSON a, ToJSON b, FromJSON a, FromJSON b) => ToParams (a, b)
--- instance (ToJSON a, ToJSON b, ToJSON c, FromJSON a, FromJSON b, FromJSON c) => ToParams (a, b, c)
--- instance (ToJSON a, ToJSON b, ToJSON c, ToJSON d, FromJSON a, FromJSON b, FromJSON c, FromJSON d) => ToParams (a, b, c, d)
 
 
 
