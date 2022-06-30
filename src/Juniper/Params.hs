@@ -8,23 +8,9 @@ import Network.HTTP.Types.URI (QueryText)
 import Text.Read (readMaybe)
 import Data.List as List (lookup)
 import Data.Proxy (Proxy(..))
+import qualified Data.Text as Text
 
 import GHC.Generics
-
--- TODO use generics directly instead of JSON
--- TODO doesn't handle spaces. Do we need to use base64 for this too? Or... just fix it so it doesn't url encode on the way down
-
--- does it always serialize to a querystring?
--- what if you wanted to use paths?
-class ToParams params where
-  encode :: params -> QueryText
-  decode :: QueryText -> Maybe params
-
-  default encode :: (Generic params, GenEncode (Rep params)) => params -> QueryText
-  encode p = genEncode (from p)
-
-  default decode :: (Generic params, GenEncode (Rep params)) => QueryText -> Maybe params
-  decode qs = to <$> genDecode qs
 
 
 
@@ -38,13 +24,46 @@ instance ToParam Text where
   fromParam t = Just t
 
 instance ToParam String where
-  toParam t = cs t
-  fromParam t = Just (cs t)
+  toParam t = toParam (cs t :: Text)
+  fromParam t = cs <$> (fromParam t :: Maybe Text)
 
 instance ToParam Int where
   toParam t = cs $ show t
   fromParam t = readMaybe $ cs t
 
+instance ToParam Day where
+  toParam = cs . formatTime defaultTimeLocale "%Y-%m-%d"
+  fromParam = parseTimeM True defaultTimeLocale "%Y-%m-%d" . cs
+
+
+
+
+
+
+
+
+
+
+class ToParams params where
+  encode :: params -> QueryText
+  decode :: QueryText -> Maybe params
+
+  default encode :: (Generic params, GenEncode (Rep params)) => params -> QueryText
+  encode p = genEncode (from p)
+
+  default decode :: (Generic params, GenEncode (Rep params)) => QueryText -> Maybe params
+  decode qs = to <$> genDecode qs
+
+-- The default for simplePage uses () as the params
+instance ToParams () where
+  encode _ = []
+  decode _ = Just ()
+
+-- instance (ToParam a, ToParam b) => ToParams (a, b) where
+--   encode (a, b) = [("a", Just $ toParam a), ("b", Just $ toParam b)]
+
+--   -- can I use the generic instance for this?
+--   decode qs = Just ()
 
 
 
@@ -58,30 +77,20 @@ instance (ToParam c) => GenParam (K1 i c) where
 
 class GenEncode f where
   genEncode :: f p -> QueryText
-
-  -- and how do you know if you can instantiate all of them?
-  -- if we pattern match all the decodes and get what we need
-
   genDecode :: QueryText -> Maybe (f p)
 
--- can we get one of our things from this? 
--- we don't have a value yet
 instance (Selector s, GenParam a) => GenEncode (M1 S s a) where
   genEncode x = [(cs $ selName x, Just $ genEncParam (unM1 x))]
 
   genDecode q = do
-    -- see if there is a query entry that matches our selector name
-    mv <- lookupSel q (selName (undefined :: M1 S s a x))
-    -- make sure it actually exists
-    v <- mv
-
-    -- see if we can decode it, then return
-    a <- genDecParam v
+    mv <- lookupSel q undefined -- see if there is a query entry that matches our selector name. selName doesn't use the value
+    v <- mv                     -- make sure it actually exists
+    a <- genDecParam v          -- see if we can decode it, then return
     pure $ M1 a
 
     where
-      lookupSel :: QueryText -> String -> Maybe (Maybe Text)
-      lookupSel q' sel = List.lookup (cs sel) q'
+      lookupSel :: QueryText -> M1 S s a x -> Maybe (Maybe Text)
+      lookupSel q' x = List.lookup (cs (selName x)) q'
 
       toVal :: GenParam f => (String, Text) -> (Text, Maybe (f p))
       toVal (k, t) = (cs k, genDecParam t)
@@ -107,31 +116,6 @@ instance (GenEncode a, GenEncode b) => GenEncode (a :*: b) where
     a <- genDecode q
     b <- genDecode q
     pure $ a :*: b
-
-data Test = Test { test1 :: Int, test2 :: String }
-  deriving (Generic, Show, Eq)
-instance ToParams Test
-
-test = Test 1 "asdf"
-
--- instance ToParams Day where
---   encode = cs . formatTime defaultTimeLocale "%Y-%m-%d"
---   decode = parseTimeM True defaultTimeLocale "%Y-%m-%d" . cs
-
--- class Selectors rep where
---   selectors :: [String]
-
--- genEncode :: Generic a => a -> QueryText
--- genEncode = _
-
-
--- fields' :: (Generic a, GenEncode (Rep a)) => a -> [String]
--- fields' = genFields . from
-
-
-instance ToParams () where
-  encode _ = []
-  decode _ = Just ()
 
 
 -- instance (ToJSON a, ToJSON b, FromJSON a, FromJSON b) => ToParams (a, b)

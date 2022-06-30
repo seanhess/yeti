@@ -19,6 +19,7 @@ import Lucid.Html5
 
 data Model = Model
   { todos :: [Todo]
+  , count :: Int
   , search :: Text
   , addContent :: Text
   } deriving (Read, Show, ToState)
@@ -26,15 +27,12 @@ data Model = Model
 -- the only parameter is the search text
 data Params = Params
   { search :: Text
-  }
-
-instance ToParams Params where
-  encode (Params s) = [("search", Just s)]
-  decode [("search", Just s)] = Just $ Params s
-  decode _ = Nothing
+  , count :: Int
+  } deriving (Generic)
+instance ToParams Params
 
 toParams :: Model -> Params
-toParams m = Params m.search
+toParams m = Params m.search m.count
 
 
 data Todo = Todo
@@ -56,10 +54,11 @@ data Action
 -- you have to load even if no params were specified
 load :: MonadIO m => TVar [Todo] -> Maybe Params -> m Model
 load savedTodos mps = do
-  let ps = fromMaybe (Params "") $ mps
+  let ps = fromMaybe (Params "" 0) $ mps
   ts <- liftIO $ atomically $ readTVar savedTodos
   pure $ Model
     { todos = ts
+    , count = ps.count
     , search = ps.search
     , addContent = ""
     }
@@ -87,7 +86,7 @@ update _ (Search (Value s)) m = do
   pure $ (m :: Model) { search = s }
 
 update _ (NewTodoInput (Value s)) m = do
-  pure $ m { addContent = s }
+  pure $ m { addContent = s, count = m.count + 1 }
 
 
 

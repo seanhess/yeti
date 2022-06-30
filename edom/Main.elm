@@ -123,7 +123,7 @@ onResponse response =
   case response of
     Http.GoodStatus_ meta body ->
       case (getHeader "x-params" meta.headers) of
-        (Ok p) -> Ok (p, body)
+        (Ok p) -> Ok (String.replace "%20" "+" p, body)
         (Err e) -> Err e
 
     Http.BadUrl_ _ ->
