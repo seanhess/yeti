@@ -70,7 +70,7 @@ runActions (Page params load update view) m cmds = do
 
 
 response :: Page params model action m -> model -> Response params
-response pg m = Response (pg.view m) (pg.params m)
+response (Page params _ _ view) m = Response (view m) (params m)
 
 
 runCommand :: (Monad m) => (action -> model -> m model) -> model -> Command action -> m model

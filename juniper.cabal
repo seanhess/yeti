@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           juniper
-version:        0.1.1
+version:        0.2.0
 description:    Please see the README on GitHub at <https://github.com/seanhess/juniper#readme>
 homepage:       https://github.com/seanhess/juniper#readme
 bug-reports:    https://github.com/seanhess/juniper/issues
@@ -65,7 +65,7 @@ library
       TypeSynonymInstances
       UndecidableInstances
       PolyKinds
-  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -F -pgmF=record-dot-preprocessor -fdefer-typed-holes
+  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -133,7 +133,7 @@ executable juniper-exe
       TypeSynonymInstances
       UndecidableInstances
       PolyKinds
-  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -F -pgmF=record-dot-preprocessor -fdefer-typed-holes -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -198,7 +198,7 @@ test-suite juniper-test
       TypeSynonymInstances
       UndecidableInstances
       PolyKinds
-  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -F -pgmF=record-dot-preprocessor -fdefer-typed-holes -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
