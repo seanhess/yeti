@@ -50,7 +50,6 @@ ghc-options:
   - -Wdodgy-imports
   - -Wincomplete-record-updates
   - -Wname-shadowing
-  - -F -pgmF=record-dot-preprocessor
   - -fdefer-typed-holes
 
 default-extensions:
