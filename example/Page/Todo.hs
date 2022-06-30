@@ -26,7 +26,12 @@ data Model = Model
 -- the only parameter is the search text
 data Params = Params
   { search :: Text
-  } deriving (Generic, ToParams)
+  }
+
+instance ToParams Params where
+  encode (Params s) = [("search", Just s)]
+  decode [("search", Just s)] = Just $ Params s
+  decode _ = Nothing
 
 toParams :: Model -> Params
 toParams m = Params m.search

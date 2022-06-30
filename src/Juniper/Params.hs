@@ -11,16 +11,18 @@ import Data.Time.Format (defaultTimeLocale, formatTime, parseTimeM)
 
 
 -- TODO use generics directly instead of JSON
+-- TODO doesn't handle spaces. Do we need to use base64 for this too? Or... just fix it so it doesn't url encode on the way down
+
 -- does it always serialize to a querystring?
 -- what if you wanted to use paths?
 class ToParams params where
-  encode :: params -> Text
-  decode :: Text -> Maybe params
+  encode :: params -> [(Text, Maybe Text)]
+  decode :: [(Text, Maybe Text)] -> Maybe params
 
-  default encode :: Generic params => params -> Text
-  encode _ = ""
+  default encode :: Generic params => params -> [(Text, Maybe Text)]
+  encode _ = []
 
-  default decode :: Generic params => Text -> Maybe params
+  default decode :: Generic params => [(Text, Maybe Text)] -> Maybe params
   decode _ = Nothing
 
 -- instance ToParams Day where

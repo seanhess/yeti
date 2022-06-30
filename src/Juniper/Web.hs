@@ -28,7 +28,9 @@ import Web.Scotty.Trans (ActionT, ScottyT, ScottyError)
 import qualified Web.Scotty.Trans as Scotty
 import Lucid (renderBS, Html, toHtml)
 import Lucid.Html5
-import Network.Wai (rawPathInfo, Request(rawQueryString))
+import Network.Wai (rawPathInfo, Request(queryString, rawQueryString))
+import Network.HTTP.Types.URI (queryToQueryText, parseQueryText, renderQueryText, QueryText)
+import Data.Binary.Builder (toLazyByteString, Builder)
 import Data.Default (Default, def)
 
 import qualified Data.HashMap.Strict as HM
@@ -62,7 +64,7 @@ handle
   -> Page params model action (ActionT e m)
   -> ActionT e m ()
 handle (Render js doc) pg = do
-  mps <- Params.decode <$> queryText
+  mps <- Params.decode <$> query
   (mm, cmds) <- Runtime.parseBody =<< Scotty.body
 
   m <- Runtime.run pg mps mm cmds
@@ -76,7 +78,7 @@ handle (Render js doc) pg = do
 -- this should be for the page to make sure they match!
 pageUrl :: ToParams params => String -> params -> Text
 pageUrl path ps =
-  cs path <> "?" <> Params.encode ps
+  cs path <> "?" <> queryToText (Params.encode ps)
 
 
 
@@ -111,7 +113,7 @@ respond embJS toDocument ps model view = do
     stateJSON = Aeson.encode (cs stateString :: Text)
 
     setParams = 
-      Scotty.setHeader "X-Params" $ cs $ Params.encode ps
+      Scotty.setHeader "X-Params" $ cs $ queryToText $ Params.encode ps
 
     embedStateScript :: Html ()
     embedStateScript = 
@@ -161,9 +163,14 @@ document t extra content = do
 
 
 
-queryText :: (Monad m) => ActionT e m Text
-queryText = do
-  Text.dropWhile (=='?') . cs . rawQueryString <$> Scotty.request
+query :: (Monad m) => ActionT e m QueryText
+query = do
+  parseQueryText . rawQueryString <$> Scotty.request
+
+queryToText :: QueryText -> Text
+queryToText qt =
+  (cs $ toLazyByteString $ renderQueryText False qt)
+
 
 lucid :: ScottyError e => Monad m => Html a -> ActionT e m ()
 lucid h = do
