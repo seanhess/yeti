@@ -84,13 +84,10 @@ runCommand update m cmd =
 
 parseBody :: (MonadIO m, MonadFail m, PageAction action, ToState model) => ByteString -> m (Maybe model, [Command action])
 parseBody body = do
-  putStrLn "PARSE BODY"
   case BSL.split newline body of
     [] -> pure (Nothing, [])
     (ml:cls) -> do
       -- the first line is always the model, you can't run actions without it
-      putStrLn "-body"
-      putStrLn $ cs ml
       m <- parseModel ml
 
       -- each other line contains an action
@@ -102,7 +99,6 @@ parseBody body = do
 
 parseModel :: (MonadFail m, MonadIO m, ToState model) => ByteString -> m model
 parseModel inp = do
-  putStrLn $ cs inp
   case State.decode (cs inp) of
     Nothing -> fail $ "Could not parse model: " <> cs inp
     Just m -> pure m
