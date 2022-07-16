@@ -122,12 +122,13 @@ respond embJS toDocument ps model view = do
 
     embedStateScript :: Html ()
     embedStateScript = 
-      script_ [type_ "text/javascript", id_ "juniper-state" ] ("let juniperState = " <> stateJSON)
+      script_ [type_ "text/javascript", id_ "juniper-state" ] ("\nlet juniperState = " <> stateJSON <> "\n")
 
 
     -- render the root node and embed the javascript
     embedContent :: Html () -> Html ()
     embedContent v = do
+      "\n"
       embedStateScript
       "\n"
       div_ [id_ "juniper-root-content"] v
