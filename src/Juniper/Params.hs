@@ -1,17 +1,19 @@
-
+{-# LANGUAGE InstanceSigs #-}
 module Juniper.Params where
 
 import Juniper.Prelude
-import Data.Time.Calendar (Day)
-import Data.Time.Format (defaultTimeLocale, formatTime, parseTimeM)
-import Network.HTTP.Types.URI (QueryText)
-import Text.Read (readMaybe)
 import Data.List as List (lookup)
 import Data.Proxy (Proxy(..))
-import qualified Data.Text as Text
-import Numeric (showFFloat)
-
+import Data.Tagged (Tagged(..))
+import Data.Time.Calendar (Day)
+import Data.Time.Format (defaultTimeLocale, formatTime, parseTimeM)
 import GHC.Generics
+import Network.HTTP.Types.URI (QueryText)
+import Network.URI (isUnreserved, escapeURIString)
+import Network.URI.Encode (encodeTextWith, decodeText)
+import Numeric (showFFloat)
+import Text.Read (readMaybe)
+import qualified Data.Text as Text
 
 
 
@@ -20,17 +22,27 @@ class ToParam param where
   toParam :: param -> Text
   fromParam :: Text -> Maybe param
 
+  default toParam :: (Show param) => param -> Text
+  toParam = cs . show
+
+  default fromParam :: (Read param) => Text -> Maybe param
+  fromParam = readMaybe . cs
+
+-- we should url escape these?, maybe it already happens
 instance ToParam Text where
   toParam t = t
   fromParam t = Just t
 
-instance ToParam String where
-  toParam t = toParam (cs t :: Text)
-  fromParam t = cs <$> (fromParam t :: Maybe Text)
-
 instance ToParam Int where
   toParam t = cs $ show t
   fromParam t = readMaybe $ cs t
+
+instance ToParam Bool where
+  toParam True = "1"
+  toParam False = "0"
+  fromParam "1" = Just True
+  fromParam "0" = Just False
+  fromParam _ = Nothing
 
 instance ToParam Integer where
   toParam t = cs $ show t
@@ -44,8 +56,61 @@ instance ToParam Day where
   toParam = cs . formatTime defaultTimeLocale "%Y-%m-%d"
   fromParam = parseTimeM True defaultTimeLocale "%Y-%m-%d" . cs
 
+instance ToParam a => ToParam (Maybe a) where
+  toParam (Just a) = toParam a
+  toParam Nothing  = ""
+
+  fromParam :: Text -> Maybe (Maybe a)
+  fromParam t =
+    case (fromParam t :: Maybe a) of
+      Nothing -> Nothing
+      Just a -> Just (Just a)
+
+-- TODO escape toParam now, what if it has my character in it?
+instance ToParam a => ToParam [a] where
+
+  -- we ONLY need to encode the "|" character
+  toParam = Text.intercalate "|" . map (escapeChar '|' . toParam)
+  fromParam = mapM (fromParam . urlDecode) . Text.splitOn "|"
+
+instance ToParam b => ToParam (Tagged a b) where
+  toParam (Tagged b) = toParam b
+  fromParam t = Tagged <$> fromParam t
+
+-- this means that a list of items would be double-escaped, yikes
+-- but it's the only way to make it super safe, keep escaping
+instance (ToParam a, ToParam b) => ToParam (a, b) where
+
+  -- we ONLY need to encode the "," character
+  toParam (r, c) = esc (toParam r) <> "," <> esc (toParam c)
+    where esc = escapeChar ','
+
+  fromParam t = do
+    [tr, tc] <- pure $ Text.splitOn "," t
+    r <- fromParam $ urlDecode tr
+    c <- fromParam $ urlDecode tc
+    pure (r, c)
 
 
+
+escapeChar :: Char -> Text -> Text
+escapeChar c = cs . escapeURIString (/=c) . cs
+
+urlDecode :: Text -> Text
+urlDecode =
+  decodeText
+
+urlEncode :: Text -> Text
+urlEncode =
+  encodeTextWith skipEscape
+
+-- all the chars we use we want to pass through
+skipEscape :: Char -> Bool
+-- skipEscape '+' = True
+skipEscape ',' = True
+skipEscape '|' = True
+skipEscape c = isUnreserved c
+    
 
 
 

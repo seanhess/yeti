@@ -10,13 +10,14 @@ module Juniper.Web
   , pageUrl
   , document
   , lucid
+  , queryToText
   ) where
 
 import Juniper.Prelude
 import Juniper.Runtime as Runtime (Response(..))
 import qualified Juniper.Runtime as Runtime
 import Juniper.Page (Page, PageAction)
-import Juniper.Params as Params (ToParams(..))
+import Juniper.Params as Params (ToParams(..), urlEncode, urlDecode)
 import Juniper.State as State (ToState(..))
 import Juniper.JS as JS
 import Data.ByteString.Lazy (ByteString)
@@ -31,6 +32,8 @@ import Lucid.Html5
 import Network.Wai (rawPathInfo, Request(queryString, rawQueryString))
 import Network.HTTP.Types.URI (queryToQueryText, parseQueryText, renderQueryText, QueryText)
 import Data.Binary.Builder (toLazyByteString, Builder)
+import Network.URI.Encode (encodeTextWith, encodeText)
+import Network.URI (isUnreserved)
 import Data.Default (Default, def)
 
 import qualified Data.HashMap.Strict as HM
@@ -78,6 +81,8 @@ handle (Render js doc) pg = do
 -- this should be for the page to make sure they match!
 pageUrl :: ToParams params => String -> params -> Text
 pageUrl path ps =
+
+  -- here, escape differently
   cs path <> "?" <> queryToText (Params.encode ps)
 
 
@@ -167,9 +172,32 @@ query :: (Monad m) => ActionT e m QueryText
 query = do
   parseQueryText . rawQueryString <$> Scotty.request
 
+
+-- renders a query text
+-- but this escapes differently than I want
+-- QueryText :: 
+-- urlEncode :: Bool -> ByteString -> ByteString
+-- type QueryText = [(Text, Maybe Text)]
+
+
+-- 
 queryToText :: QueryText -> Text
 queryToText qt =
-  (cs $ toLazyByteString $ renderQueryText False qt)
+  -- first, 
+  -- (cs $ toLazyByteString $ renderQueryText False qt)
+  Text.intercalate "&" $ map segment qt
+  where
+    segment (k, Nothing) = key k
+    segment (k, (Just v)) =
+
+      -- we need to encode everything but special chars
+      -- these are already escaped
+      key k <> "=" <> urlEncode v
+    
+    -- encode the key
+    key t = urlEncode t
+
+
 
 
 lucid :: ScottyError e => Monad m => Html a -> ActionT e m ()

@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           juniper
-version:        0.2.0
+version:        0.2.1
 description:    Please see the README on GitHub at <https://github.com/seanhess/juniper#readme>
 homepage:       https://github.com/seanhess/juniper#readme
 bug-reports:    https://github.com/seanhess/juniper/issues
@@ -80,13 +80,16 @@ library
     , lucid
     , megaparsec
     , mtl
+    , network-uri
     , raw-strings-qq
     , scotty
     , stm
     , string-conversions
+    , tagged
     , text
     , time
     , unordered-containers
+    , uri-encode
     , url
     , vector
     , wai
@@ -149,15 +152,18 @@ executable juniper-exe
     , lucid
     , megaparsec
     , mtl
+    , network-uri
     , raw-strings-qq
     , record-dot-preprocessor
     , record-hasfield
     , scotty
     , stm
     , string-conversions
+    , tagged
     , text
     , time
     , unordered-containers
+    , uri-encode
     , url
     , vector
     , wai
@@ -214,13 +220,16 @@ test-suite juniper-test
     , lucid
     , megaparsec
     , mtl
+    , network-uri
     , raw-strings-qq
     , scotty
     , stm
     , string-conversions
+    , tagged
     , text
     , time
     , unordered-containers
+    , uri-encode
     , url
     , vector
     , wai

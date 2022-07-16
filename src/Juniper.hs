@@ -3,7 +3,7 @@ module Juniper
  , simplePage
  , PageAction
  , Submit(..)
- , ToParams(..)
+ , ToParams(..), ToParam(..)
  , ToState
  , Value(..)
  , page

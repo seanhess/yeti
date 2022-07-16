@@ -1,5 +1,5 @@
 name:                juniper
-version:             0.2.0
+version:             0.2.2
 github:              "seanhess/juniper"
 license:             BSD3
 author:              "Sean Hess"
@@ -32,14 +32,17 @@ dependencies:
 - lucid
 - megaparsec
 - mtl
+- network-uri
 - raw-strings-qq
 - scotty
 - stm
 - string-conversions
+- tagged
 - text
 - time
 - unordered-containers
 - url
+- uri-encode
 - vector
 - wai
 - wai-middleware-static
