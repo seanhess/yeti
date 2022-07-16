@@ -19,7 +19,6 @@ data Action
   | Decrement
   deriving (Show, Read, PageAction)
 
-
 load :: MonadIO m => m Model
 load = pure $ Model 0
 

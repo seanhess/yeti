@@ -68,29 +68,38 @@ instance ToParam a => ToParam (Maybe a) where
 
 -- TODO escape toParam now, what if it has my character in it?
 instance ToParam a => ToParam [a] where
+  -- we ONLY need to encode the "," character
+  toParam = Text.intercalate "," . map (escapeChar ',' . toParam)
 
-  -- we ONLY need to encode the "|" character
-  toParam = Text.intercalate "|" . map (escapeChar '|' . toParam)
-  fromParam = mapM (fromParam . urlDecode) . Text.splitOn "|"
+  fromParam "" = Just []
+  fromParam t = mapM (fromParam . urlDecode) . Text.splitOn "," $ t
 
 instance ToParam b => ToParam (Tagged a b) where
   toParam (Tagged b) = toParam b
   fromParam t = Tagged <$> fromParam t
 
--- this means that a list of items would be double-escaped, yikes
--- but it's the only way to make it super safe, keep escaping
 instance (ToParam a, ToParam b) => ToParam (a, b) where
-
-  -- we ONLY need to encode the "," character
-  toParam (r, c) = esc (toParam r) <> "," <> esc (toParam c)
-    where esc = escapeChar ','
+  -- we ONLY need to encode the "|" character
+  toParam (r, c) = esc (toParam r) <> "|" <> esc (toParam c)
+    where esc = escapeChar '|'
 
   fromParam t = do
-    [tr, tc] <- pure $ Text.splitOn "," t
+    [tr, tc] <- pure $ Text.splitOn "|" t
     r <- fromParam $ urlDecode tr
     c <- fromParam $ urlDecode tc
     pure (r, c)
 
+instance (ToParam a, ToParam b, ToParam c) => ToParam (a, b, c) where
+  -- we ONLY need to encode the "|" character
+  toParam (a, b, c) = Text.intercalate "|" $ map esc [toParam a, toParam b, toParam c]
+    where esc = escapeChar '|'
+
+  fromParam t = do
+    [ta, tb, tc] <- pure $ Text.splitOn "|" t
+    a <- fromParam $ urlDecode ta
+    b <- fromParam $ urlDecode tb
+    c <- fromParam $ urlDecode tc
+    pure (a, b, c)
 
 
 escapeChar :: Char -> Text -> Text
@@ -148,7 +157,10 @@ class GenEncode f where
   genDecode :: QueryText -> Maybe (f p)
 
 instance (Selector s, GenParam a) => GenEncode (M1 S s a) where
-  genEncode x = [(cs $ selName x, Just $ genEncParam (unM1 x))]
+  genEncode x = 
+    case selName x of
+      "" -> []
+      n -> [(cs n, Just $ genEncParam (unM1 x))]
 
   genDecode q = do
     mv <- lookupSel q undefined -- see if there is a query entry that matches our selector name. selName doesn't use the value

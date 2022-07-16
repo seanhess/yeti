@@ -25,11 +25,11 @@ data Model = Model
   } deriving (Read, Show, ToState)
 
 -- the only parameter is the search text
-data Params = Params
-  { search :: Text
-  , count :: Int
-  } deriving (Generic)
-instance ToParams Params
+data Params = Params Text Int
+  deriving (Generic, ToParams)
+  -- { search :: Text
+  -- , count :: Int
+  -- } deriving (Generic, ToParams)
 
 toParams :: Model -> Params
 toParams m = Params m.search m.count
@@ -54,12 +54,12 @@ data Action
 -- you have to load even if no params were specified
 load :: MonadIO m => TVar [Todo] -> Maybe Params -> m Model
 load savedTodos mps = do
-  let ps = fromMaybe (Params "" 0) $ mps
+  let (Params src cnt) = fromMaybe (Params "" 0) $ mps
   ts <- liftIO $ atomically $ readTVar savedTodos
   pure $ Model
     { todos = ts
-    , count = ps.count
-    , search = ps.search
+    , count = cnt
+    , search = src
     , addContent = ""
     }
 
