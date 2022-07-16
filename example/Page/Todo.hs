@@ -25,11 +25,10 @@ data Model = Model
   } deriving (Read, Show, ToState)
 
 -- the only parameter is the search text
-data Params = Params Text Int
-  deriving (Generic, ToParams)
-  -- { search :: Text
-  -- , count :: Int
-  -- } deriving (Generic, ToParams)
+data Params = Params
+  { search :: Text
+  , count :: Int
+  } deriving (Generic, ToParams)
 
 toParams :: Model -> Params
 toParams m = Params m.search m.count

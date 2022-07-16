@@ -9,7 +9,7 @@ scripts = build <> "\n" <> run
 
 -- | Embed built javascript into file via Data.FileEmbed. Must be recompiled via node to work
 build :: ByteString
-build = $(embedFile "edom/build.js")
+build = $(embedFile "edom/build.min.js")
 
 run :: ByteString
 run = $(embedFile "edom/run.js")
