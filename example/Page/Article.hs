@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 module Page.Article where
@@ -18,7 +19,7 @@ data Model = Model
   { article  :: Article
   , comment :: Text
   , comments :: [Text]
-  } deriving (Show, Read, ToState)
+  } deriving (Show, Read, Encode LiveModel)
 
 fakeDatabase :: [(Id, Article)]
 fakeDatabase = map (\a -> (a.articleId, a))
@@ -39,7 +40,7 @@ data Article = Article
 data Action
   = Comment Value
   | SubmitComment
-  deriving (Show, Read, PageAction)
+  deriving (Show, Read, Encode LiveAction)
 
 -- TODO this should be a 404 if the post is missing!
 -- could I return a maybe model instead? A nothing?

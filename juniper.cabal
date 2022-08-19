@@ -27,12 +27,10 @@ library
       Juniper
       Juniper.Events
       Juniper.JS
-      Juniper.Page
       Juniper.Params
       Juniper.Prelude
       Juniper.Router
       Juniper.Runtime
-      Juniper.State
       Juniper.Web
   other-modules:
       Paths_juniper

@@ -19,19 +19,18 @@ import Lucid.Html5
 
 data Model = Model
   { todos :: [Todo]
-  , count :: Int
   , search :: Text
   , addContent :: Text
-  } deriving (Read, Show, ToState)
+  , addCategory :: Category
+  } deriving (Read, Show, Encode LiveModel)
 
 -- the only parameter is the search text
 data Params = Params
   { search :: Text
-  , count :: Int
   } deriving (Generic, ToParams)
 
-toParams :: Model -> Params
-toParams m = Params m.search m.count
+params :: Model -> Params
+params m = Params m.search
 
 
 data Category
@@ -55,10 +54,11 @@ data Todo = Todo
 data Action
   = AddTodo
   | NewTodoInput Value
-  | Completed Text Bool
+  | NewTodoCategory Category
+  | SetCompleted Text Bool
   | Delete Text
   | Search Value
-  deriving (Show, Read, PageAction)
+  deriving (Show, Read, Encode LiveAction)
 
 
 
@@ -67,13 +67,13 @@ data Action
 -- you have to load even if no params were specified
 load :: MonadIO m => TVar [Todo] -> Maybe Params -> m Model
 load savedTodos mps = do
-  let (Params src cnt) = fromMaybe (Params "" 0) $ mps
+  let (Params src) = fromMaybe (Params "") $ mps
   ts <- liftIO $ atomically $ readTVar savedTodos
   pure $ Model
     { todos = ts
-    , count = cnt
     , search = src
     , addContent = ""
+    , addCategory = Errand
     }
 
 
@@ -94,20 +94,21 @@ update todos (AddTodo) m = do
 update todos (Delete t) m = do
   ts <- liftIO $ atomically $ updateTodos todos remove
   pure $ m { todos = ts }
-  where
-    remove = filter (\(Todo t' _ _) -> t /= t')
+  where remove = filter (\(Todo t' _ _) -> t /= t')
 
-update todos (Completed ct c) m = do
+update todos (SetCompleted ct c) m = do
   ts <- liftIO $ atomically $ updateTodos todos (modify ct complete)
   pure $ m { todos = ts }
-  where
-    complete t = t { completed = c }
+  where complete t = t { completed = c }
+
+update todos (NewTodoCategory c) m = do
+  pure $ m { addCategory = c }
+
+update todos (NewTodoInput (Value t)) m = do
+  pure $ m { addContent = t }
 
 update _ (Search (Value s)) m = do
   pure $ (m :: Model) { search = s }
-
-update _ (NewTodoInput (Value s)) m = do
-  pure $ m { addContent = s, count = m.count + 1 }
 
 
 
@@ -129,31 +130,33 @@ updateTodos saved up = do
 
 
 
-
 view :: Model -> Html ()
-view m = div_ $ do
+view m = div_ [] $ do
   h3_ "Todos"
 
-  div_ [ id_ "add", style_ "margin:10" ] $ do
-    button_ [ onClick AddTodo ] "Add"
-    input_ [ name_ "add", value_ (m.addContent), onInput (NewTodoInput), onEnter AddTodo ]
+  div_ [ class_ "col g8"] $ do
 
-  div_ [ id_ "search", style_ "margin:10" ] $ do
-    button_ [ onClick Submit, onEnter Submit ] "Search"
-    input_ [ name_ "search", value_ (m.search), onInput (Search), onEnter Submit ]
+    div_ [ id_ "add" ] $ do
+      button_ [ onClick AddTodo ] "Add"
+      input_ [ name_ "add", value_ (m.addContent), onInput (NewTodoInput), onEnter AddTodo ]
+      dropdown NewTodoCategory (\v -> toHtml (cs $ show v :: Text)) [Errand, Home, Work, Personal]
 
-
-  let ts = m.todos & filter (isSearch m.search)
-
-  div_ [ class_ "col g16"] $ do
-    forM_ ts $ \todo ->
-      div_ [ class_ "row g8" ] $ do
-        button_ [ onClick (Delete (content todo)) ] "X"
-        checkButton (Completed (content todo)) (completed todo) $
-          div_ $ toHtml (content todo)
+    div_ [ id_ "search" ] $ do
+      button_ [ onClick Submit, onEnter Submit ] "Search"
+      input_ [ name_ "search", value_ (m.search), onInput (Search), onEnter Submit ]
 
 
-checkButton :: PageAction action => (Bool -> action) -> Bool -> Html () -> Html ()
+    let ts = m.todos & filter (isSearch m.search)
+
+    div_ [ class_ "col g8"] $ do
+      forM_ ts $ \todo ->
+        div_ [ class_ "row g8" ] $ do
+          button_ [ onClick (Delete (content todo)) ] "X"
+          checkButton (SetCompleted (content todo)) (completed todo) $
+            div_ $ toHtml (content todo)
+
+
+checkButton :: Encode LiveAction action => (Bool -> action) -> Bool -> Html () -> Html ()
 checkButton act chk ct =
   button_ [ class_ "row g4", onClick $ act $ not chk ] $ do
     span_ $ if (chk) then "☑" else "☐"
@@ -165,8 +168,15 @@ isSearch "" _ = True
 isSearch t (Todo t' _ _) = Text.isInfixOf (Text.toLower t) (Text.toLower t')
 
 
+-- we are going to run into similar problems. We have to encode things into values
+dropdown :: (Encode LiveAction action, Show val) => (val -> action) -> (val -> Html ()) -> [val] -> Html ()
+dropdown act opt vals =
+  select_ [ id_ "test" ] $
+    mapM_ option vals
+  where
+    option v = option_ [id_ (cs (show v))] (opt v)
 
 
 
 page :: MonadIO m => TVar [Todo] -> Page Params Model Action m
-page savedTodos = Page toParams (load savedTodos) (update savedTodos) view
+page savedTodos = Page params (load savedTodos) (update savedTodos) view

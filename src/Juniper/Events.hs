@@ -1,13 +1,12 @@
 module Juniper.Events where
 
 import Juniper.Prelude
-import Data.Aeson (encode)
 
 import Data.List as List
 import Data.Map as Map (Map, null, empty)
 import Data.String.Conversions (cs)
-import Data.Text as Text (Text, null)
-import Juniper.Page (PageAction(..))
+import Data.Text as Text (Text, null, dropWhileEnd)
+import Juniper.Runtime (Encode(..), Encoded(..), LiveAction)
 import Lucid.Base (makeAttribute, Attribute)
 import Lucid.Html5 (onchange_)
 
@@ -51,47 +50,27 @@ instance Read Value where
 
 
 
-onClick :: PageAction action => action -> Attribute
-onClick = makeAttribute "data-click" . cs . showAction
+onClick :: Encode LiveAction action => action -> Attribute
+onClick act = makeAttribute "data-click" . cs . fromEncoded $ (encode act :: Encoded LiveAction)
 
+onInput :: Encode LiveAction action => (Value -> action) -> Attribute
+onInput con = makeAttribute "data-input" $ cs $ fromEncoded $ stripArgs $ (encode $ con mempty :: Encoded LiveAction)
 
--- I don't need this to be generic, I can apply the emptiness myself!
--- submit :: PageAction action => (FormData -> action) -> Attribute
--- submit con = makeAttribute "data-submit" $ cs $ stripArgs $ showAction $ con mempty
+onEnter :: Encode LiveAction action => action -> Attribute
+onEnter act = makeAttribute "data-enter" . cs . fromEncoded $ (encode act :: Encoded LiveAction)
 
-
--- -- | Submit a form with just one text field (like a search bar)
--- submit1 :: PageAction action => (Value -> action) -> Attribute
--- submit1 con = makeAttribute "data-submit1" $ cs $ stripArgs $ showAction $con mempty
-
-
--- onInput :: PageAction action => (Value -> action) -> Attribute
--- onInput con = makeAttribute "data-onInput" $ cs $ stripArgs $ showAction $con mempty
-
--- is he lowercasing my stuff!?
--- onInput :: PageAction action => (Value -> action) -> Attribute
--- onInput con = makeAttribute "data-input" $ cs $ stripArgs $ showAction $ con mempty
-
-onInput :: PageAction action => (Value -> action) -> Attribute
-onInput con = makeAttribute "data-input" $ cs $ stripArgs $ showAction $ con mempty
-
-onEnter :: PageAction action => action -> Attribute
-onEnter = makeAttribute "data-enter" . cs . showAction
-
--- onBlur :: PageAction action => action -> Attribute
--- onBlur = makeAttribute "data-blur" . cs . showAction
+-- -- | Only fires when the element loses focus
+-- onChange :: PageAction action => action -> Attribute
+-- onChange = makeAttribute "data-change" . cs . showAction
 
 
 
 data Submit = Submit
 
-instance PageAction Submit where
-  showAction _ = "|Submit|"
-  readAction "|Submit|" = Just Submit
-  readAction _ = Nothing
-
-
-
+instance Encode LiveAction Submit where
+  encode _ = Encoded "|Submit|"
+  decode (Encoded "|Submit|") = Just Submit
+  decode _ = Nothing
 
 
 call :: Text -> String -> Text
@@ -99,7 +78,7 @@ call fun action = mconcat [fun, "(", cs action, ")"]
 
 
 
-stripArgs :: String -> String
-stripArgs = List.dropWhileEnd isArg
+stripArgs :: Encoded a -> Encoded a
+stripArgs (Encoded t) = Encoded $ Text.dropWhileEnd isArg t
   where isArg c = c == ' ' || c == '_'
 

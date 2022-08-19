@@ -14,11 +14,9 @@ module Juniper.Web
   ) where
 
 import Juniper.Prelude
-import Juniper.Runtime as Runtime (Response(..))
+import Juniper.Runtime as Runtime (Response(..), Page, Encode(..), LiveAction, LiveModel, Encoded(..))
 import qualified Juniper.Runtime as Runtime
-import Juniper.Page (Page, PageAction)
 import Juniper.Params as Params (ToParams(..), urlEncode, urlDecode)
-import Juniper.State as State (ToState(..))
 import Juniper.JS as JS
 import Data.ByteString.Lazy (ByteString)
 import Data.Text.Encoding.Base64 (encodeBase64, decodeBase64)
@@ -62,12 +60,12 @@ instance Default Render where
 
 -- handle handles it if you're in actionM
 handle
-  :: forall params model action e m. (ToState model, ToParams params, PageAction action, MonadIO m, ScottyError e)
+  :: forall params model action e m. (MonadIO m, ScottyError e, Encode LiveModel model, Encode LiveAction action, ToParams params)
   => Render
   -> Page params model action (ActionT e m)
   -> ActionT e m ()
 handle (Render js doc) pg = do
-  mps <- Params.decode <$> query
+  mps <- Params.fromParams <$> query
   (mm, cmds) <- Runtime.parseBody =<< Scotty.body
 
   m <- Runtime.run pg mps mm cmds
@@ -83,7 +81,7 @@ pageUrl :: ToParams params => String -> params -> Text
 pageUrl path ps =
 
   -- here, escape differently
-  cs path <> "?" <> queryToText (Params.encode ps)
+  cs path <> "?" <> queryToText (Params.toParams ps)
 
 
 
@@ -98,27 +96,27 @@ pageUrl path ps =
 -- TODO they should embed the html itself?
 -- do we choose how to embed it or not?
 
-respond :: (Monad m, ScottyError e, ToState model, ToParams params) => Bool -> (Html() -> Html ()) -> params -> model -> Html () -> ActionT e m ()
+respond :: (Monad m, ScottyError e, Encode LiveModel model, ToParams params) => Bool -> (Html() -> Html ()) -> params -> model -> Html () -> ActionT e m ()
 respond embJS toDocument ps model view = do
 
   setParams
 
   Scotty.header "Accept" >>= \case
     Just "application/vdom" -> do
-      vdom stateString view
+      vdom (fromEncoded stateString) view
       
     _ -> do
       lucid $ toDocument $ embedContent view
 
   where
-    stateString :: Text
-    stateString = State.encode model
+    stateString :: Encoded LiveModel
+    stateString = Runtime.encode model
 
     stateJSON :: ByteString
-    stateJSON = Aeson.encode (cs stateString :: Text)
+    stateJSON = Aeson.encode (cs $ fromEncoded stateString :: Text)
 
     setParams = 
-      Scotty.setHeader "X-Params" $ cs $ queryToText $ Params.encode ps
+      Scotty.setHeader "X-Params" $ cs $ queryToText $ Params.toParams ps
 
     embedStateScript :: Html ()
     embedStateScript = 

@@ -12,12 +12,12 @@ import Lucid.Html5
 
 data Model = Model
   { count :: Integer
-  } deriving (Read, Show, ToState)
+  } deriving (Read, Show, Encode LiveModel)
 
 data Action
   = Increment
   | Decrement
-  deriving (Show, Read, PageAction)
+  deriving (Show, Read, Encode LiveAction)
 
 load :: MonadIO m => m Model
 load = pure $ Model 0

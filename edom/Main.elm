@@ -361,6 +361,9 @@ toAttribute (name, value) =
       -- automatically commit changes on enter or blur for inputs
       [Html.onInput (ServerUpdate value), onEnter (ServerAction submit), Html.onBlur (ServerAction submit)]
 
+    -- "data-change" -> 
+    --   [Html.onInput (ServerUpdate value), onEnter (ServerAction submit), Html.onBlur (ServerAction submit)]
+
     "data-enter" -> 
       [onEnter (ServerAction value)]
 

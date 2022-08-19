@@ -47,7 +47,7 @@ data Model = Model
   , pass2 :: Text
   , timestamp :: UTCTime
   , signup :: Signup
-  } deriving (Show, Read, Eq, ToState)
+  } deriving (Show, Read, Eq, Encode LiveModel)
 
 
 data Action
@@ -55,7 +55,7 @@ data Action
   | EditPass1 Value
   | EditPass2 Value
   | SignUp
-  deriving (Show, Read, PageAction)
+  deriving (Show, Read, Encode LiveAction)
 
 
 passwordsMatch :: Text -> Text -> Bool

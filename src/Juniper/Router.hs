@@ -1,6 +1,5 @@
 module Juniper.Router
   ( Path(..)
-  , RoutePath(..)
   , renderPath
   , parsePath
   , parseSegment
@@ -16,10 +15,6 @@ import Data.Map as Map (Map, toList, fromList, lookup)
 import Data.Text as Text (Text, intercalate, splitOn, stripPrefix, stripSuffix)
 
 
-
-class RoutePath a where
-  toPath :: a -> Path
-  fromPath :: Path -> Maybe a
 
 data Path
   = Str Text

@@ -1,9 +1,7 @@
+{-# LANGUAGE ConstraintKinds #-}
 module Juniper.Runtime where
 
-
 import Juniper.Prelude
-import Juniper.Page (Page(..), PageAction(..))
-import Juniper.State as State (ToState(..))
 
 import qualified Data.Aeson as Aeson
 import Data.ByteString.Lazy (ByteString)
@@ -24,22 +22,13 @@ data Response params = Response
 
 
 
--- class Page model params where
---   toParams :: model -> params
---   loadPage :: (MonadIO m, MonadFail m) => params -> m model
-
-
-
-
-
-
 data Command action
   = Submit
   | Update action
 
 
 run
-  :: (Monad m, ToState model, PageAction action)
+  :: (Monad m, Encode LiveModel model, Encode LiveAction action)
   => Page params model action m
   -> Maybe params
   -> Maybe model
@@ -50,7 +39,7 @@ run pg mps (Just m) cmds = runActions pg m cmds
 
 -- if we only have params, no model, and no commands
 runLoad
-  :: forall m model params action. (Monad m, PageAction action)
+  :: forall m model params action. (Monad m, Encode LiveAction action)
   => Page params model action m
   -> Maybe params 
   -> m model
@@ -60,7 +49,7 @@ runLoad (Page params load update view) ps = do
 
 -- we can only run actions if we already have a model
 runActions
-  :: forall m model params action. (Monad m, PageAction action)
+  :: forall m model params action. (Monad m, Encode LiveAction action)
   => Page params model action m
   -> model
   -> [Command action]
@@ -80,9 +69,7 @@ runCommand update m cmd =
     Update a -> update a m
 
 
-
-
-parseBody :: (MonadIO m, MonadFail m, PageAction action, ToState model) => ByteString -> m (Maybe model, [Command action])
+parseBody :: (MonadIO m, MonadFail m, Encode LiveAction action, Encode LiveModel model) => ByteString -> m (Maybe model, [Command action])
 parseBody body = do
   case BSL.split newline body of
     [] -> pure (Nothing, [])
@@ -97,19 +84,60 @@ parseBody body = do
   where newline = 10 -- fromEnum '\n'
 
 
-parseModel :: (MonadFail m, MonadIO m, ToState model) => ByteString -> m model
+parseModel :: (MonadFail m, MonadIO m, Encode LiveModel model) => ByteString -> m model
 parseModel inp = do
-  case State.decode (cs inp) of
+  case decode (Encoded $ cs inp :: Encoded LiveModel) of
     Nothing -> fail $ "Could not parse model: " <> cs inp
     Just m -> pure m
 
 
 
-parseCommand :: (MonadFail m, PageAction action) => ByteString -> m (Command action)
+parseCommand :: (MonadFail m, Encode LiveAction action) => ByteString -> m (Command action)
 parseCommand "|Submit|" = pure Submit
 parseCommand t =
-  case readAction (cs t) of
-    Just a -> pure $ Update a
+  case decode (Encoded $ cs t :: Encoded LiveAction) of
+    Just (a :: action) -> pure $ Update a
     Nothing -> fail $ "Could not parse action: " <> cs t
 
 
+
+
+
+data Page params model action m = Page
+  { params :: Params params model
+  , load   :: Load params model m
+  , update :: Update action model m
+  , view   :: View          model
+  }
+
+
+type Load   params model m = Maybe params -> m model
+type Params params model   = model -> params
+type Update action model m = action -> model -> m model
+type View          model   = model -> Html ()
+
+
+-- a page without params
+simplePage
+  :: forall action model m. Applicative m
+  => m model
+  -> Update action model m
+  -> View model
+  -> Page () model action m
+simplePage int up vw = Page (const ()) (const int) up vw
+
+
+newtype Encoded a = Encoded { fromEncoded :: Text }
+
+class Encode typ a where
+  encode :: a -> Encoded typ
+  decode :: Encoded typ -> Maybe a
+
+  default encode :: Show a => a -> Encoded typ
+  encode m = Encoded $ cs $ show m
+
+  default decode :: Read a => Encoded typ -> Maybe a
+  decode e = readMaybe $ cs $ fromEncoded e
+
+data LiveModel
+data LiveAction

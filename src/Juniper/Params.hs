@@ -128,19 +128,19 @@ skipEscape c = isUnreserved c
 
 
 class ToParams params where
-  encode :: params -> QueryText
-  decode :: QueryText -> Maybe params
+  toParams :: params -> QueryText
+  fromParams :: QueryText -> Maybe params
 
-  default encode :: (Generic params, GenEncode (Rep params)) => params -> QueryText
-  encode p = genEncode (from p)
+  default toParams :: (Generic params, GenEncode (Rep params)) => params -> QueryText
+  toParams p = genEncode (from p)
 
-  default decode :: (Generic params, GenEncode (Rep params)) => QueryText -> Maybe params
-  decode qs = to <$> genDecode qs
+  default fromParams :: (Generic params, GenEncode (Rep params)) => QueryText -> Maybe params
+  fromParams qs = to <$> genDecode qs
 
 instance ToParams () where
   -- The default for simplePage uses () as the params
-  encode _ = []
-  decode _ = Just ()
+  toParams _ = []
+  fromParams _ = Just ()
 
 
 
