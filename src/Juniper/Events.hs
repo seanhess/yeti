@@ -5,8 +5,9 @@ import Juniper.Prelude
 import Data.List as List
 import Data.Map as Map (Map, null, empty)
 import Data.String.Conversions (cs)
-import Data.Text as Text (Text, null, dropWhileEnd)
-import Juniper.Runtime (Encode(..), Encoded(..), LiveAction)
+import Data.Text as Text (Text, null, takeWhile)
+import Data.Char (isAlphaNum)
+import Juniper.Runtime (Encode, encode, encode1, decode, Encoded(..), LiveAction)
 import Lucid.Base (makeAttribute, Attribute)
 import Lucid.Html5 (onchange_)
 
@@ -33,28 +34,13 @@ instance Read FormData where
 
 
 
-newtype Value = Value Text
-  deriving (Monoid, Semigroup)
-
-instance Show Value where
-  show (Value t) =
-    if Text.null t
-      then "_"
-      else show t
-
-instance Read Value where
-  readsPrec _ "_" = [(Value "", "")]
-  readsPrec n s = fmap fstFormData $ readsPrec n s
-    where fstFormData (a, s') = (Value a, s')
-
-
-
 
 onClick :: Encode LiveAction action => action -> Attribute
 onClick act = makeAttribute "data-click" . cs . fromEncoded $ (encode act :: Encoded LiveAction)
 
-onInput :: Encode LiveAction action => (Value -> action) -> Attribute
-onInput con = makeAttribute "data-input" $ cs $ fromEncoded $ stripArgs $ (encode $ con mempty :: Encoded LiveAction)
+-- won't this rely on it using show as the instance?
+onInput :: Encode LiveAction action => (Text -> action) -> Attribute
+onInput con = makeAttribute "data-input" $ cs $ fromEncoded $ (encode1 con "" :: Encoded LiveAction)
 
 onEnter :: Encode LiveAction action => action -> Attribute
 onEnter act = makeAttribute "data-enter" . cs . fromEncoded $ (encode act :: Encoded LiveAction)
@@ -64,21 +50,11 @@ onEnter act = makeAttribute "data-enter" . cs . fromEncoded $ (encode act :: Enc
 -- onChange = makeAttribute "data-change" . cs . showAction
 
 
-
 data Submit = Submit
+instance Show Submit where
+  show _ = "|Submit|"
+instance Read Submit where
+  readsPrec _ _ = [(Submit, "")]
 
-instance Encode LiveAction Submit where
-  encode _ = Encoded "|Submit|"
-  decode (Encoded "|Submit|") = Just Submit
-  decode _ = Nothing
-
-
-call :: Text -> String -> Text
-call fun action = mconcat [fun, "(", cs action, ")"]
-
-
-
-stripArgs :: Encoded a -> Encoded a
-stripArgs (Encoded t) = Encoded $ Text.dropWhileEnd isArg t
-  where isArg c = c == ' ' || c == '_'
+instance Encode LiveAction Submit
 

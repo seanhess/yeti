@@ -91,7 +91,7 @@ start = do
 
   -- load embedded js
   todos <- atomically $ newTVar [Todo "Test Item" Todo.Errand False]
-  let cfg = Render True toDocument
+  let cfg = Render False toDocument
 
   scotty 3030 $ do
     -- delay to simulate real-world conditions
@@ -129,6 +129,16 @@ start = do
       m <- param "message" :: ActionM TL.Text
       html $ "<div id='container'><p>"<> m <>"</p><input type='text'/><p>Hello!</p><button data-click='Action 3'>PRESS</button></div>"
 
+    -- You probably want Render True toDocument to embed the javascript directly
+    -- we load dynamically for debugging while developing
+    get "/build.js" $ do
+      addHeader "Content-Type" "text/javascript"
+      file "edom/build.js"
+
+    get "/run.js" $ do
+      addHeader "Content-Type" "text/javascript"
+      file "edom/run.js"
+
     get "/" $ do
       html $ cs $ renderBS $ ol_ [] $ do
         li_ $ a_ [href_ "/app/counter"] "Counter"
@@ -140,6 +150,8 @@ start = do
 toDocument :: Html () -> Html ()
 toDocument = document "Example" $ do
   link_ [type_ "text/css", rel_ "stylesheet", href_ "/example/example.css"]
+  script_ [type_ "text/javascript", src_ "/build.js"] ("" :: Text)
+  script_ [type_ "text/javascript", src_ "/run.js"] ("" :: Text)
 
 
 delay :: Int -> Application -> Application

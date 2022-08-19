@@ -38,7 +38,7 @@ data Article = Article
 
 
 data Action
-  = Comment Value
+  = Comment Text
   | SubmitComment
   deriving (Show, Read, Encode LiveAction)
 
@@ -55,7 +55,7 @@ load i = do
     Just a -> pure $ Model a "" []
 
 update :: Monad m => Action -> Model -> m Model
-update (Comment (Value t)) m =
+update (Comment t) m =
   pure $ m { comment = t }
 update SubmitComment m =
   pure $ m { comments = m.comments <> [m.comment], comment = "" }

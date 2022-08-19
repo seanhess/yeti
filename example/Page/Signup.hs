@@ -51,9 +51,9 @@ data Model = Model
 
 
 data Action
-  = EditUsername Value
-  | EditPass1 Value
-  | EditPass2 Value
+  = EditUsername Text
+  | EditPass1 Text
+  | EditPass2 Text
   | SignUp
   deriving (Show, Read, Encode LiveAction)
 
@@ -89,11 +89,11 @@ load = do
 
 
 update :: MonadIO m => Action -> Model -> m Model
-update (EditUsername (Value t)) m =
+update (EditUsername t) m =
   pure $ m { username = t }
-update (EditPass1 (Value t)) m =
+update (EditPass1 t) m =
   pure $ m { pass1 = t }
-update (EditPass2 (Value t)) m =
+update (EditPass2 t) m =
   pure $ m { pass2 = t }
 update SignUp m = do
   v <- validate m.username m.pass1 m.pass2

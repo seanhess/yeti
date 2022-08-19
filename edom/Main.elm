@@ -149,6 +149,10 @@ getHeader h heads =
 
 serializeValueAction : Action -> Value -> String
 serializeValueAction act val =
+  -- this automatically serializes it as a constructor
+  -- that means we DON'T really allow you to customize the instance
+  -- you MUST use show/read
+  -- what about Model
   (act ++ " " ++ Encode.encode 0 (Encode.string val))
 
 requestBody : Action -> Model -> Body

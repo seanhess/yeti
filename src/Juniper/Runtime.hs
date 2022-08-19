@@ -8,6 +8,7 @@ import Data.ByteString.Lazy (ByteString)
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as TL (Text)
 import qualified Data.ByteString.Lazy as BSL
+import Data.List as List (take)
 import Lucid (Html, renderBS)
 import Text.Read (readMaybe)
 import Data.Map ((!?))
@@ -84,7 +85,7 @@ parseBody body = do
   where newline = 10 -- fromEnum '\n'
 
 
-parseModel :: (MonadFail m, MonadIO m, Encode LiveModel model) => ByteString -> m model
+parseModel :: (MonadFail m, MonadIO m, Read model, Encode LiveModel model) => ByteString -> m model
 parseModel inp = do
   case decode (Encoded $ cs inp :: Encoded LiveModel) of
     Nothing -> fail $ "Could not parse model: " <> cs inp
@@ -92,7 +93,7 @@ parseModel inp = do
 
 
 
-parseCommand :: (MonadFail m, Encode LiveAction action) => ByteString -> m (Command action)
+parseCommand :: (MonadFail m, Show action, Encode LiveAction action) => ByteString -> m (Command action)
 parseCommand "|Submit|" = pure Submit
 parseCommand t =
   case decode (Encoded $ cs t :: Encoded LiveAction) of
@@ -129,15 +130,21 @@ simplePage int up vw = Page (const ()) (const int) up vw
 
 newtype Encoded a = Encoded { fromEncoded :: Text }
 
-class Encode typ a where
-  encode :: a -> Encoded typ
-  decode :: Encoded typ -> Maybe a
+-- | Must be show/read, you can't customize it
+class (Show a, Read a) => Encode typ a
 
-  default encode :: Show a => a -> Encoded typ
-  encode m = Encoded $ cs $ show m
+encode :: Encode typ a => a -> Encoded typ
+encode m = Encoded $ cs $ show m
 
-  default decode :: Read a => Encoded typ -> Maybe a
-  decode e = readMaybe $ cs $ fromEncoded e
+decode :: Encode typ a => Encoded typ -> Maybe a
+decode e = readMaybe $ cs $ fromEncoded e
+
+-- | Encodes a constructor that takes one argument. Removes the last argument, ready to accept new ones
+encode1 :: (Encode typ a, Show x) => (x -> a) -> x -> Encoded typ
+encode1 con x =
+  let tot = show (con x)
+      end = show x
+  in Encoded $ Text.stripEnd $ cs $ List.take (length tot - length end) tot
 
 data LiveModel
 data LiveAction

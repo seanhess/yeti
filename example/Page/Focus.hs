@@ -24,8 +24,8 @@ data Model = Model
   } deriving (Read, Show, Encode LiveModel, Eq)
 
 data Action
-  = One Value
-  | Two Value
+  = One Text
+  | Two Text
   deriving (Show, Read, Encode LiveAction)
 
 
@@ -37,8 +37,8 @@ load = do
   pure $ Model "a" "b"
 
 update :: MonadIO m => Action -> Model -> m Model
-update (One (Value t)) m = pure $ m { one = t }
-update (Two (Value t)) m = pure $ m { two = t }
+update (One t) m = pure $ m { one = t }
+update (Two t) m = pure $ m { two = t }
 
 view :: Model -> Html ()
 view m = section_ [ class_ "page" ] $ do

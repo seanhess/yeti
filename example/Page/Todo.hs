@@ -53,11 +53,11 @@ data Todo = Todo
 
 data Action
   = AddTodo
-  | NewTodoInput Value
+  | NewTodoInput Int Text
   | NewTodoCategory Category
   | SetCompleted Text Bool
   | Delete Text
-  | Search Value
+  | Search Text
   deriving (Show, Read, Encode LiveAction)
 
 
@@ -104,10 +104,10 @@ update todos (SetCompleted ct c) m = do
 update todos (NewTodoCategory c) m = do
   pure $ m { addCategory = c }
 
-update todos (NewTodoInput (Value t)) m = do
+update todos (NewTodoInput _ t) m = do
   pure $ m { addContent = t }
 
-update _ (Search (Value s)) m = do
+update _ (Search s) m = do
   pure $ (m :: Model) { search = s }
 
 
@@ -138,7 +138,7 @@ view m = div_ [] $ do
 
     div_ [ id_ "add" ] $ do
       button_ [ onClick AddTodo ] "Add"
-      input_ [ name_ "add", value_ (m.addContent), onInput (NewTodoInput), onEnter AddTodo ]
+      input_ [ name_ "add", value_ (m.addContent), onInput (NewTodoInput 3), onEnter AddTodo ]
       dropdown NewTodoCategory (\v -> toHtml (cs $ show v :: Text)) [Errand, Home, Work, Personal]
 
     div_ [ id_ "search" ] $ do

@@ -1,11 +1,11 @@
 module Juniper
  ( Page(Page)
- , Encode(..)
+ , Encode, encode, decode
  , LiveAction, LiveModel
  , simplePage
  , Submit(..)
  , ToParams(..), ToParam(..)
- , Value(..)
+--  , Value(..)
  , page
  , handle
  , Render(..)

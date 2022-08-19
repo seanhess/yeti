@@ -14,7 +14,7 @@ module Juniper.Web
   ) where
 
 import Juniper.Prelude
-import Juniper.Runtime as Runtime (Response(..), Page, Encode(..), LiveAction, LiveModel, Encoded(..))
+import Juniper.Runtime as Runtime (Response(..), Page, Encode, LiveAction, LiveModel, Encoded(..))
 import qualified Juniper.Runtime as Runtime
 import Juniper.Params as Params (ToParams(..), urlEncode, urlDecode)
 import Juniper.JS as JS
