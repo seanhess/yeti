@@ -34,14 +34,28 @@ toParams :: Model -> Params
 toParams m = Params m.search m.count
 
 
+data Category
+  = Errand
+  | Work
+  | Home
+  | Personal
+  deriving (Show, Read, Eq)
+
 data Todo = Todo
   { content :: Text
+  , category :: Category
   , completed :: Bool
-  } deriving (Read, Show)
+  } deriving (Show, Read)
+
+
+
+
+
 
 data Action
   = AddTodo
   | NewTodoInput Value
+  | Completed Text Bool
   | Delete Text
   | Search Value
   deriving (Show, Read, PageAction)
@@ -68,18 +82,26 @@ load savedTodos mps = do
 
 
 update :: MonadIO m => TVar [Todo] -> Action -> Model -> m Model
-update savedTodos (AddTodo) m = do
-  let new = Todo (m.addContent) False
-  ts <- liftIO $ atomically $ appendTodo savedTodos new
+update todos (AddTodo) m = do
+  let new = Todo (m.addContent) Errand False
+  ts <- liftIO $ atomically $ updateTodos todos $ \ts -> ts <> [new]
   pure $ m
     { search = ""
     , addContent = ""
     , todos = ts
     }
 
-update savedTodos (Delete t) m = do
-  ts <- liftIO $ atomically $ deleteTodo savedTodos t
+update todos (Delete t) m = do
+  ts <- liftIO $ atomically $ updateTodos todos remove
   pure $ m { todos = ts }
+  where
+    remove = filter (\(Todo t' _ _) -> t /= t')
+
+update todos (Completed ct c) m = do
+  ts <- liftIO $ atomically $ updateTodos todos (modify ct complete)
+  pure $ m { todos = ts }
+  where
+    complete t = t { completed = c }
 
 update _ (Search (Value s)) m = do
   pure $ (m :: Model) { search = s }
@@ -89,20 +111,20 @@ update _ (NewTodoInput (Value s)) m = do
 
 
 
+modify :: Text -> (Todo -> Todo) -> [Todo] -> [Todo]
+modify ct up =
+  map checkTodo
+  where
+    checkTodo t =
+      if (content t) == ct
+        then up t
+        else t
 
-appendTodo :: TVar [Todo] -> Todo -> STM [Todo]
-appendTodo savedTodos t = do
-  ts <- readTVar savedTodos
-  let ts' = ts <> [t]
-  writeTVar savedTodos ts'
-  pure ts'
-
-
-deleteTodo :: TVar [Todo] -> Text -> STM [Todo]
-deleteTodo savedTodos t = do
-  ts <- readTVar savedTodos
-  let ts' = filter (\(Todo t' _) -> t /= t') ts
-  writeTVar savedTodos ts'
+updateTodos :: TVar [Todo] -> ([Todo] -> [Todo]) -> STM [Todo]
+updateTodos saved up = do
+  ts <- readTVar saved
+  let ts' = up ts
+  writeTVar saved ts'
   pure ts'
 
 
@@ -123,21 +145,24 @@ view m = div_ $ do
 
   let ts = m.todos & filter (isSearch m.search)
 
-  div_ $ do
+  div_ [ class_ "col g16"] $ do
     forM_ ts $ \todo ->
-      div_ $ do
-        span_ $ button_ [ onClick (Delete (content todo)) ] "X"
-        -- this is going to be a button
-        span_ "✓"
-        span_ "☑"
-        span_ "☐"
-        span_ $ toHtml (content todo)
+      div_ [ class_ "row g8" ] $ do
+        button_ [ onClick (Delete (content todo)) ] "X"
+        checkButton (Completed (content todo)) (completed todo) $
+          div_ $ toHtml (content todo)
 
+
+checkButton :: PageAction action => (Bool -> action) -> Bool -> Html () -> Html ()
+checkButton act chk ct =
+  button_ [ class_ "row g4", onClick $ act $ not chk ] $ do
+    span_ $ if (chk) then "☑" else "☐"
+    span_ ct
 
 
 isSearch :: Text -> Todo -> Bool
 isSearch "" _ = True
-isSearch t (Todo t' _) = Text.isInfixOf (Text.toLower t) (Text.toLower t')
+isSearch t (Todo t' _ _) = Text.isInfixOf (Text.toLower t) (Text.toLower t')
 
 
 

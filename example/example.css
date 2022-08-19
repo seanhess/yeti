@@ -17,6 +17,25 @@
   color: red
 }
 
+.row {
+  display:flex;
+  flex-direction:row;
+}
+
+.col {
+  display:flex;
+  flex-direction:column;
+}
+
+.g1 { gap:1px; }
+.g2 { gap:0.125rem; }
+.g4 { gap:0.25rem; }
+.g6 { gap:0.375rem; }
+.g8 { gap:0.5rem; }
+.g10 { gap:0.625rem; }
+.g12 { gap:0.75rem; }
+.g16 { gap:1rem; }
+
 .error input[type=text], .error input[type=password] {
   border: solid red 1px;
   border-radius: 3px;

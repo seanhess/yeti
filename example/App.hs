@@ -90,7 +90,7 @@ start :: IO ()
 start = do
 
   -- load embedded js
-  todos <- atomically $ newTVar [Todo "Test Item" False]
+  todos <- atomically $ newTVar [Todo "Test Item" Todo.Errand False]
   let cfg = Render True toDocument
 
   scotty 3030 $ do
