@@ -14,7 +14,6 @@ import Dict exposing (Dict)
 import Json.Encode as Encode
 import Json.Decode as Decode
 
-
 -- TODO switch to forms, submit or submit1!
 -- TODO try checkboxes, I want to do something on each click
 -- TODO connect to actual backend
