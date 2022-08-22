@@ -9,6 +9,7 @@ import Juniper.Prelude
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad (forM_)
+import Data.Default (Default(..))
 import Data.Map as Map (lookup, (!?))
 import Data.Maybe (fromMaybe)
 import Data.Text as Text (Text, isInfixOf, toLower)
@@ -39,6 +40,8 @@ data Category
   | Home
   | Personal
   deriving (Show, Read, Eq)
+instance Value Category where
+  empty = Errand
 
 data Todo = Todo
   { content :: Text
@@ -139,7 +142,8 @@ view m = div_ [] $ do
     div_ [ id_ "add" ] $ do
       button_ [ onClick AddTodo ] "Add"
       input_ [ name_ "add", value_ (m.addContent), onInput (NewTodoInput 3), onEnter AddTodo ]
-      dropdown NewTodoCategory (\v -> toHtml (cs $ show v :: Text)) [Errand, Home, Work, Personal]
+      dropdown NewTodoCategory (\v -> (cs $ show v)) (\v -> toHtml (cs $ show v :: Text)) [Errand, Home, Work, Personal]
+      span_ (toHtml $ show m.addCategory)
 
     div_ [ id_ "search" ] $ do
       button_ [ onClick Submit, onEnter Submit ] "Search"
@@ -169,12 +173,12 @@ isSearch t (Todo t' _ _) = Text.isInfixOf (Text.toLower t) (Text.toLower t')
 
 
 -- we are going to run into similar problems. We have to encode things into values
-dropdown :: (Encode LiveAction action, Show val) => (val -> action) -> (val -> Html ()) -> [val] -> Html ()
-dropdown act opt vals =
-  select_ [ id_ "test" ] $
+dropdown :: (Encode LiveAction action, Value val) => (val -> action) -> (val -> Text) -> (val -> Html ()) -> [val] -> Html ()
+dropdown act toVal opt vals =
+  select_ [ onSelect act ] $
     mapM_ option vals
   where
-    option v = option_ [id_ (cs (show v))] (opt v)
+    option v = option_ [value_ (toVal v)] (opt v)
 
 
 

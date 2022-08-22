@@ -149,11 +149,15 @@ getHeader h heads =
 
 serializeValueAction : Action -> Value -> String
 serializeValueAction act val =
-  -- this automatically serializes it as a constructor
-  -- that means we DON'T really allow you to customize the instance
-  -- you MUST use show/read
-  -- what about Model
+  -- this assumes act is an unapplied haskell constructor
+  -- assumes action wants a string
   (act ++ " " ++ Encode.encode 0 (Encode.string val))
+
+serializeChangeAction : Action -> String -> Action
+serializeChangeAction act inp =
+  -- this assumes act is an unapplied haskell constructor
+  -- assumed input is shown haskell code as well
+  (act ++ " " ++ inp)
 
 requestBody : Action -> Model -> Body
 requestBody action model =
@@ -253,7 +257,6 @@ pageUrl url params =
 
 view : Model -> Document Msg
 view model =
-  -- let test = div [] [ text "Elm Initialized" ]
   { title = model.title
   , body =
       [ case model.parsed of
@@ -365,8 +368,10 @@ toAttribute (name, value) =
       -- automatically commit changes on enter or blur for inputs
       [Html.onInput (ServerUpdate value), onEnter (ServerAction submit), Html.onBlur (ServerAction submit)]
 
-    -- "data-change" -> 
-    --   [Html.onInput (ServerUpdate value), onEnter (ServerAction submit), Html.onBlur (ServerAction submit)]
+    "data-select" -> 
+      -- For select inputs, this assumes inputs are serialized enums
+      -- that's... not at all obvious
+      [Html.onInput (\s -> ServerAction (serializeChangeAction value s))]
 
     "data-enter" -> 
       [onEnter (ServerAction value)]
@@ -383,6 +388,10 @@ toAttribute (name, value) =
     _ ->
       [Html.attribute name value]
 
+
+onChange : (String -> msg) -> Attribute msg
+onChange toMsg = 
+  Html.on "click" (Decode.map toMsg Decode.string)
 
 submit : AttributeValue
 submit = "|Submit|"

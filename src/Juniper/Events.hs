@@ -7,7 +7,8 @@ import Data.Map as Map (Map, null, empty)
 import Data.String.Conversions (cs)
 import Data.Text as Text (Text, null, takeWhile)
 import Data.Char (isAlphaNum)
-import Juniper.Runtime (Encode, encode, encode1, decode, Encoded(..), LiveAction)
+import Data.Default (Default(..))
+import Juniper.Runtime (Encode, encode, encode1, decode, Encoded(..), LiveAction, Value)
 import Lucid.Base (makeAttribute, Attribute)
 import Lucid.Html5 (onchange_)
 
@@ -38,16 +39,14 @@ instance Read FormData where
 onClick :: Encode LiveAction action => action -> Attribute
 onClick act = makeAttribute "data-click" . cs . fromEncoded $ (encode act :: Encoded LiveAction)
 
--- won't this rely on it using show as the instance?
-onInput :: Encode LiveAction action => (Text -> action) -> Attribute
-onInput con = makeAttribute "data-input" $ cs $ fromEncoded $ (encode1 con "" :: Encoded LiveAction)
+onInput :: (Encode LiveAction action, Value val) => (val -> action) -> Attribute
+onInput con = makeAttribute "data-input" $ cs $ fromEncoded $ (encode1 con :: Encoded LiveAction)
 
 onEnter :: Encode LiveAction action => action -> Attribute
 onEnter act = makeAttribute "data-enter" . cs . fromEncoded $ (encode act :: Encoded LiveAction)
 
--- -- | Only fires when the element loses focus
--- onChange :: PageAction action => action -> Attribute
--- onChange = makeAttribute "data-change" . cs . showAction
+onSelect :: (Encode LiveAction action, Value val) => (val -> action) -> Attribute
+onSelect con = makeAttribute "data-select" $ cs $ fromEncoded $ (encode1 con :: Encoded LiveAction)
 
 
 data Submit = Submit

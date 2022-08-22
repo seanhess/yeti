@@ -140,11 +140,19 @@ decode :: Encode typ a => Encoded typ -> Maybe a
 decode e = readMaybe $ cs $ fromEncoded e
 
 -- | Encodes a constructor that takes one argument. Removes the last argument, ready to accept new ones
-encode1 :: (Encode typ a, Show x) => (x -> a) -> x -> Encoded typ
-encode1 con x =
-  let tot = show (con x)
-      end = show x
+-- I would need to know exactly how many characters to take
+-- without measuring the length of the overall string
+encode1 :: forall typ a x. (Encode typ a, Value x, Show x) => (x -> a) -> Encoded typ
+encode1 con =
+  let tot = show (con empty)
+      end = show (empty :: x)
   in Encoded $ Text.stripEnd $ cs $ List.take (length tot - length end) tot
 
 data LiveModel
 data LiveAction
+
+class Show a => Value a where
+  empty :: a
+
+instance Value Text where 
+  empty = ""

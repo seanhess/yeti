@@ -1,7 +1,7 @@
 module Juniper
  ( Page(Page)
- , Encode, encode, decode
- , LiveAction, LiveModel
+ , Encode, encode, decode, encode1
+ , LiveAction, LiveModel, Value(..)
  , simplePage
  , Submit(..)
  , ToParams(..), ToParam(..)
@@ -9,7 +9,7 @@ module Juniper
  , page
  , handle
  , Render(..)
- , onInput, onClick, onEnter --, onBlur
+ , onInput, onClick, onEnter, onSelect --, onBlur
  , scripts
  , Html
  , FromJSON, ToJSON, Generic
