@@ -79,23 +79,23 @@ instance ToParam b => ToParam (Tagged a b) where
   fromParam t = Tagged <$> fromParam t
 
 instance (ToParam a, ToParam b) => ToParam (a, b) where
-  -- we ONLY need to encode the "|" character
-  toParam (r, c) = esc (toParam r) <> "|" <> esc (toParam c)
-    where esc = escapeChar '|'
+  -- we ONLY need to encode the "-" character
+  toParam (r, c) = esc (toParam r) <> "-" <> esc (toParam c)
+    where esc = escapeChar '-'
 
   fromParam t = do
-    [tr, tc] <- pure $ Text.splitOn "|" t
+    [tr, tc] <- pure $ Text.splitOn "-" t
     r <- fromParam $ urlDecode tr
     c <- fromParam $ urlDecode tc
     pure (r, c)
 
 instance (ToParam a, ToParam b, ToParam c) => ToParam (a, b, c) where
-  -- we ONLY need to encode the "|" character
-  toParam (a, b, c) = Text.intercalate "|" $ map esc [toParam a, toParam b, toParam c]
+  -- we ONLY need to encode the "-" character
+  toParam (a, b, c) = Text.intercalate "-" $ map esc [toParam a, toParam b, toParam c]
     where esc = escapeChar '|'
 
   fromParam t = do
-    [ta, tb, tc] <- pure $ Text.splitOn "|" t
+    [ta, tb, tc] <- pure $ Text.splitOn "-" t
     a <- fromParam $ urlDecode ta
     b <- fromParam $ urlDecode tb
     c <- fromParam $ urlDecode tc
@@ -117,7 +117,8 @@ urlEncode =
 skipEscape :: Char -> Bool
 -- skipEscape '+' = True
 skipEscape ',' = True
-skipEscape '|' = True
+skipEscape '-' = True
+-- skipEscape '|' = True
 skipEscape c = isUnreserved c
     
 

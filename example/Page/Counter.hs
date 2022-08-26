@@ -33,6 +33,8 @@ view m = section_ [ class_ "page" ] $ do
       button_ [ onClick Increment] "Increment"
       button_ [ onClick Decrement] "Decrement"
 
+    div_ $ toHtml $ show m.count
+
 
 page :: MonadIO m => Page () Model Action m
 page = simplePage load update view

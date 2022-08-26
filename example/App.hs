@@ -145,6 +145,7 @@ start = do
         li_ $ a_ [href_ "/app/signup"] "Signup"
         li_ $ a_ [href_ "/app/focus"] "Focus"
         li_ $ a_ [href_ "/app/todo"] "Todo"
+        li_ $ a_ [href_ "/app/article/1"] "Article"
 
 
 toDocument :: Html () -> Html ()
