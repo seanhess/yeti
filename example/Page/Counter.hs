@@ -30,8 +30,8 @@ view :: Model -> Html ()
 view m = section_ [ class_ "page" ] $ do
 
     div_ [ class_ "section" ] $ do
-      button_ [ onClick Increment] "Increment"
       button_ [ onClick Decrement] "Decrement"
+      button_ [ onClick Increment] "Increment"
 
     div_ $ toHtml $ show m.count
 

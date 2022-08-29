@@ -8,34 +8,18 @@ import Html exposing (Html, div, text, node, Attribute, span)
 import Svg exposing (Svg)
 import Html.Attributes as Html exposing (id)
 import Html.Events as Html
-import Html.Parser as Parser exposing (Node(..))
+import Html.Parser as HParser exposing (Node(..))
+import Parser exposing (DeadEnd, Problem, deadEndsToString)
 import Http exposing (Response)
 import Dict exposing (Dict)
 import Json.Encode as Encode
 import Json.Decode as Decode
 
--- TODO switch to forms, submit or submit1!
--- TODO try checkboxes, I want to do something on each click
--- TODO connect to actual backend
-
--- var currentUrl = window.location.pathname + window.location.search
-
-  -- // TODO titles
-  -- if (pageUrl != currentUrl) {
-  --   let title = "Juniper Tab Title"
-  --   console.log(" - ", "pageUrl", pageUrl)
-  --   window.history.pushState({pageUrl: pageUrl}, title, pageUrl)
-  -- }
-
-    -- method: "POST",
-    -- headers: {"Accept": "application/vdom"},
-    -- body: body
-
 type alias Id = String
 type alias Value = String
 
 type Error
-  = FailedParse
+  = FailedParse (List DeadEnd)
   | MissingHeader String
   | ServerError ServerError
   | CannotBuildUrl String
@@ -265,12 +249,12 @@ view model =
   }
 
 viewError : Error -> Html Msg
-viewError e =
+viewError err =
   div []
     [ span [] [ text "Error: " ]
     , span []
-       [ case e of
-          FailedParse -> text "Failed Parse"
+       [ case err of
+          FailedParse ds -> text <| "Failed Parse: " ++ deadEndsToString ds
           MissingHeader h -> text ("Missing Header from Server: " ++ h)
           ServerError BadUrl -> text "Bad url"
           ServerError Timeout -> text "Timeout"
@@ -287,8 +271,8 @@ viewError e =
 
 parseHtml : String -> Result Error (Html Msg)
 parseHtml input = 
-  case (Parser.run input) of
-    Err _ -> Err FailedParse
+  case (HParser.run input) of
+    Err ld -> Err (FailedParse ld)
     Ok nodes -> Ok <|
       div [ id "juniper-root-content"] <|
         List.map toHtml nodes
@@ -300,7 +284,7 @@ type alias AttributeName = String
 type alias AttributeValue = String
 
 
-toHtml : Parser.Node -> Html Msg
+toHtml : HParser.Node -> Html Msg
 toHtml node =
   case node of
     (Text s) ->
@@ -312,7 +296,7 @@ toHtml node =
     (Element name atts childs) ->
       toElement name atts childs
 
-toSvg : Parser.Node -> Svg Msg
+toSvg : HParser.Node -> Svg Msg
 toSvg node =
   case node of
     (Text s) ->
@@ -325,20 +309,20 @@ toSvg node =
 
 
 
-toElement : ElementName -> List Parser.Attribute -> List Parser.Node -> Html Msg
+toElement : ElementName -> List HParser.Attribute -> List HParser.Node -> Html Msg
 toElement name atts childs =
   let convertedAtts = List.concatMap toAttribute atts
       convertedChilds = List.map toHtml childs
   in Html.node name convertedAtts convertedChilds
 
-svgRoot : List Parser.Attribute -> List Parser.Node -> Html Msg
+svgRoot : List HParser.Attribute -> List HParser.Node -> Html Msg
 svgRoot atts childs =
   Svg.svg (List.map svgToAttribute atts) (List.map toSvg childs)
 
 svgToAttribute : (AttributeName, AttributeValue) -> Svg.Attribute Msg
 svgToAttribute (name, value) = VirtualDom.attribute name value
 
-svgElement : ElementName -> List Parser.Attribute -> List Parser.Node -> Html Msg
+svgElement : ElementName -> List HParser.Attribute -> List HParser.Node -> Html Msg
 svgElement name atts childs =
   let convertedAtts = List.concatMap toAttribute atts
       convertedChilds = List.map toHtml childs
@@ -350,7 +334,7 @@ svgElement name atts childs =
 -- inputListener id =
 --     Html.onInput (Input id)
 
-idFromAttributes : List Parser.Attribute -> Maybe String
+idFromAttributes : List HParser.Attribute -> Maybe String
 idFromAttributes atts =
   case List.filter (\(name, _) -> name == "id") atts of
     [] -> Nothing
