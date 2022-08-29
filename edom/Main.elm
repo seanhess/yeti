@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import VirtualDom
 import Browser exposing (UrlRequest, Document)
@@ -9,7 +9,9 @@ import Svg exposing (Svg)
 import Html.Attributes as Html exposing (id)
 import Html.Events as Html
 import Html.Parser as HParser exposing (Node(..))
-import Parser exposing (DeadEnd, Problem, deadEndsToString)
+import Parser exposing (DeadEnd, deadEndsToString)
+import Process
+import Task
 import Http exposing (Response)
 import Dict exposing (Dict)
 import Json.Encode as Encode
@@ -41,6 +43,13 @@ type RequestType
 type alias RequestId = Int
 
 
+port sendEvent : String -> Cmd msg
+
+
+updateDOM : Cmd Msg
+updateDOM =
+  Process.sleep 5 |> Task.perform (always (Updated ()))
+
 type alias Model =
   { html : Body
   , title : Title 
@@ -70,6 +79,7 @@ type Msg
   | Loaded RequestId RequestType (Result Error (Params, Body))
   | UrlChange Url
   | LinkClicked UrlRequest
+  | Updated ()
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -90,7 +100,7 @@ init (title, start, state) url key =
     , requestId = 0
     , requestPending = False
     }
-  , Cmd.none
+  , updateDOM
   )
 
 
@@ -176,22 +186,35 @@ update msg model =
     Loaded _ rt (Ok (params, body)) ->
       let urlString = pageUrl model.url params
           (state, content) = parseBody body
+          updateUrl = case rt of
+            RequestAction ->
+              if Url.fromString urlString /= Just model.url
+                then Browser.pushUrl model.key urlString
+                else Cmd.none
+            RequestLoadUrl ->
+              Cmd.none
+
+
       in case Url.fromString urlString of
-          Nothing -> ( { model | parsed = Err (CannotBuildUrl urlString), requestPending = False }, Cmd.none )
+          Nothing ->
+            ( { model | parsed = Err (CannotBuildUrl urlString)
+                      , requestPending = False
+              }
+            , updateDOM
+            )
           Just url -> 
-            ( { model | html = content, parsed = parseHtml content, url = url, state = state, requestPending = False }
-            ,  case rt of
-                 RequestAction ->
-                   if Url.fromString urlString /= Just model.url
-                     then Browser.pushUrl model.key urlString
-                     else Cmd.none
-                 RequestLoadUrl ->
-                  Cmd.none
+            ( { model | html = content
+                      , parsed = parseHtml content
+                      , url = url
+                      , state = state
+                      , requestPending = False
+              }
+            , Cmd.batch [updateUrl, updateDOM]
             )
 
     Loaded _ _ (Err e) ->
       ( { model | parsed = Err e}
-      , Cmd.none
+      , updateDOM
       )
 
     UrlChange url ->
@@ -219,8 +242,8 @@ update msg model =
         Browser.External href ->
           ( model, Browser.load href )
 
-    -- None ->
-    --   (model, Cmd.none)
+    Updated _ ->
+      (model, sendEvent "updateDOM")
 
 parseBody : Body -> (State, Content)
 parseBody b = 
@@ -344,23 +367,20 @@ idFromAttributes atts =
 toAttribute : (AttributeName, AttributeValue) -> List (Html.Attribute Msg)
 toAttribute (name, value) =
   case name of
-    "data-click" -> 
+    "data-jun-click" -> 
       [Html.onClick (ServerAction value)]
 
-    "data-input" -> 
+    "data-jun-input" -> 
       -- automatically commit changes on enter or blur for inputs
       [Html.onInput (ServerUpdate value), onEnter (ServerAction submit), Html.onBlur (ServerAction submit)]
 
-    "data-select" -> 
+    "data-jun-select" -> 
       -- For select inputs, this assumes inputs are serialized enums
       -- that's... not at all obvious
       [Html.onInput (\s -> ServerAction (serializeChangeAction value s))]
 
-    "data-enter" -> 
+    "data-jun-enter" -> 
       [onEnter (ServerAction value)]
-
-    -- "data-blur" -> 
-    --   [Html.onBlur (toMessage value)]
 
     "value" -> 
       [Html.value value]

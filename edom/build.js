@@ -5459,8 +5459,6 @@ var $elm$browser$Browser$application = _Browser_application;
 var $elm$json$Json$Decode$index = _Json_decodeIndex;
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
-var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$FailedParse = function (a) {
 	return {$: 'FailedParse', a: a};
 };
@@ -9300,13 +9298,13 @@ var $author$project$Main$toAttribute = function (_v0) {
 	var name = _v0.a;
 	var value = _v0.b;
 	switch (name) {
-		case 'data-click':
+		case 'data-jun-click':
 			return _List_fromArray(
 				[
 					$elm$html$Html$Events$onClick(
 					$author$project$Main$ServerAction(value))
 				]);
-		case 'data-input':
+		case 'data-jun-input':
 			return _List_fromArray(
 				[
 					$elm$html$Html$Events$onInput(
@@ -9316,7 +9314,7 @@ var $author$project$Main$toAttribute = function (_v0) {
 					$elm$html$Html$Events$onBlur(
 					$author$project$Main$ServerAction($author$project$Main$submit))
 				]);
-		case 'data-select':
+		case 'data-jun-select':
 			return _List_fromArray(
 				[
 					$elm$html$Html$Events$onInput(
@@ -9325,7 +9323,7 @@ var $author$project$Main$toAttribute = function (_v0) {
 							A2($author$project$Main$serializeChangeAction, value, s));
 					})
 				]);
-		case 'data-enter':
+		case 'data-jun-enter':
 			return _List_fromArray(
 				[
 					$author$project$Main$onEnter(
@@ -9419,6 +9417,15 @@ var $author$project$Main$parseHtml = function (input) {
 				A2($elm$core$List$map, $author$project$Main$toHtml, nodes)));
 	}
 };
+var $author$project$Main$Updated = function (a) {
+	return {$: 'Updated', a: a};
+};
+var $elm$core$Process$sleep = _Process_sleep;
+var $author$project$Main$updateDOM = A2(
+	$elm$core$Task$perform,
+	$elm$core$Basics$always(
+		$author$project$Main$Updated(_Utils_Tuple0)),
+	$elm$core$Process$sleep(5));
 var $author$project$Main$init = F3(
 	function (_v0, url, key) {
 		var title = _v0.a;
@@ -9436,7 +9443,7 @@ var $author$project$Main$init = F3(
 				updates: $elm$core$Dict$empty,
 				url: url
 			},
-			$elm$core$Platform$Cmd$none);
+			$author$project$Main$updateDOM);
 	});
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
@@ -9452,6 +9459,7 @@ var $author$project$Main$Loaded = F3(
 	});
 var $author$project$Main$RequestAction = {$: 'RequestAction'};
 var $author$project$Main$RequestLoadUrl = {$: 'RequestLoadUrl'};
+var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -9867,6 +9875,7 @@ var $elm$http$Http$Header = F2(
 var $elm$http$Http$header = $elm$http$Http$Header;
 var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $author$project$Main$nextRequestId = $elm$core$Basics$add(1);
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$BadStatus = F2(
 	function (a, b) {
 		return {$: 'BadStatus', a: a, b: b};
@@ -10370,6 +10379,7 @@ var $author$project$Main$requestBody = F2(
 						[action]))));
 		return body;
 	});
+var $author$project$Main$sendEvent = _Platform_outgoingPort('sendEvent', $elm$json$Json$Encode$string);
 var $elm$http$Http$stringBody = _Http_pair;
 var $author$project$Main$update = F2(
 	function (msg, model) {
@@ -10417,6 +10427,15 @@ var $author$project$Main$update = F2(
 					var params = _v1.a;
 					var body = _v1.b;
 					var urlString = A2($author$project$Main$pageUrl, model.url, params);
+					var updateUrl = function () {
+						if (rt.$ === 'RequestAction') {
+							return (!_Utils_eq(
+								$elm$url$Url$fromString(urlString),
+								$elm$core$Maybe$Just(model.url))) ? A2($elm$browser$Browser$Navigation$pushUrl, model.key, urlString) : $elm$core$Platform$Cmd$none;
+						} else {
+							return $elm$core$Platform$Cmd$none;
+						}
+					}();
 					var _v2 = $author$project$Main$parseBody(body);
 					var state = _v2.a;
 					var content = _v2.b;
@@ -10430,7 +10449,7 @@ var $author$project$Main$update = F2(
 										$author$project$Main$CannotBuildUrl(urlString)),
 									requestPending: false
 								}),
-							$elm$core$Platform$Cmd$none);
+							$author$project$Main$updateDOM);
 					} else {
 						var url = _v3.a;
 						return _Utils_Tuple2(
@@ -10443,15 +10462,9 @@ var $author$project$Main$update = F2(
 									state: state,
 									url: url
 								}),
-							function () {
-								if (rt.$ === 'RequestAction') {
-									return (!_Utils_eq(
-										$elm$url$Url$fromString(urlString),
-										$elm$core$Maybe$Just(model.url))) ? A2($elm$browser$Browser$Navigation$pushUrl, model.key, urlString) : $elm$core$Platform$Cmd$none;
-								} else {
-									return $elm$core$Platform$Cmd$none;
-								}
-							}());
+							$elm$core$Platform$Cmd$batch(
+								_List_fromArray(
+									[updateUrl, $author$project$Main$updateDOM])));
 					}
 				} else {
 					var e = msg.c.a;
@@ -10461,7 +10474,7 @@ var $author$project$Main$update = F2(
 							{
 								parsed: $elm$core$Result$Err(e)
 							}),
-						$elm$core$Platform$Cmd$none);
+						$author$project$Main$updateDOM);
 				}
 			case 'UrlChange':
 				var url = msg.a;
@@ -10486,7 +10499,7 @@ var $author$project$Main$update = F2(
 							tracker: $elm$core$Maybe$Nothing,
 							url: $elm$url$Url$toString(url)
 						}));
-			default:
+			case 'LinkClicked':
 				var urlRequest = msg.a;
 				if (urlRequest.$ === 'Internal') {
 					var url = urlRequest.a;
@@ -10502,12 +10515,15 @@ var $author$project$Main$update = F2(
 						model,
 						$elm$browser$Browser$Navigation$load(href));
 				}
+			default:
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$sendEvent('updateDOM'));
 		}
 	});
 var $elm$parser$Parser$deadEndsToString = function (deadEnds) {
 	return 'TODO deadEndsToString';
 };
-var $elm$core$Debug$log = _Debug_log;
 var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$viewError = function (err) {
 	return A2(
@@ -10532,8 +10548,7 @@ var $author$project$Main$viewError = function (err) {
 							case 'FailedParse':
 								var ds = err.a;
 								return $elm$html$Html$text(
-									'Failed Parse: ' + $elm$parser$Parser$deadEndsToString(
-										A2($elm$core$Debug$log, 'WHAT', ds)));
+									'Failed Parse: ' + $elm$parser$Parser$deadEndsToString(ds));
 							case 'MissingHeader':
 								var h = err.a;
 								return $elm$html$Html$text('Missing Header from Server: ' + h);

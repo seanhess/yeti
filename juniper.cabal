@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           juniper
-version:        0.2.6
+version:        0.3.0
 description:    Please see the README on GitHub at <https://github.com/seanhess/juniper#readme>
 homepage:       https://github.com/seanhess/juniper#readme
 bug-reports:    https://github.com/seanhess/juniper/issues
@@ -100,6 +100,7 @@ executable juniper-exe
       App
       Page.About
       Page.Article
+      Page.Component
       Page.Counter
       Page.Focus
       Page.Signup

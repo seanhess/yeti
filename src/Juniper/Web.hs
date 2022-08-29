@@ -8,7 +8,7 @@ module Juniper.Web
   , def
   , page
   , pageUrl
-  , document
+  , simpleDocument
   , lucid
   , queryToText
   ) where
@@ -56,7 +56,7 @@ data Render = Render
   }
 
 instance Default Render where
-  def = Render True (document "" "")
+  def = Render True (simpleDocument "" "")
 
 -- handle handles it if you're in actionM
 handle
@@ -149,20 +149,21 @@ respond embJS toDocument ps model view = do
 
 
 -- | Convenience toDocument function to pass to render. Allows you to add stylesheets and javascript easily
-document :: Text -> Html () -> (Html () -> Html ())
-document t extra content = do
+simpleDocument :: Text -> Html () -> (Html () -> Html ())
+simpleDocument t extra content = do
   html_ $ do
     head_ $ do
       title_ (toHtml t)
       meta_ [charset_ "UTF-8"]
       meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
+      meta_ [name_ "viewport", content_ "width=device-width, initial-scale=1.0" ]
+      "\n"
+      extra
 
     "\n"
     body_ $ do
-      "\n"
       content
-      "\n"
-      extra
+
 
 
 
