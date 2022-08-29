@@ -26,7 +26,7 @@ import qualified Page.About as About
 import qualified Page.Todo as Todo
 import qualified Page.Focus as Focus
 import qualified Page.Article as Article
-import qualified Page.Component as Component
+import qualified Page.Comp as Comp
 import Page.Todo (Todo(..))
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
@@ -68,8 +68,8 @@ start = do
     page "/app/focus" $ do
       handle cfg Focus.page
 
-    page "/app/component" $ do
-      handle cfg Component.page
+    page "/app/comp" $ do
+      handle cfg Comp.page
 
     page "/app/todo" $ do
       -- n <- param "n" :: ActionM Int
@@ -109,7 +109,7 @@ start = do
         li_ $ a_ [href_ "/app/signup"] "Signup"
         li_ $ a_ [href_ "/app/focus"] "Focus"
         li_ $ a_ [href_ "/app/todo"] "Todo"
-        li_ $ a_ [href_ "/app/component"] "Component"
+        li_ $ a_ [href_ "/app/comp"] "Comp"
         li_ $ a_ [href_ "/app/article/1"] "Article"
 
 

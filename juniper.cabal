@@ -25,6 +25,7 @@ source-repository head
 library
   exposed-modules:
       Juniper
+      Juniper.Component
       Juniper.Events
       Juniper.JS
       Juniper.Params
@@ -100,7 +101,7 @@ executable juniper-exe
       App
       Page.About
       Page.Article
-      Page.Component
+      Page.Comp
       Page.Counter
       Page.Focus
       Page.Signup

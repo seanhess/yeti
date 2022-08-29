@@ -46,6 +46,7 @@
 .p16 { padding:1rem; }
 
 .bg-blue { background-color: blue;}
+.bg-green { background-color: green;}
 
 .error input[type=text], .error input[type=password] {
   border: solid red 1px;
@@ -55,3 +56,7 @@
 }
 
 
+.link {
+  text-decoration: underline;
+  cursor: pointer;
+}

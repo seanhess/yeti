@@ -32,8 +32,9 @@ class Component {
   }
 }
 
-Juniper.registerComponent = function(selector, f) {
+Juniper.registerComponent = function(name, f) {
 
+  let selector = "." + name
   document.addEventListener("updateDOM", function() {
 
     const doms = document.querySelectorAll(selector)
@@ -42,7 +43,7 @@ Juniper.registerComponent = function(selector, f) {
       // compare data input as strings
       if (dom.dataset.input !== dom.oldInput) {
         let inp = JSON.parse(dom.dataset.input)
-        f.call(comp, inp)
+        f.call(dom, inp)
       }
 
       dom.oldInput = dom.dataset.input

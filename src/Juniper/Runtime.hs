@@ -156,3 +156,6 @@ class Show a => Value a where
 
 instance Value Text where 
   empty = ""
+
+instance Value String where 
+  empty = ""

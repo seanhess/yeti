@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
-module Page.Component where
+module Page.Comp where
 
 import Prelude
 import Juniper
@@ -20,6 +20,7 @@ data Model = Model
 
 data Action
   = AddItem
+  | RemoveItem String
   | Increment
   deriving (Show, Read, Encode LiveAction)
 
@@ -27,10 +28,15 @@ load :: MonadIO m => m Model
 load = pure $ Model ["Empty"] 0
 
 update :: MonadIO m => Action -> Model -> m Model
+
 update AddItem m = do
   let n = length m.items
       i = "Item: " <> show n
   pure $ m { items = i:m.items }
+
+update (RemoveItem i) m = do
+  pure $ m { items = filter (/= i) m.items }
+
 update Increment m = do
   pure $ m { count = m.count + 1 }
 
@@ -43,8 +49,9 @@ view m = section_ [ class_ "g10 p10 col", id_ "parent" ] $ do
 
     button_ [ onClick AddItem ] "AddItem"
 
-    div_ [ class_ "bg-blue p12 comp", id_ "comp", makeAttribute "data-input" (pack $ show m.items) ] $ do
-      div_ "Component Empty Content - should be replaced by component"
+    component [class_ "bg-blue p12", onSelect RemoveItem] "comp" m.items
+
+    component [class_ "bg-green p12"] "comp" m.items
 
     div_ [id_ "items"] $ do
       forM_ m.items $ \item -> do
