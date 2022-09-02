@@ -7,11 +7,12 @@ import Url exposing (Url)
 import Html exposing (Html, div, text, node, Attribute, span)
 import Svg exposing (Svg)
 import Html.Attributes as Html exposing (id)
-import Html.Events as Html
+import Html.Events as Events
 import Html.Parser as HParser exposing (Node(..))
 import Parser exposing (DeadEnd, deadEndsToString)
 import Process
 import Task
+import String
 import Http exposing (Response)
 import Dict exposing (Dict)
 import Json.Encode as Encode
@@ -169,7 +170,7 @@ update msg model =
 
     ServerAction action ->
       let rid = nextRequestId model.requestId
-      in if model.requestPending
+      in if Debug.log "ServerAction" <| model.requestPending
             then ( model, Cmd.none )
             else ( { model | updates = Dict.empty, requestId = rid, requestPending = True }
                  , Http.request
@@ -367,20 +368,21 @@ idFromAttributes atts =
 toAttribute : (AttributeName, AttributeValue) -> List (Html.Attribute Msg)
 toAttribute (name, value) =
   case name of
-    "data-jun-click" -> 
-      [Html.onClick (ServerAction value)]
+    "data-on-click" -> 
+      [Events.onClick (ServerAction value)]
 
-    "data-jun-input" -> 
+    "data-on-input" -> 
       -- automatically commit changes on enter or blur for inputs
-      [Html.onInput (ServerUpdate value), onEnter (ServerAction submit), Html.onBlur (ServerAction submit)]
+      [Events.onInput (ServerUpdate value), onEnter (ServerAction submit), Events.onBlur (ServerAction submit)]
 
-    "data-jun-select" -> 
-      -- For select inputs, this assumes inputs are serialized enums
-      -- that's... not at all obvious
-      [Html.onInput (\s -> ServerAction (serializeChangeAction value s))]
+    "data-on-select" -> 
+      [Events.onInput (\s -> ServerAction (serializeChangeAction value s))]
 
-    "data-jun-enter" -> 
+    "data-on-enter" -> 
       [onEnter (ServerAction value)]
+
+    "data-on-delete" -> 
+      [onDelete (\s -> ServerAction (serializeValueAction value s))]
 
     "value" -> 
       [Html.value value]
@@ -392,16 +394,24 @@ toAttribute (name, value) =
       [Html.attribute name value]
 
 
-onChange : (String -> msg) -> Attribute msg
-onChange toMsg = 
-  Html.on "click" (Decode.map toMsg Decode.string)
+onDelete : (String -> msg) -> Attribute msg
+onDelete toMsg =
+  (Events.on "delete"
+      (Decode.field "value" Decode.string
+          |> Decode.map toMsg
+      )
+  )
+
+alwaysStop : a -> (a, Bool)
+alwaysStop x =
+  (x, True)
 
 submit : AttributeValue
 submit = "|Submit|"
 
 onEnter : msg -> Attribute msg
 onEnter msg =
-  (Html.on "keydown"
+  (Events.on "keydown"
       (Decode.field "key" Decode.string
           |> Decode.andThen
               (\key ->

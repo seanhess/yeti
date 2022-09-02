@@ -21,32 +21,23 @@ window.addEventListener("load", function () {
 })
 
 
-// Map of [selector] => comp
-const Juniper = { selectors: {} }
+const Juniper = {
+  registerComponent: function(name, f) {
 
+    let selector = "." + name
+    document.addEventListener("updateDOM", function() {
 
-class Component {
-  constructor(dom) {
-    this.dom = dom
-    this.dataset = dom.dataset
-  }
-}
+      const doms = document.querySelectorAll(selector)
+      for (dom of doms) {
 
-Juniper.registerComponent = function(name, f) {
+        // compare data input as strings
+        if (dom.dataset.input !== dom.oldInput) {
+          let inp = JSON.parse(dom.dataset.input)
+          f.call(dom, inp)
+        }
 
-  let selector = "." + name
-  document.addEventListener("updateDOM", function() {
-
-    const doms = document.querySelectorAll(selector)
-    for (dom of doms) {
-
-      // compare data input as strings
-      if (dom.dataset.input !== dom.oldInput) {
-        let inp = JSON.parse(dom.dataset.input)
-        f.call(dom, inp)
+        dom.oldInput = dom.dataset.input
       }
-
-      dom.oldInput = dom.dataset.input
-    }
-  })
+    })
+  }
 }

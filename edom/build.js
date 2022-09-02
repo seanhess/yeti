@@ -9220,6 +9220,7 @@ var $elm$html$Html$Attributes$boolProperty = F2(
 			$elm$json$Json$Encode$bool(bool));
 	});
 var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
+var $elm$core$Debug$log = _Debug_log;
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -9243,9 +9244,18 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$json$Json$Decode$fail = _Json_fail;
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Main$onDelete = function (toMsg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'delete',
+		A2(
+			$elm$json$Json$Decode$map,
+			toMsg,
+			A2($elm$json$Json$Decode$field, 'value', $elm$json$Json$Decode$string)));
+};
+var $elm$json$Json$Decode$fail = _Json_fail;
 var $author$project$Main$onEnter = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
@@ -9292,19 +9302,26 @@ var $author$project$Main$serializeChangeAction = F2(
 	function (act, inp) {
 		return act + (' ' + inp);
 	});
+var $author$project$Main$serializeValueAction = F2(
+	function (act, val) {
+		return act + (' ' + A2(
+			$elm$json$Json$Encode$encode,
+			0,
+			$elm$json$Json$Encode$string(val)));
+	});
 var $author$project$Main$submit = '|Submit|';
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$toAttribute = function (_v0) {
 	var name = _v0.a;
 	var value = _v0.b;
 	switch (name) {
-		case 'data-jun-click':
+		case 'data-on-click':
 			return _List_fromArray(
 				[
 					$elm$html$Html$Events$onClick(
 					$author$project$Main$ServerAction(value))
 				]);
-		case 'data-jun-input':
+		case 'data-on-input':
 			return _List_fromArray(
 				[
 					$elm$html$Html$Events$onInput(
@@ -9314,7 +9331,7 @@ var $author$project$Main$toAttribute = function (_v0) {
 					$elm$html$Html$Events$onBlur(
 					$author$project$Main$ServerAction($author$project$Main$submit))
 				]);
-		case 'data-jun-select':
+		case 'data-on-select':
 			return _List_fromArray(
 				[
 					$elm$html$Html$Events$onInput(
@@ -9323,11 +9340,23 @@ var $author$project$Main$toAttribute = function (_v0) {
 							A2($author$project$Main$serializeChangeAction, value, s));
 					})
 				]);
-		case 'data-jun-enter':
+		case 'data-on-enter':
 			return _List_fromArray(
 				[
 					$author$project$Main$onEnter(
 					$author$project$Main$ServerAction(value))
+				]);
+		case 'data-on-delete':
+			return _List_fromArray(
+				[
+					A2(
+					$elm$core$Debug$log,
+					'onDelete',
+					$author$project$Main$onDelete(
+						function (s) {
+							return $author$project$Main$ServerAction(
+								A2($author$project$Main$serializeValueAction, value, s));
+						}))
 				]);
 		case 'value':
 			return _List_fromArray(
@@ -10347,13 +10376,6 @@ var $elm$core$Dict$foldl = F3(
 			}
 		}
 	});
-var $author$project$Main$serializeValueAction = F2(
-	function (act, val) {
-		return act + (' ' + A2(
-			$elm$json$Json$Encode$encode,
-			0,
-			$elm$json$Json$Encode$string(val)));
-	});
 var $author$project$Main$requestBody = F2(
 	function (action, model) {
 		var updates = A3(
@@ -10391,13 +10413,16 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							updates: A3($elm$core$Dict$insert, action, value, model.updates)
+							updates: A2(
+								$elm$core$Debug$log,
+								'ServerUpdate',
+								A3($elm$core$Dict$insert, action, value, model.updates))
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'ServerAction':
 				var action = msg.a;
 				var rid = $author$project$Main$nextRequestId(model.requestId);
-				return model.requestPending ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+				return A2($elm$core$Debug$log, 'ServerAction', model.requestPending) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{requestId: rid, requestPending: true, updates: $elm$core$Dict$empty}),

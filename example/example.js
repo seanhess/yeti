@@ -3,8 +3,8 @@ console.log("Loaded Example.js")
 
 // Ok, let's give the component the ability to delete items
 Juniper.registerComponent("comp", function(items) {
-  console.log("Component Updated", items)
-  console.log(this)
+  // console.log("Component Updated", items)
+  // console.log(this)
 
   let comp = this
   // no way to vdom this
@@ -16,16 +16,13 @@ Juniper.registerComponent("comp", function(items) {
     link.innerHTML = item
     link.addEventListener("click", function() {
       console.log("Clicked", this.innerText)
-      let onInput = new Event("input")
+
+      let onInput = new Event("delete")
+      // I'm setting the value manually
       onInput.value = this.innerText
       comp.dispatchEvent(onInput)
     })
-    console.log(link)
+    // console.log(link)
     this.appendChild(link)
-
-    comp.addEventListener("input", function() {
-      console.log("GOT INPUT")
-    })
   }
-
 })

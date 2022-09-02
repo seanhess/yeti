@@ -37,16 +37,22 @@ instance Read FormData where
 
 
 onClick :: Encode LiveAction action => action -> Attribute
-onClick act = makeAttribute "data-jun-click" . cs . fromEncoded $ (encode act :: Encoded LiveAction)
+onClick = on "click"
 
 onInput :: (Encode LiveAction action, Value val) => (val -> action) -> Attribute
-onInput con = makeAttribute "data-jun-input" $ cs $ fromEncoded $ (encode1 con :: Encoded LiveAction)
+onInput = on1 "input"
 
 onEnter :: Encode LiveAction action => action -> Attribute
-onEnter act = makeAttribute "data-jun-enter" . cs . fromEncoded $ (encode act :: Encoded LiveAction)
+onEnter = on "enter"
 
 onSelect :: (Encode LiveAction action, Value val) => (val -> action) -> Attribute
-onSelect con = makeAttribute "data-jun-select" $ cs $ fromEncoded $ (encode1 con :: Encoded LiveAction)
+onSelect = on1 "select"
+
+on :: (Encode LiveAction action) => Text -> (action) -> Attribute
+on name act = makeAttribute ("data-on-" <> name) $ cs $ fromEncoded $ (encode act :: Encoded LiveAction)
+
+on1 :: (Encode LiveAction action, Value val) => Text -> (val -> action) -> Attribute
+on1 name con = makeAttribute ("data-on-" <> name) $ cs $ fromEncoded $ (encode1 con :: Encoded LiveAction)
 
 
 data Submit = Submit

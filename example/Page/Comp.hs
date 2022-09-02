@@ -6,11 +6,12 @@ module Page.Comp where
 
 import Prelude
 import Juniper
+import Juniper.Events (on1)
 import Data.Text (pack, Text)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad (forM_)
 import Lucid (Html, toHtml)
-import Lucid.Base (makeAttribute)
+import Lucid.Base (makeAttribute, Attribute)
 import Lucid.Html5
 
 data Model = Model
@@ -21,6 +22,8 @@ data Model = Model
 data Action
   = AddItem
   | RemoveItem String
+  | Test String
+  | DoNothing String
   | Increment
   deriving (Show, Read, Encode LiveAction)
 
@@ -40,6 +43,12 @@ update (RemoveItem i) m = do
 update Increment m = do
   pure $ m { count = m.count + 1 }
 
+update (Test _) m = do
+  pure $ m
+
+update (DoNothing _) m = do
+  pure $ m
+
 view :: Model -> Html ()
 view m = section_ [ class_ "g10 p10 col", id_ "parent" ] $ do
 
@@ -49,14 +58,20 @@ view m = section_ [ class_ "g10 p10 col", id_ "parent" ] $ do
 
     button_ [ onClick AddItem ] "AddItem"
 
-    component [class_ "bg-blue p12", onSelect RemoveItem] "comp" m.items
+    deleteList [class_ "bg-blue p12"] m.items RemoveItem
 
-    component [class_ "bg-green p12"] "comp" m.items
+    deleteList [class_ "bg-green p12"] m.items DoNothing
+
+    button_ [] "Button"
 
     div_ [id_ "items"] $ do
       forM_ m.items $ \item -> do
         div_ $ toHtml item
 
+
+deleteList :: [Attribute] -> [String] -> (String -> Action) -> Html ()
+deleteList as items act = 
+  div_ ([component "comp", dataInput items, on1 "delete" act] <> as) $ pure ()
 
 
 page :: MonadIO m => Page () Model Action m
