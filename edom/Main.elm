@@ -144,7 +144,7 @@ getHeader h heads =
 serializeAction : Action -> Maybe Value -> String
 serializeAction act mval =
   case mval of
-    Just val -> (act ++ "_|_" ++ Encode.encode 0 val)
+    Just val -> (act ++ "\t" ++ Encode.encode 0 val)
     Nothing -> act
 
 

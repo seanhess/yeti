@@ -183,14 +183,12 @@ resultMaybe (Success a) = Just a
 
 serialize :: EncodedAction -> Text
 serialize (EncodedAction c vs) =
-  intercalate "_|_"
+  intercalate "\t"
     (c : map (cs . Aeson.encode) vs)
 
 deserialize :: Text -> Maybe EncodedAction
 deserialize t = do
-  -- we need a better parser, or a better delimiter
-  -- or to escape the spaces...
-  c:vts <- pure $ splitOn "_|_" t
+  c:vts <- pure $ splitOn "\t" t
   vs <- mapM (Aeson.decode . cs) vts
   pure $ EncodedAction c vs
 
