@@ -3,8 +3,9 @@ module Juniper.Runtime where
 
 import Juniper.Prelude
 
+import Juniper.Encode
 import qualified Data.Aeson as Aeson
-import Data.Aeson (ToJSON, FromJSON)
+import Data.Aeson (ToJSON, FromJSON, Result(..))
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as TL (Text)
@@ -30,7 +31,7 @@ data Command action
 
 
 run
-  :: (Monad m, Encode LiveModel model, Encode LiveAction action)
+  :: (Monad m, LiveModel model, LiveAction action)
   => Page params model action m
   -> Maybe params
   -> Maybe model
@@ -41,7 +42,7 @@ run pg mps (Just m) cmds = runActions pg m cmds
 
 -- if we only have params, no model, and no commands
 runLoad
-  :: forall m model params action. (Monad m, Encode LiveAction action)
+  :: forall m model params action. (Monad m, LiveAction action)
   => Page params model action m
   -> Maybe params 
   -> m model
@@ -51,7 +52,7 @@ runLoad (Page params load update view) ps = do
 
 -- we can only run actions if we already have a model
 runActions
-  :: forall m model params action. (Monad m, Encode LiveAction action)
+  :: forall m model params action. (Monad m, LiveAction action)
   => Page params model action m
   -> model
   -> [Command action]
@@ -71,7 +72,7 @@ runCommand update m cmd =
     Update a -> update a m
 
 
-parseBody :: (MonadIO m, MonadFail m, FromJSON model, FromJSON action, Encode LiveAction action, Encode LiveModel model) => ByteString -> m (Maybe model, [Command action])
+parseBody :: (MonadIO m, MonadFail m, LiveAction action, LiveModel model) => ByteString -> m (Maybe model, [Command action])
 parseBody body = do
   case BSL.split newline body of
     [] -> pure (Nothing, [])
@@ -86,20 +87,20 @@ parseBody body = do
   where newline = 10 -- fromEnum '\n'
 
 
-parseModel :: (MonadFail m, MonadIO m, FromJSON model, Encode LiveModel model) => ByteString -> m model
+parseModel :: (MonadFail m, MonadIO m, LiveModel model) => ByteString -> m model
 parseModel inp = do
-  case decode (Encoded $ cs inp :: Encoded LiveModel) of
-    Nothing -> fail $ "Could not parse model: " <> cs inp
-    Just m -> pure m
+  case decodeModel (cs inp) of
+    Error e -> fail $ "Could not parse model: " <> cs inp <> " " <> e
+    Success m -> pure m
 
 
 
-parseCommand :: (MonadFail m, FromJSON action, Encode LiveAction action) => ByteString -> m (Command action)
+parseCommand :: (MonadFail m, MonadIO m, LiveAction action) => ByteString -> m (Command action)
 parseCommand "|Submit|" = pure Submit
 parseCommand t =
-  case decode (Encoded $ cs t :: Encoded LiveAction) of
-    Just (a :: action) -> pure $ Update a
-    Nothing -> fail $ "Could not parse action: " <> cs t
+  case decodeAction (cs t) of
+    Success (a :: action) -> pure $ Update a
+    Error err -> fail $ "Could not parse action: " <> cs t <> " " <> err
 
 
 
@@ -128,21 +129,3 @@ simplePage
   -> Page () model action m
 simplePage int up vw = Page (const ()) (const int) up vw
 
-
-newtype Encoded a = Encoded { fromEncoded :: ByteString }
-  deriving (Show)
-
--- | Must be show/read, you can't customize it
-class (ToJSON a, FromJSON a) => Encode typ a
-
-encode :: (Encode typ a) => a -> Encoded typ
-encode a = Encoded $ Aeson.encode a
-
-decode :: (Encode typ a) => Encoded typ -> Maybe a
-decode e = Aeson.decode $ fromEncoded e
-
-encode1 :: forall typ a x. (Encode typ a, Value x) => (x -> a) -> Encoded typ
-encode1 con = Encoded $ Aeson.encode $ con empty
-
-data LiveModel
-data LiveAction

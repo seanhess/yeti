@@ -10359,7 +10359,7 @@ var $author$project$Main$serializeAction = F2(
 	function (act, mval) {
 		if (mval.$ === 'Just') {
 			var val = mval.a;
-			return act + (' ' + A2($elm$json$Json$Encode$encode, 0, val));
+			return act + ('_|_' + A2($elm$json$Json$Encode$encode, 0, val));
 		} else {
 			return act;
 		}

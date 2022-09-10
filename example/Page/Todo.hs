@@ -24,7 +24,7 @@ data Model = Model
   , search :: Text
   , addContent :: Text
   , addCategory :: Category
-  } deriving (Show, Generic, ToJSON, FromJSON, Encode LiveModel)
+  } deriving (Show, Generic, LiveModel)
 
 -- the only parameter is the search text
 data Params = Params
@@ -41,7 +41,7 @@ data Category
   | Home
   | Personal
   deriving (Show, Generic, ToJSON, FromJSON)
-instance Value Category where
+instance Input Category where
   empty = Errand
 
 data Todo = Todo
@@ -62,7 +62,7 @@ data Action
   | SetCompleted Text Bool
   | Delete Text
   | Search Text
-  deriving (Show, Generic, FromJSON, ToJSON, Encode LiveAction)
+  deriving (Show, Generic, LiveAction)
 
 
 
@@ -161,7 +161,7 @@ view m = div_ [] $ do
             div_ $ toHtml (content todo)
 
 
-checkButton :: Encode LiveAction action => (Bool -> action) -> Bool -> Html () -> Html ()
+checkButton :: LiveAction action => (Bool -> action) -> Bool -> Html () -> Html ()
 checkButton act chk ct =
   button_ [ class_ "row g4", onClick $ act $ not chk ] $ do
     span_ $ if (chk) then "☑" else "☐"
@@ -174,7 +174,7 @@ isSearch t (Todo t' _ _) = Text.isInfixOf (Text.toLower t) (Text.toLower t')
 
 
 -- we are going to run into similar problems. We have to encode things into values
-dropdown :: (Encode LiveAction action, Value val) => (val -> action) -> (val -> Text) -> (val -> Html ()) -> [val] -> Html ()
+dropdown :: (LiveAction action, Input val) => (val -> action) -> (val -> Text) -> (val -> Html ()) -> [val] -> Html ()
 dropdown act toVal opt vals =
   select_ [ onSelect act ] $
     mapM_ option vals

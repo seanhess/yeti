@@ -17,7 +17,7 @@ import Lucid.Html5
 data Model = Model
   { items :: [String]
   , count :: Int
-  } deriving (Show, Generic, ToJSON, FromJSON, Encode LiveModel)
+  } deriving (Show, Generic, LiveModel)
 
 data Action
   = AddItem
@@ -25,7 +25,7 @@ data Action
   | Test String
   | DoNothing String
   | Increment
-  deriving (Show, Generic, ToJSON, FromJSON, Encode LiveAction)
+  deriving (Show, Generic, LiveAction)
 
 load :: MonadIO m => m Model
 load = pure $ Model ["Empty"] 0

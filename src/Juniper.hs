@@ -1,7 +1,7 @@
 module Juniper
  ( Page(Page)
- , Encode, encode, decode, encode1
- , LiveAction, LiveModel, Value(..)
+ , LiveModel(encodeModel, decodeModel)
+ , LiveAction, encodeAction, encodeAction1, decodeAction, Input(..)
  , simplePage
  , Submit(..)
  , ToParams(..), ToParam(..)

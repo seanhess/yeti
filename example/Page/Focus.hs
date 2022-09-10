@@ -21,12 +21,12 @@ import Lucid.Html5
 data Model = Model
   { one :: Text
   , two :: Text
-  } deriving (Show, Generic, ToJSON, FromJSON, Encode LiveModel, Eq)
+  } deriving (Show, Generic, LiveModel, Eq)
 
 data Action
   = One Text
   | Two Text
-  deriving (Show, Generic, ToJSON, FromJSON, Encode LiveAction)
+  deriving (Show, Generic, LiveAction)
 
 
 page :: MonadIO m => Page () Model Action m

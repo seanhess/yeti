@@ -143,10 +143,8 @@ getHeader h heads =
 
 serializeAction : Action -> Maybe Value -> String
 serializeAction act mval =
-  -- this assumes act is an unapplied haskell constructor
-  -- assumes action wants a string
   case mval of
-    Just val -> (act ++ " " ++ Encode.encode 0 val)
+    Just val -> (act ++ "_|_" ++ Encode.encode 0 val)
     Nothing -> act
 
 

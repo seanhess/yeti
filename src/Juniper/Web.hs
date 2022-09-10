@@ -14,7 +14,8 @@ module Juniper.Web
   ) where
 
 import Juniper.Prelude
-import Juniper.Runtime as Runtime (Response(..), Page, Encode, LiveAction, LiveModel, Encoded(..))
+import Juniper.Runtime as Runtime (Response(..), Page)
+import Juniper.Encode (LiveModel, LiveAction, encodeModel)
 import qualified Juniper.Runtime as Runtime
 import Juniper.Params as Params (ToParams(..), urlEncode, urlDecode)
 import Juniper.JS as JS
@@ -61,7 +62,7 @@ instance Default Render where
 
 -- handle handles it if you're in actionM
 handle
-  :: forall params model action e m. (MonadIO m, ScottyError e, ToJSON model, FromJSON action, FromJSON model, Encode LiveModel model, Encode LiveAction action, ToParams params)
+  :: forall params model action e m. (MonadIO m, ScottyError e, Show action, LiveModel model, LiveAction action, ToParams params)
   => Render
   -> Page params model action (ActionT e m)
   -> ActionT e m ()
@@ -97,24 +98,24 @@ pageUrl path ps =
 -- TODO they should embed the html itself?
 -- do we choose how to embed it or not?
 
-respond :: (Monad m, ScottyError e, ToJSON model, Encode LiveModel model, FromJSON model, ToParams params) => Bool -> (Html() -> Html ()) -> params -> model -> Html () -> ActionT e m ()
+respond :: (Monad m, ScottyError e, LiveModel model, ToParams params) => Bool -> (Html() -> Html ()) -> params -> model -> Html () -> ActionT e m ()
 respond embJS toDocument ps model view = do
 
   setParams
 
   Scotty.header "Accept" >>= \case
     Just "application/vdom" -> do
-      vdom (cs $ fromEncoded stateString) view
+      vdom (cs $ stateString) view
       
     _ -> do
       lucid $ toDocument $ embedContent view
 
   where
-    stateString :: Encoded LiveModel
-    stateString = Runtime.encode model
+    stateString :: Text
+    stateString = encodeModel model
 
     stateJSON :: ByteString
-    stateJSON = Aeson.encode (cs $ fromEncoded stateString :: Text)
+    stateJSON = Aeson.encode stateString
 
     setParams = 
       Scotty.setHeader "X-Params" $ cs $ queryToText $ Params.toParams ps

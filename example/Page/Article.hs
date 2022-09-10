@@ -19,7 +19,7 @@ data Model = Model
   { article  :: Article
   , comment :: Text
   , comments :: [Text]
-  } deriving (Generic, ToJSON, FromJSON, Encode LiveModel)
+  } deriving (Generic, LiveModel)
 
 fakeDatabase :: [(Id, Article)]
 fakeDatabase = map (\a -> (a.articleId, a))
@@ -42,7 +42,7 @@ data Action
   | SubmitComment
   | TestEnter
   | Woot Text
-  deriving (Show, Generic, ToJSON, FromJSON, Encode LiveAction)
+  deriving (Show, Generic, LiveAction)
 
 -- TODO this should be a 404 if the post is missing!
 -- could I return a maybe model instead? A nothing?
