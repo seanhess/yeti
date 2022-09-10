@@ -6,8 +6,8 @@ module Page.Comp where
 
 import Prelude
 import Juniper
-import Juniper.Events (on1)
-import Data.Text (pack, Text)
+import Juniper.Events (onText)
+import Data.Text (pack, unpack, Text)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad (forM_)
 import Lucid (Html, toHtml)
@@ -17,7 +17,7 @@ import Lucid.Html5
 data Model = Model
   { items :: [String]
   , count :: Int
-  } deriving (Read, Show, Encode LiveModel)
+  } deriving (Show, Generic, ToJSON, FromJSON, Encode LiveModel)
 
 data Action
   = AddItem
@@ -25,7 +25,7 @@ data Action
   | Test String
   | DoNothing String
   | Increment
-  deriving (Show, Read, Encode LiveAction)
+  deriving (Show, Generic, ToJSON, FromJSON, Encode LiveAction)
 
 load :: MonadIO m => m Model
 load = pure $ Model ["Empty"] 0
@@ -71,7 +71,7 @@ view m = section_ [ class_ "g10 p10 col", id_ "parent" ] $ do
 
 deleteList :: [Attribute] -> [String] -> (String -> Action) -> Html ()
 deleteList as items act = 
-  div_ ([component "comp", dataInput items, on1 "delete" act] <> as) $ pure ()
+  div_ ([component "comp", dataInput items, onText "delete" (act . unpack)] <> as) $ pure ()
 
 
 page :: MonadIO m => Page () Model Action m

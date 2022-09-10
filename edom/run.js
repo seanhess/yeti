@@ -21,23 +21,23 @@ window.addEventListener("load", function () {
 })
 
 
-const Juniper = {
-  registerComponent: function(name, f) {
+const Juniper = {}
 
-    let selector = "." + name
-    document.addEventListener("updateDOM", function() {
+Juniper.registerComponent = function(name, f) {
 
-      const doms = document.querySelectorAll(selector)
-      for (dom of doms) {
+  let selector = "." + name
+  document.addEventListener("updateDOM", function() {
 
-        // compare data input as strings
-        if (dom.dataset.input !== dom.oldInput) {
-          let inp = JSON.parse(dom.dataset.input)
-          f.call(dom, inp)
-        }
+    const doms = document.querySelectorAll(selector)
+    for (dom of doms) {
 
-        dom.oldInput = dom.dataset.input
+      // compare data input as strings
+      if (dom.dataset.input !== dom.oldInput) {
+        let inp = JSON.parse(dom.dataset.input)
+        f.call(dom, inp)
       }
-    })
-  }
+
+      dom.oldInput = dom.dataset.input
+    }
+  })
 }

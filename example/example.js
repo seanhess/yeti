@@ -15,12 +15,9 @@ Juniper.registerComponent("comp", function(items) {
     link.setAttribute("class", "link")
     link.innerHTML = item
     link.addEventListener("click", function() {
-      console.log("Clicked", this.innerText)
-
-      let onInput = new Event("delete")
-      // I'm setting the value manually
-      onInput.value = this.innerText
-      comp.dispatchEvent(onInput)
+      let onInput = new Event("delete", {bubbles: true})
+      this.value = this.innerHTML
+      this.dispatchEvent(onInput)
     })
     // console.log(link)
     this.appendChild(link)

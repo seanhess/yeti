@@ -15,11 +15,10 @@ import Task
 import String
 import Http exposing (Response)
 import Dict exposing (Dict)
-import Json.Encode as Encode
+import Json.Encode as Encode exposing (Value)
 import Json.Decode as Decode
 
 type alias Id = String
-type alias Value = String
 
 type Error
   = FailedParse (List DeadEnd)
@@ -35,6 +34,7 @@ type ServerError
 
 
 type alias Action = String
+type alias Command = String
 
 
 type RequestType
@@ -75,7 +75,7 @@ main =
     }
 
 type Msg
-  = ServerAction Action 
+  = ServerAction Action (Maybe Value)
   | ServerUpdate Action Value
   | Loaded RequestId RequestType (Result Error (Params, Body))
   | UrlChange Url
@@ -141,43 +141,48 @@ getHeader h heads =
     
 
 
-serializeValueAction : Action -> Value -> String
-serializeValueAction act val =
+serializeAction : Action -> Maybe Value -> String
+serializeAction act mval =
   -- this assumes act is an unapplied haskell constructor
   -- assumes action wants a string
-  (act ++ " " ++ Encode.encode 0 (Encode.string val))
+  case mval of
+    Just val -> (act ++ " " ++ Encode.encode 0 val)
+    Nothing -> act
 
-serializeChangeAction : Action -> String -> Action
-serializeChangeAction act inp =
-  -- this assumes act is an unapplied haskell constructor
-  -- assumed input is shown haskell code as well
-  (act ++ " " ++ inp)
 
-requestBody : Action -> Model -> Body
-requestBody action model =
-  let updates = Dict.foldl (\act val items -> serializeValueAction act val :: items) [] model.updates
-      body = String.join "\n" (model.state :: updates ++ [action])
-  in body
+requestBody : Action -> Maybe Value -> Model -> Body
+requestBody action mval model =
+  String.join "\n"
+    ( model.state
+    :: serverUpdates model.updates
+    ++ [serializeAction action mval]
+    )
+
+serverUpdates : Dict Action Value -> List Command
+serverUpdates ups = 
+  Dict.foldl (\act val items -> serializeAction act (Just val) :: items) [] ups
+
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-  case msg of
+  case (Debug.log "Update" msg) of
 
-    ServerUpdate action value ->
-      ( { model | updates = Dict.insert action value model.updates }
+    ServerUpdate action val ->
+      ( { model | updates = Dict.insert action val model.updates }
       , Cmd.none
       )
 
-    ServerAction action ->
+    ServerAction action value ->
       let rid = nextRequestId model.requestId
-      in if Debug.log "ServerAction" <| model.requestPending
+
+      in if model.requestPending
             then ( model, Cmd.none )
             else ( { model | updates = Dict.empty, requestId = rid, requestPending = True }
                  , Http.request
                      { method = "POST"
                      , headers = [Http.header "accept" "application/vdom"]
                      , url = Url.toString model.url
-                     , body = Http.stringBody "text/plain" (requestBody action model)
+                     , body = Http.stringBody "text/plain" (requestBody action value model)
                      , timeout = Nothing
                      , tracker = Nothing
                      , expect = Http.expectStringResponse (Loaded rid RequestAction) onResponse
@@ -366,40 +371,44 @@ idFromAttributes atts =
 
 
 toAttribute : (AttributeName, AttributeValue) -> List (Html.Attribute Msg)
-toAttribute (name, value) =
+toAttribute (name, att) =
   case name of
     "data-on-click" -> 
-      [Events.onClick (ServerAction value)]
+      [Events.onClick (ServerAction att Nothing)]
 
     "data-on-input" -> 
       -- automatically commit changes on enter or blur for inputs
-      [Events.onInput (ServerUpdate value), onEnter (ServerAction submit), Events.onBlur (ServerAction submit)]
+      [Events.onInput (serverUpdateInput att), Events.onBlur (ServerAction submit Nothing)] -- ,onEnter (ServerAction submit Nothing)] --, 
 
     "data-on-select" -> 
-      [Events.onInput (\s -> ServerAction (serializeChangeAction value s))]
+      [Events.onInput (serverActionInput att)]
 
     "data-on-enter" -> 
-      [onEnter (ServerAction value)]
-
-    "data-on-delete" -> 
-      [onDelete (\s -> ServerAction (serializeValueAction value s))]
+      [onEnter (ServerAction att Nothing)]
 
     "value" -> 
-      [Html.value value]
+      [Html.value att]
 
     "checked" -> 
       [Html.checked True]
 
     _ ->
-      [Html.attribute name value]
+      if String.startsWith "data-on-" name
+        then [Debug.log "event" <| onEventTargetValue (String.dropLeft 8 name) att]
+        else [Html.attribute name att]
 
 
-onDelete : (String -> msg) -> Attribute msg
-onDelete toMsg =
-  (Events.on "delete"
-      (Decode.field "value" Decode.string
-          |> Decode.map toMsg
-      )
+serverUpdateInput : Action -> String -> Msg
+serverUpdateInput act inp = ServerUpdate act (Encode.string inp)
+
+serverActionInput : Action -> String -> Msg
+serverActionInput act inp = ServerAction act (Just (Encode.string inp))
+
+onEventTargetValue : String -> Action -> Attribute Msg
+onEventTargetValue name act =
+  (Events.stopPropagationOn name <|
+    (Decode.map alwaysStop) <|
+    (Decode.map (serverActionInput act) Events.targetValue)
   )
 
 alwaysStop : a -> (a, Bool)

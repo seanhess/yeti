@@ -9203,12 +9203,9 @@ var $author$project$Main$svgToAttribute = function (_v0) {
 };
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$ServerAction = function (a) {
-	return {$: 'ServerAction', a: a};
-};
-var $author$project$Main$ServerUpdate = F2(
+var $author$project$Main$ServerAction = F2(
 	function (a, b) {
-		return {$: 'ServerUpdate', a: a, b: b};
+		return {$: 'ServerAction', a: a, b: b};
 	});
 var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
 var $elm$json$Json$Encode$bool = _Json_wrap;
@@ -9244,18 +9241,9 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
+var $elm$json$Json$Decode$fail = _Json_fail;
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$string = _Json_decodeString;
-var $author$project$Main$onDelete = function (toMsg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'delete',
-		A2(
-			$elm$json$Json$Decode$map,
-			toMsg,
-			A2($elm$json$Json$Decode$field, 'value', $elm$json$Json$Decode$string)));
-};
-var $elm$json$Json$Decode$fail = _Json_fail;
 var $author$project$Main$onEnter = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
@@ -9267,9 +9255,17 @@ var $author$project$Main$onEnter = function (msg) {
 			},
 			A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string)));
 };
-var $elm$html$Html$Events$alwaysStop = function (x) {
+var $author$project$Main$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
 };
+var $author$project$Main$serverActionInput = F2(
+	function (act, inp) {
+		return A2(
+			$author$project$Main$ServerAction,
+			act,
+			$elm$core$Maybe$Just(
+				$elm$json$Json$Encode$string(inp)));
+	});
 var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
 	return {$: 'MayStopPropagation', a: a};
 };
@@ -9289,6 +9285,22 @@ var $elm$html$Html$Events$targetValue = A2(
 	_List_fromArray(
 		['target', 'value']),
 	$elm$json$Json$Decode$string);
+var $author$project$Main$onEventTargetValue = F2(
+	function (name, act) {
+		return A2(
+			$elm$html$Html$Events$stopPropagationOn,
+			name,
+			A2(
+				$elm$json$Json$Decode$map,
+				$author$project$Main$alwaysStop,
+				A2(
+					$elm$json$Json$Decode$map,
+					$author$project$Main$serverActionInput(act),
+					$elm$html$Html$Events$targetValue)));
+	});
+var $elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
 var $elm$html$Html$Events$onInput = function (tagger) {
 	return A2(
 		$elm$html$Html$Events$stopPropagationOn,
@@ -9298,70 +9310,53 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 			$elm$html$Html$Events$alwaysStop,
 			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
-var $author$project$Main$serializeChangeAction = F2(
-	function (act, inp) {
-		return act + (' ' + inp);
+var $author$project$Main$ServerUpdate = F2(
+	function (a, b) {
+		return {$: 'ServerUpdate', a: a, b: b};
 	});
-var $author$project$Main$serializeValueAction = F2(
-	function (act, val) {
-		return act + (' ' + A2(
-			$elm$json$Json$Encode$encode,
-			0,
-			$elm$json$Json$Encode$string(val)));
+var $author$project$Main$serverUpdateInput = F2(
+	function (act, inp) {
+		return A2(
+			$author$project$Main$ServerUpdate,
+			act,
+			$elm$json$Json$Encode$string(inp));
 	});
 var $author$project$Main$submit = '|Submit|';
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$toAttribute = function (_v0) {
 	var name = _v0.a;
-	var value = _v0.b;
+	var att = _v0.b;
 	switch (name) {
 		case 'data-on-click':
 			return _List_fromArray(
 				[
 					$elm$html$Html$Events$onClick(
-					$author$project$Main$ServerAction(value))
+					A2($author$project$Main$ServerAction, att, $elm$core$Maybe$Nothing))
 				]);
 		case 'data-on-input':
 			return _List_fromArray(
 				[
 					$elm$html$Html$Events$onInput(
-					$author$project$Main$ServerUpdate(value)),
-					$author$project$Main$onEnter(
-					$author$project$Main$ServerAction($author$project$Main$submit)),
+					$author$project$Main$serverUpdateInput(att)),
 					$elm$html$Html$Events$onBlur(
-					$author$project$Main$ServerAction($author$project$Main$submit))
+					A2($author$project$Main$ServerAction, $author$project$Main$submit, $elm$core$Maybe$Nothing))
 				]);
 		case 'data-on-select':
 			return _List_fromArray(
 				[
 					$elm$html$Html$Events$onInput(
-					function (s) {
-						return $author$project$Main$ServerAction(
-							A2($author$project$Main$serializeChangeAction, value, s));
-					})
+					$author$project$Main$serverActionInput(att))
 				]);
 		case 'data-on-enter':
 			return _List_fromArray(
 				[
 					$author$project$Main$onEnter(
-					$author$project$Main$ServerAction(value))
-				]);
-		case 'data-on-delete':
-			return _List_fromArray(
-				[
-					A2(
-					$elm$core$Debug$log,
-					'onDelete',
-					$author$project$Main$onDelete(
-						function (s) {
-							return $author$project$Main$ServerAction(
-								A2($author$project$Main$serializeValueAction, value, s));
-						}))
+					A2($author$project$Main$ServerAction, att, $elm$core$Maybe$Nothing))
 				]);
 		case 'value':
 			return _List_fromArray(
 				[
-					$elm$html$Html$Attributes$value(value)
+					$elm$html$Html$Attributes$value(att)
 				]);
 		case 'checked':
 			return _List_fromArray(
@@ -9369,9 +9364,18 @@ var $author$project$Main$toAttribute = function (_v0) {
 					$elm$html$Html$Attributes$checked(true)
 				]);
 		default:
-			return _List_fromArray(
+			return A2($elm$core$String$startsWith, 'data-on-', name) ? _List_fromArray(
 				[
-					A2($elm$html$Html$Attributes$attribute, name, value)
+					A2(
+					$elm$core$Debug$log,
+					'event',
+					A2(
+						$author$project$Main$onEventTargetValue,
+						A2($elm$core$String$dropLeft, 8, name),
+						att))
+				]) : _List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$attribute, name, att)
 				]);
 	}
 };
@@ -10351,6 +10355,15 @@ var $elm$http$Http$request = function (r) {
 		$elm$http$Http$Request(
 			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
 };
+var $author$project$Main$serializeAction = F2(
+	function (act, mval) {
+		if (mval.$ === 'Just') {
+			var val = mval.a;
+			return act + (' ' + A2($elm$json$Json$Encode$encode, 0, val));
+		} else {
+			return act;
+		}
+	});
 var $elm$core$Dict$foldl = F3(
 	function (func, acc, dict) {
 		foldl:
@@ -10376,53 +10389,58 @@ var $elm$core$Dict$foldl = F3(
 			}
 		}
 	});
-var $author$project$Main$requestBody = F2(
-	function (action, model) {
-		var updates = A3(
-			$elm$core$Dict$foldl,
-			F3(
-				function (act, val, items) {
-					return A2(
-						$elm$core$List$cons,
-						A2($author$project$Main$serializeValueAction, act, val),
-						items);
-				}),
-			_List_Nil,
-			model.updates);
-		var body = A2(
+var $author$project$Main$serverUpdates = function (ups) {
+	return A3(
+		$elm$core$Dict$foldl,
+		F3(
+			function (act, val, items) {
+				return A2(
+					$elm$core$List$cons,
+					A2(
+						$author$project$Main$serializeAction,
+						act,
+						$elm$core$Maybe$Just(val)),
+					items);
+			}),
+		_List_Nil,
+		ups);
+};
+var $author$project$Main$requestBody = F3(
+	function (action, mval, model) {
+		return A2(
 			$elm$core$String$join,
 			'\n',
 			A2(
 				$elm$core$List$cons,
 				model.state,
 				_Utils_ap(
-					updates,
+					$author$project$Main$serverUpdates(model.updates),
 					_List_fromArray(
-						[action]))));
-		return body;
+						[
+							A2($author$project$Main$serializeAction, action, mval)
+						]))));
 	});
 var $author$project$Main$sendEvent = _Platform_outgoingPort('sendEvent', $elm$json$Json$Encode$string);
 var $elm$http$Http$stringBody = _Http_pair;
 var $author$project$Main$update = F2(
 	function (msg, model) {
-		switch (msg.$) {
+		var _v0 = A2($elm$core$Debug$log, 'Update', msg);
+		switch (_v0.$) {
 			case 'ServerUpdate':
-				var action = msg.a;
-				var value = msg.b;
+				var action = _v0.a;
+				var val = _v0.b;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							updates: A2(
-								$elm$core$Debug$log,
-								'ServerUpdate',
-								A3($elm$core$Dict$insert, action, value, model.updates))
+							updates: A3($elm$core$Dict$insert, action, val, model.updates)
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'ServerAction':
-				var action = msg.a;
+				var action = _v0.a;
+				var value = _v0.b;
 				var rid = $author$project$Main$nextRequestId(model.requestId);
-				return A2($elm$core$Debug$log, 'ServerAction', model.requestPending) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+				return model.requestPending ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{requestId: rid, requestPending: true, updates: $elm$core$Dict$empty}),
@@ -10431,7 +10449,7 @@ var $author$project$Main$update = F2(
 							body: A2(
 								$elm$http$Http$stringBody,
 								'text/plain',
-								A2($author$project$Main$requestBody, action, model)),
+								A3($author$project$Main$requestBody, action, value, model)),
 							expect: A2(
 								$elm$http$Http$expectStringResponse,
 								A2($author$project$Main$Loaded, rid, $author$project$Main$RequestAction),
@@ -10446,9 +10464,9 @@ var $author$project$Main$update = F2(
 							url: $elm$url$Url$toString(model.url)
 						}));
 			case 'Loaded':
-				if (msg.c.$ === 'Ok') {
-					var rt = msg.b;
-					var _v1 = msg.c.a;
+				if (_v0.c.$ === 'Ok') {
+					var rt = _v0.b;
+					var _v1 = _v0.c.a;
 					var params = _v1.a;
 					var body = _v1.b;
 					var urlString = A2($author$project$Main$pageUrl, model.url, params);
@@ -10492,7 +10510,7 @@ var $author$project$Main$update = F2(
 									[updateUrl, $author$project$Main$updateDOM])));
 					}
 				} else {
-					var e = msg.c.a;
+					var e = _v0.c.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -10502,7 +10520,7 @@ var $author$project$Main$update = F2(
 						$author$project$Main$updateDOM);
 				}
 			case 'UrlChange':
-				var url = msg.a;
+				var url = _v0.a;
 				var rid = $author$project$Main$nextRequestId(model.requestId);
 				return (_Utils_eq(model.url, url) || model.requestPending) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 					_Utils_update(
@@ -10525,7 +10543,7 @@ var $author$project$Main$update = F2(
 							url: $elm$url$Url$toString(url)
 						}));
 			case 'LinkClicked':
-				var urlRequest = msg.a;
+				var urlRequest = _v0.a;
 				if (urlRequest.$ === 'Internal') {
 					var url = urlRequest.a;
 					return _Utils_Tuple2(

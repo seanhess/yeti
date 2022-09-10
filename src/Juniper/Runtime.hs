@@ -4,6 +4,7 @@ module Juniper.Runtime where
 import Juniper.Prelude
 
 import qualified Data.Aeson as Aeson
+import Data.Aeson (ToJSON, FromJSON)
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as TL (Text)
@@ -70,7 +71,7 @@ runCommand update m cmd =
     Update a -> update a m
 
 
-parseBody :: (MonadIO m, MonadFail m, Encode LiveAction action, Encode LiveModel model) => ByteString -> m (Maybe model, [Command action])
+parseBody :: (MonadIO m, MonadFail m, FromJSON model, FromJSON action, Encode LiveAction action, Encode LiveModel model) => ByteString -> m (Maybe model, [Command action])
 parseBody body = do
   case BSL.split newline body of
     [] -> pure (Nothing, [])
@@ -85,7 +86,7 @@ parseBody body = do
   where newline = 10 -- fromEnum '\n'
 
 
-parseModel :: (MonadFail m, MonadIO m, Read model, Encode LiveModel model) => ByteString -> m model
+parseModel :: (MonadFail m, MonadIO m, FromJSON model, Encode LiveModel model) => ByteString -> m model
 parseModel inp = do
   case decode (Encoded $ cs inp :: Encoded LiveModel) of
     Nothing -> fail $ "Could not parse model: " <> cs inp
@@ -93,7 +94,7 @@ parseModel inp = do
 
 
 
-parseCommand :: (MonadFail m, Show action, Encode LiveAction action) => ByteString -> m (Command action)
+parseCommand :: (MonadFail m, FromJSON action, Encode LiveAction action) => ByteString -> m (Command action)
 parseCommand "|Submit|" = pure Submit
 parseCommand t =
   case decode (Encoded $ cs t :: Encoded LiveAction) of
@@ -128,34 +129,20 @@ simplePage
 simplePage int up vw = Page (const ()) (const int) up vw
 
 
-newtype Encoded a = Encoded { fromEncoded :: Text }
+newtype Encoded a = Encoded { fromEncoded :: ByteString }
+  deriving (Show)
 
 -- | Must be show/read, you can't customize it
-class (Show a, Read a) => Encode typ a
+class (ToJSON a, FromJSON a) => Encode typ a
 
-encode :: Encode typ a => a -> Encoded typ
-encode m = Encoded $ cs $ show m
+encode :: (Encode typ a) => a -> Encoded typ
+encode a = Encoded $ Aeson.encode a
 
-decode :: Encode typ a => Encoded typ -> Maybe a
-decode e = readMaybe $ cs $ fromEncoded e
+decode :: (Encode typ a) => Encoded typ -> Maybe a
+decode e = Aeson.decode $ fromEncoded e
 
--- | Encodes a constructor that takes one argument. Removes the last argument, ready to accept new ones
--- I would need to know exactly how many characters to take
--- without measuring the length of the overall string
-encode1 :: forall typ a x. (Encode typ a, Value x, Show x) => (x -> a) -> Encoded typ
-encode1 con =
-  let tot = show (con empty)
-      end = show (empty :: x)
-  in Encoded $ Text.stripEnd $ cs $ List.take (length tot - length end) tot
+encode1 :: forall typ a x. (Encode typ a, Value x) => (x -> a) -> Encoded typ
+encode1 con = Encoded $ Aeson.encode $ con empty
 
 data LiveModel
 data LiveAction
-
-class Show a => Value a where
-  empty :: a
-
-instance Value Text where 
-  empty = ""
-
-instance Value String where 
-  empty = ""

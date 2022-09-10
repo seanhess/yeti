@@ -26,6 +26,7 @@ library
   exposed-modules:
       Juniper
       Juniper.Component
+      Juniper.Encode
       Juniper.Events
       Juniper.JS
       Juniper.Params

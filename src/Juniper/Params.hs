@@ -132,18 +132,16 @@ class ToParams params where
   toParams :: params -> QueryText
   fromParams :: QueryText -> Maybe params
 
-  default toParams :: (Generic params, GenEncode (Rep params)) => params -> QueryText
+  default toParams :: (Generic params, GenQuery (Rep params)) => params -> QueryText
   toParams p = genEncode (from p)
 
-  default fromParams :: (Generic params, GenEncode (Rep params)) => QueryText -> Maybe params
+  default fromParams :: (Generic params, GenQuery (Rep params)) => QueryText -> Maybe params
   fromParams qs = to <$> genDecode qs
 
 instance ToParams () where
   -- The default for simplePage uses () as the params
   toParams _ = []
   fromParams _ = Just ()
-
-
 
 class GenParam f where
   genEncParam :: f p -> Text
@@ -153,11 +151,18 @@ instance (ToParam c) => GenParam (K1 i c) where
   genEncParam (K1 c) = toParam c
   genDecParam t = K1 <$> fromParam t
 
-class GenEncode f where
+
+
+
+
+
+
+
+class GenQuery f where
   genEncode :: f p -> QueryText
   genDecode :: QueryText -> Maybe (f p)
 
-instance (Selector s, GenParam a) => GenEncode (M1 S s a) where
+instance (Selector s, GenParam a) => GenQuery (M1 S s a) where
   genEncode x = 
     case selName x of
       "" -> []
@@ -176,21 +181,21 @@ instance (Selector s, GenParam a) => GenEncode (M1 S s a) where
       toVal :: GenParam f => (String, Text) -> (Text, Maybe (f p))
       toVal (k, t) = (cs k, genDecParam t)
 
-instance GenEncode f => GenEncode (M1 D d f) where
+instance GenQuery f => GenQuery (M1 D d f) where
   genEncode (M1 x) = genEncode x
   genDecode q = M1 <$> genDecode q
 
-instance GenEncode f => GenEncode (M1 C c f) where
+instance GenQuery f => GenQuery (M1 C c f) where
   genEncode (M1 x) = genEncode x
   genDecode q = M1 <$> genDecode q
 
 -- this is a sum type, meaning either this constructor or that
-instance (GenEncode a, GenEncode b) => GenEncode (a :+: b) where
+instance (GenQuery a, GenQuery b) => GenQuery (a :+: b) where
   genEncode (L1 x) = genEncode x
   genEncode (R1 x) = genEncode x
   genDecode q = L1 <$> genDecode q <|> R1 <$> genDecode q
 
-instance (GenEncode a, GenEncode b) => GenEncode (a :*: b) where
+instance (GenQuery a, GenQuery b) => GenQuery (a :*: b) where
   genEncode (a :*: b) = genEncode a ++ genEncode b
 
   genDecode q = do

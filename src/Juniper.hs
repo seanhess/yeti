@@ -9,7 +9,7 @@ module Juniper
  , page
  , handle
  , Render(..)
- , onInput, onClick, onEnter, onSelect --, onBlur
+ , onInput, onClick, onEnter, onSelect
  , scripts
  , Html
  , FromJSON, ToJSON, Generic
@@ -25,6 +25,7 @@ import Juniper.Web
 import Juniper.Component
 import Juniper.JS (scripts)
 import Lucid (Html)
+import Juniper.Encode
 
 
 

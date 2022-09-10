@@ -36,6 +36,7 @@ import Data.Default (Default, def)
 
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Aeson as Aeson
+import Data.Aeson (FromJSON, ToJSON)
 
 import Text.RawString.QQ
 
@@ -60,7 +61,7 @@ instance Default Render where
 
 -- handle handles it if you're in actionM
 handle
-  :: forall params model action e m. (MonadIO m, ScottyError e, Encode LiveModel model, Encode LiveAction action, ToParams params)
+  :: forall params model action e m. (MonadIO m, ScottyError e, ToJSON model, FromJSON action, FromJSON model, Encode LiveModel model, Encode LiveAction action, ToParams params)
   => Render
   -> Page params model action (ActionT e m)
   -> ActionT e m ()
@@ -96,14 +97,14 @@ pageUrl path ps =
 -- TODO they should embed the html itself?
 -- do we choose how to embed it or not?
 
-respond :: (Monad m, ScottyError e, Encode LiveModel model, ToParams params) => Bool -> (Html() -> Html ()) -> params -> model -> Html () -> ActionT e m ()
+respond :: (Monad m, ScottyError e, ToJSON model, Encode LiveModel model, FromJSON model, ToParams params) => Bool -> (Html() -> Html ()) -> params -> model -> Html () -> ActionT e m ()
 respond embJS toDocument ps model view = do
 
   setParams
 
   Scotty.header "Accept" >>= \case
     Just "application/vdom" -> do
-      vdom (fromEncoded stateString) view
+      vdom (cs $ fromEncoded stateString) view
       
     _ -> do
       lucid $ toDocument $ embedContent view

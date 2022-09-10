@@ -19,7 +19,7 @@ data Model = Model
   { article  :: Article
   , comment :: Text
   , comments :: [Text]
-  } deriving (Show, Read, Encode LiveModel)
+  } deriving (Generic, ToJSON, FromJSON, Encode LiveModel)
 
 fakeDatabase :: [(Id, Article)]
 fakeDatabase = map (\a -> (a.articleId, a))
@@ -34,13 +34,15 @@ type Id = Text
 data Article = Article
   { articleId :: Id
   , articleText :: Text
-  } deriving (Read, Show)
+  } deriving (Generic, ToJSON, FromJSON)
 
 
 data Action
   = Comment Text
   | SubmitComment
-  deriving (Show, Read, Encode LiveAction)
+  | TestEnter
+  | Woot Text
+  deriving (Show, Generic, ToJSON, FromJSON, Encode LiveAction)
 
 -- TODO this should be a 404 if the post is missing!
 -- could I return a maybe model instead? A nothing?
@@ -59,6 +61,10 @@ update (Comment t) m =
   pure $ m { comment = t }
 update SubmitComment m =
   pure $ m { comments = m.comments <> [m.comment], comment = "" }
+update TestEnter m =
+  pure $ m { comments = m.comments <> ["Enter"] }
+update (Woot t) m =
+  pure $ m { comments = m.comments <> ["Woot"] }
 
 view :: Model -> Html ()
 view m = section_ [ class_ "page" ] $ do
@@ -72,7 +78,7 @@ view m = section_ [ class_ "page" ] $ do
         div_ $ toHtml c
 
     div_ [ class_ "section" ] $ do
-      input_ [ value_ m.comment, onInput Comment, onEnter SubmitComment ]
+      input_ [ value_ m.comment, onInput Comment ] -- onInput Comment, 
       button_ [ onClick SubmitComment ] "Submit"
 
 

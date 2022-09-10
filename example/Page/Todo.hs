@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Page.Todo where
 
+import Data.Aeson (ToJSON)
 import Juniper
 import Juniper.Prelude
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
@@ -23,7 +24,7 @@ data Model = Model
   , search :: Text
   , addContent :: Text
   , addCategory :: Category
-  } deriving (Read, Show, Encode LiveModel)
+  } deriving (Show, Generic, ToJSON, FromJSON, Encode LiveModel)
 
 -- the only parameter is the search text
 data Params = Params
@@ -39,7 +40,7 @@ data Category
   | Work
   | Home
   | Personal
-  deriving (Show, Read, Eq)
+  deriving (Show, Generic, ToJSON, FromJSON)
 instance Value Category where
   empty = Errand
 
@@ -47,7 +48,7 @@ data Todo = Todo
   { content :: Text
   , category :: Category
   , completed :: Bool
-  } deriving (Show, Read)
+  } deriving (Show, Generic, ToJSON, FromJSON)
 
 
 
@@ -61,7 +62,7 @@ data Action
   | SetCompleted Text Bool
   | Delete Text
   | Search Text
-  deriving (Show, Read, Encode LiveAction)
+  deriving (Show, Generic, FromJSON, ToJSON, Encode LiveAction)
 
 
 
