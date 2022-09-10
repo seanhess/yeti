@@ -163,7 +163,7 @@ serverUpdates ups =
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-  case (Debug.log "Update" msg) of
+  case msg of
 
     ServerUpdate action val ->
       ( { model | updates = Dict.insert action val model.updates }
@@ -374,12 +374,9 @@ toAttribute (name, att) =
     "data-on-click" -> 
       [Events.onClick (ServerAction att Nothing)]
 
-    "data-on-input" -> 
+    "data-on-text-input" -> 
       -- automatically commit changes on enter or blur for inputs
       [Events.onInput (serverUpdateInput att), Events.onBlur (ServerAction submit Nothing)] -- ,onEnter (ServerAction submit Nothing)] --, 
-
-    "data-on-select" -> 
-      [Events.onInput (serverActionInput att)]
 
     "data-on-enter" -> 
       [onEnter (ServerAction att Nothing)]
@@ -392,7 +389,7 @@ toAttribute (name, att) =
 
     _ ->
       if String.startsWith "data-on-" name
-        then [Debug.log "event" <| onEventTargetValue (String.dropLeft 8 name) att]
+        then [onEventTargetValue (String.dropLeft 8 name) att]
         else [Html.attribute name att]
 
 

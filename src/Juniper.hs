@@ -9,7 +9,7 @@ module Juniper
  , page
  , handle
  , Render(..)
- , onInput, onClick, onEnter, onSelect
+ , onInput, onClick, onEnter, onSelect, onValue, on
  , scripts
  , Html
  , FromJSON, ToJSON, Generic

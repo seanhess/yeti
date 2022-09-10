@@ -87,7 +87,7 @@ load savedTodos mps = do
 
 update :: MonadIO m => TVar [Todo] -> Action -> Model -> m Model
 update todos (AddTodo) m = do
-  let new = Todo (m.addContent) Errand False
+  let new = Todo (m.addContent) (m.addCategory) False
   ts <- liftIO $ atomically $ updateTodos todos $ \ts -> ts <> [new]
   pure $ m
     { search = ""
@@ -157,8 +157,9 @@ view m = div_ [] $ do
       forM_ ts $ \todo ->
         div_ [ class_ "row g8" ] $ do
           button_ [ onClick (Delete (content todo)) ] "X"
-          checkButton (SetCompleted (content todo)) (completed todo) $
+          checkButton (SetCompleted (content todo)) (completed todo) $ do
             div_ $ toHtml (content todo)
+            div_ $ toHtml (show $ category todo)
 
 
 checkButton :: LiveAction action => (Bool -> action) -> Bool -> Html () -> Html ()

@@ -6,7 +6,6 @@ module Page.Comp where
 
 import Prelude
 import Juniper
-import Juniper.Events (onText)
 import Data.Text (pack, unpack, Text)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad (forM_)
@@ -71,7 +70,7 @@ view m = section_ [ class_ "g10 p10 col", id_ "parent" ] $ do
 
 deleteList :: [Attribute] -> [String] -> (String -> Action) -> Html ()
 deleteList as items act = 
-  div_ ([component "comp", dataInput items, onText "delete" (act . unpack)] <> as) $ pure ()
+  div_ ([component "comp", dataInput items, onValue "delete" (act . unpack)] <> as) $ pure ()
 
 
 page :: MonadIO m => Page () Model Action m
