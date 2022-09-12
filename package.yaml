@@ -32,6 +32,7 @@ dependencies:
 - lucid
 - megaparsec
 - mtl
+- network
 - network-uri
 - raw-strings-qq
 - scotty

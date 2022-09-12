@@ -80,6 +80,7 @@ library
     , lucid
     , megaparsec
     , mtl
+    , network
     , network-uri
     , raw-strings-qq
     , scotty
@@ -107,6 +108,8 @@ executable juniper-exe
       Page.Focus
       Page.Signup
       Page.Todo
+      SocketClient
+      SocketExample
       Paths_juniper
   hs-source-dirs:
       example
@@ -153,6 +156,7 @@ executable juniper-exe
     , lucid
     , megaparsec
     , mtl
+    , network
     , network-uri
     , raw-strings-qq
     , record-dot-preprocessor
@@ -221,6 +225,7 @@ test-suite juniper-test
     , lucid
     , megaparsec
     , mtl
+    , network
     , network-uri
     , raw-strings-qq
     , scotty
