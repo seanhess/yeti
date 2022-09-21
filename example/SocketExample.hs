@@ -15,9 +15,9 @@ import Lucid
 import Juniper.Encode
 import qualified Juniper.Runtime as Runtime hiding (run)
 import Control.Concurrent (forkIO)
-import Control.Exception (finally, Exception, throw)
+import Control.Exception (finally, Exception, throw, mask, onException)
 import Control.Monad (forM_, forever)
-import Control.Concurrent (MVar, newMVar, modifyMVar_, modifyMVar, putMVar, takeMVar)
+import Control.Concurrent (MVar, newMVar, putMVar, takeMVar)
 import qualified Page.Counter as Counter
 import qualified Page.Focus as Focus
 import GHC.Generics
@@ -106,25 +106,25 @@ instance FromJSON Page' where
 -- not for now
 startSocket :: IO ()
 startSocket = do
-  startLiveView liftIO $ \pg ->
+  startLiveView $ \pg ->
     case pg of
       Counter m -> do
-        runRegister Counter.page m
+        register Counter.page m
       Focus m -> do
-        runRegister Focus.page m
+        register Focus.page m
 
 
 
 -- we could just have all of this run in their monad?
 
-startLiveView :: forall page m a. (MonadIO m, FromJSON page, Show page) => (m (Html ()) -> IO (Html ())) -> (page -> IO (Message -> m (Html ()))) -> IO ()
-startLiveView toIO pageRun = do
+startLiveView :: forall page m a. (FromJSON page, Show page) => (page -> IO (WS.Connection -> IO ())) -> IO ()
+startLiveView pageRun = do
 
   liftIO $ WS.runServer "127.0.0.1" 9160 $ \pending -> do
     conn <- WS.acceptRequest pending
     page <- identify conn
     run <- pageRun page
-    connect toIO run conn
+    connect run conn
 
   where
     identify :: WS.Connection -> IO page
@@ -142,25 +142,23 @@ startLiveView toIO pageRun = do
 
 
 
-connect :: forall m x. (m (Html ()) -> IO (Html ())) -> (Message -> m (Html ())) -> WS.Connection -> IO ()
-connect toIO run conn = do
+connect :: (WS.Connection -> IO ()) -> WS.Connection -> IO ()
+connect run conn = do
   putStrLn "Connect"
   WS.withPingThread conn 30 (return ()) $ do
-    finally disconnect $ forever talk
+    finally disconnect $ forever (run conn)
 
   where
 
-    talk :: IO ()
-    talk = do
-      -- wait for them to send actions
-      putStrLn "Talk"
-      msg <- WS.receiveData conn :: IO Message
-      print msg
+    -- talk :: IO ()
+    -- talk = do
+    --   -- wait for them to send actions
 
-      h <- toIO $ run msg
-      let bs = Lucid.renderBS h :: ByteString
-      putStrLn $ cs bs
-      WS.sendTextData conn bs
+
+    --   h <- toIO $ run msg
+    --   let bs = Lucid.renderBS h :: ByteString
+    --   putStrLn $ cs bs
+    --   WS.sendTextData conn bs
 
     disconnect :: IO ()
     disconnect = do
@@ -173,35 +171,39 @@ connect toIO run conn = do
 
 
 
-runRegister :: (LiveAction action, MonadIO m, Show model) => Page params model action m -> model -> m (Message -> m (Html ()))
-runRegister pg m = do
+-- It's all right here!
+register :: (LiveAction action, Show model) => Page params model action IO -> model -> IO (WS.Connection -> IO ())
+register pg m = do
   putStrLn "Register"
   st <- liftIO $ newMVar m
   putStrLn "Registered"
-  pure $ runUpdateRender pg st
 
-runUpdateRender :: (LiveAction action, MonadIO m, Show model) => Page params model action m -> MVar model -> Message -> m (Html ())
-runUpdateRender pg st msg = do
-  putStrLn "runUpdateRender"
-  m <- liftIO $ takeMVar st
-  putStrLn "Update:"
-  print m
-  -- what if this throws an exception? Doesn't matter, All I did was read it
-  m' <- update pg msg m
-  print m'
-  liftIO $ putMVar st m'
-  putStrLn "Saved"
-  pure $ (Runtime.view pg) m'
+  pure $ \conn -> do
+    putStrLn "Talk"
+    msg <- WS.receiveData conn :: IO Message
+    print msg
 
-update :: (LiveAction action, Monad m) => Page params model action m -> Message -> model -> m model
-update pg msg m = do
-  case decodeAction (cs $ fromMessage msg) of
-    Error _ -> throw $ InvalidAction msg
-    Success act -> do
-      m' <- (Runtime.update pg) act m
-      pure m'
+    m' <- updateState pg st msg
 
+    let bs = render pg m'
+    WS.sendTextData conn bs
 
+render :: Page params model action IO -> model -> ByteString
+render pg m =
+  let h = (Runtime.view pg) m
+  in Lucid.renderBS h
+
+updateState :: forall params action model. (LiveAction action, Show model) => Page params model action IO -> MVar model -> Message -> IO model
+updateState pg st msg = do
+  modifyMVar st update
+  where
+    update :: model -> IO model
+    update m = do
+      case decodeAction (cs $ fromMessage msg) of
+        Error _ -> throw $ InvalidAction msg
+        Success act -> do
+          m' <- (Runtime.update pg) act m
+          pure m'
 
 
 
@@ -217,3 +219,12 @@ data SocketError
 
 
 
+
+-- Taken from Control.Concurrent. Why doesn't this exist?
+modifyMVar :: MVar a -> (a -> IO a) -> IO a
+modifyMVar m io =
+  mask $ \restore -> do
+    a  <- takeMVar m
+    a' <- restore (io a) `onException` putMVar m a
+    putMVar m a'
+    pure a'
