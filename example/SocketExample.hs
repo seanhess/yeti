@@ -10,14 +10,14 @@ import qualified Data.Map as Map
 import Data.ByteString.Lazy (ByteString)
 import Data.Monoid (mappend)
 import Data.Text (Text)
-import Control.Monad.Loops (iterateM_)
+-- import Control.Monad.Loops (iterateM_)
 import Lucid
 import Juniper.Encode
 import qualified Juniper.Runtime as Runtime hiding (run)
 import Control.Concurrent (forkIO)
 import Control.Exception (finally, Exception, throw)
 import Control.Monad (forM_, forever)
-import Control.Concurrent (MVar, newMVar, modifyMVar_, modifyMVar, readMVar, putMVar)
+import Control.Concurrent (MVar, newMVar, modifyMVar_, modifyMVar, putMVar, takeMVar)
 import qualified Page.Counter as Counter
 import qualified Page.Focus as Focus
 import GHC.Generics
@@ -136,7 +136,7 @@ startLiveView toIO pageRun = do
         Just p -> do
           putStrLn "Identified"
           print p
-          WS.sendTextData conn ("Identified" :: Text)
+          -- WS.sendTextData conn ("Identified" :: Text)
           pure p
 
 
@@ -183,14 +183,15 @@ runRegister pg m = do
 runUpdateRender :: (LiveAction action, MonadIO m, Show model) => Page params model action m -> MVar model -> Message -> m (Html ())
 runUpdateRender pg st msg = do
   putStrLn "runUpdateRender"
-  m <- liftIO $ readMVar st
-  putStrLn "got M"
+  m <- liftIO $ takeMVar st
+  putStrLn "Update:"
+  print m
   -- what if this throws an exception? Doesn't matter, All I did was read it
   m' <- update pg msg m
   print m'
-  liftIO $ putMVar st m
+  liftIO $ putMVar st m'
   putStrLn "Saved"
-  pure $ (Runtime.view pg) m
+  pure $ (Runtime.view pg) m'
 
 update :: (LiveAction action, Monad m) => Page params model action m -> Message -> model -> m model
 update pg msg m = do

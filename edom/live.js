@@ -17,7 +17,7 @@ socket.addEventListener('open', (event) => {
 // Listen for messages
 socket.addEventListener('message', (event) => {
     console.log('Message from server ', event.data);
-    socket.send("Increment");
+    document.getElementById("juniper-root-content").innerHTML = event.data
 });
 
 socket.addEventListener('close', (e) => {
@@ -30,4 +30,8 @@ socket.addEventListener('error', (e) => {
 
 window.addEventListener("load", function() {
   console.log("State:", juniperState)
+})
+
+document.addEventListener("click", function(e) {
+  socket.send("Increment")
 })
