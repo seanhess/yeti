@@ -30,8 +30,11 @@ dependencies:
 - http-types
 - lens
 - lucid
+- lifted-base
 - megaparsec
 - mtl
+- monad-loops
+- websockets
 - network
 - network-uri
 - raw-strings-qq
@@ -44,6 +47,7 @@ dependencies:
 - unordered-containers
 - url
 - uri-encode
+- uuid
 - vector
 - wai
 - wai-middleware-static
@@ -60,6 +64,8 @@ default-extensions:
   - ApplicativeDo
   - DataKinds
   - DeriveGeneric
+  - DerivingStrategies
+  - DeriveAnyClass
   - DefaultSignatures
   - DuplicateRecordFields
   - FlexibleContexts

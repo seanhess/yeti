@@ -42,16 +42,18 @@ Juniper.registerComponent = function(name, f) {
   })
 }
 
+
 // Javascript responsible for communicating with server
 // Elm just takes info in over a port
 // Updates
 
 // // Create WebSocket connection.
-// const socket = new WebSocket('ws://localhost:8080');
+// console.log("OPEN")
+// const socket = new WebSocket('ws://127.0.0.1:9160');
 
 // // Connection opened
 // socket.addEventListener('open', (event) => {
-//     socket.send('Hello Server!');
+//     socket.send('Hi! I am bob');
 // });
 
 // // Listen for messages

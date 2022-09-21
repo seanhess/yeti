@@ -13,3 +13,6 @@ build = $(embedFile "edom/build.min.js")
 
 run :: ByteString
 run = $(embedFile "edom/run.js")
+
+live :: ByteString
+live = $(embedFile "edom/live.js")

@@ -7,6 +7,7 @@ module Page.Focus where
 
 import Prelude
 import Juniper
+import Sockets
 
 import Data.String.Conversions (cs)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -21,7 +22,7 @@ import Lucid.Html5
 data Model = Model
   { one :: Text
   , two :: Text
-  } deriving (Show, Generic, LiveModel, Eq)
+  } deriving (Show, Generic, LiveModel, Eq, ToJSON, FromJSON)
 
 data Action
   = One Text
@@ -42,11 +43,20 @@ update (Two t) m = pure $ m { two = t }
 
 view :: Model -> Html ()
 view m = section_ [ class_ "page" ] $ do
-    div_ [ class_ "section" ] $ do
-      -- Inputs are committed on blur or enter
-      div_ $ input_ [ value_ m.one, onInput One ]
-      div_ $ input_ [ value_ m.two, onInput Two ]
-      div_ $ toHtml $ m.one <> " " <> m.two
+  div_ [ class_ "section" ] $ do
+    -- Inputs are committed on blur or enter
+    div_ $ input_ [ value_ m.one, onInput One ]
+    div_ $ input_ [ value_ m.two, onInput Two ]
+    div_ $ toHtml $ m.one <> " " <> m.two
 
 
+instance SParams Model () where
+  params' = const ()
 
+instance SView Model where
+  view' = view
+
+instance MonadIO m => SUpdate Model m where
+  type Msg Model = Action
+  load' = load
+  update' = update

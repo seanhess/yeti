@@ -42,6 +42,8 @@ library
       ApplicativeDo
       DataKinds
       DeriveGeneric
+      DerivingStrategies
+      DeriveAnyClass
       DefaultSignatures
       DuplicateRecordFields
       FlexibleContexts
@@ -77,8 +79,10 @@ library
     , file-embed
     , http-types
     , lens
+    , lifted-base
     , lucid
     , megaparsec
+    , monad-loops
     , mtl
     , network
     , network-uri
@@ -92,9 +96,11 @@ library
     , unordered-containers
     , uri-encode
     , url
+    , uuid
     , vector
     , wai
     , wai-middleware-static
+    , websockets
   default-language: Haskell2010
 
 executable juniper-exe
@@ -108,8 +114,8 @@ executable juniper-exe
       Page.Focus
       Page.Signup
       Page.Todo
-      SocketClient
       SocketExample
+      Sockets
       Paths_juniper
   hs-source-dirs:
       example
@@ -117,6 +123,8 @@ executable juniper-exe
       ApplicativeDo
       DataKinds
       DeriveGeneric
+      DerivingStrategies
+      DeriveAnyClass
       DefaultSignatures
       DuplicateRecordFields
       FlexibleContexts
@@ -153,8 +161,10 @@ executable juniper-exe
     , http-types
     , juniper
     , lens
+    , lifted-base
     , lucid
     , megaparsec
+    , monad-loops
     , mtl
     , network
     , network-uri
@@ -170,9 +180,11 @@ executable juniper-exe
     , unordered-containers
     , uri-encode
     , url
+    , uuid
     , vector
     , wai
     , wai-middleware-static
+    , websockets
   default-language: Haskell2010
 
 test-suite juniper-test
@@ -186,6 +198,8 @@ test-suite juniper-test
       ApplicativeDo
       DataKinds
       DeriveGeneric
+      DerivingStrategies
+      DeriveAnyClass
       DefaultSignatures
       DuplicateRecordFields
       FlexibleContexts
@@ -222,8 +236,10 @@ test-suite juniper-test
     , http-types
     , juniper
     , lens
+    , lifted-base
     , lucid
     , megaparsec
+    , monad-loops
     , mtl
     , network
     , network-uri
@@ -237,7 +253,9 @@ test-suite juniper-test
     , unordered-containers
     , uri-encode
     , url
+    , uuid
     , vector
     , wai
     , wai-middleware-static
+    , websockets
   default-language: Haskell2010
