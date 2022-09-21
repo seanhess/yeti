@@ -15,4 +15,4 @@ run :: ByteString
 run = $(embedFile "edom/run.js")
 
 live :: ByteString
-live = $(embedFile "edom/live.js")
+live = $(embedFile "dist/main.js")

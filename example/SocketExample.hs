@@ -50,7 +50,7 @@ startWebServer = do
   scotty 3031 $ do
     get "/live.js" $ do
       addHeader "Content-Type" "text/javascript"
-      file "edom/live.js"
+      file "dist/main.js"
 
     get "/" $ do
       handle cfg Counter.page
@@ -110,6 +110,7 @@ startSocket = do
     case pg of
       Counter m -> do
         register Counter.page m
+
       Focus m -> do
         register Focus.page m
 
@@ -139,26 +140,12 @@ startLiveView pageRun = do
           -- WS.sendTextData conn ("Identified" :: Text)
           pure p
 
+    connect :: (WS.Connection -> IO ()) -> WS.Connection -> IO ()
+    connect run conn = do
+      putStrLn "Connect"
+      WS.withPingThread conn 30 (return ()) $ do
+        finally disconnect $ forever (run conn)
 
-
-
-connect :: (WS.Connection -> IO ()) -> WS.Connection -> IO ()
-connect run conn = do
-  putStrLn "Connect"
-  WS.withPingThread conn 30 (return ()) $ do
-    finally disconnect $ forever (run conn)
-
-  where
-
-    -- talk :: IO ()
-    -- talk = do
-    --   -- wait for them to send actions
-
-
-    --   h <- toIO $ run msg
-    --   let bs = Lucid.renderBS h :: ByteString
-    --   putStrLn $ cs bs
-    --   WS.sendTextData conn bs
 
     disconnect :: IO ()
     disconnect = do
@@ -168,14 +155,11 @@ connect run conn = do
 
 
 
-
-
-
--- It's all right here!
-register :: (LiveAction action, Show model) => Page params model action IO -> model -> IO (WS.Connection -> IO ())
-register pg m = do
+-- It's all right here, except for the connection
+register :: forall action model params. (LiveAction action, Show model) => Page params model action IO -> model -> IO (WS.Connection -> IO ())
+register pg initModel = do
   putStrLn "Register"
-  st <- liftIO $ newMVar m
+  st <- liftIO $ newMVar initModel
   putStrLn "Registered"
 
   pure $ \conn -> do
@@ -183,27 +167,30 @@ register pg m = do
     msg <- WS.receiveData conn :: IO Message
     print msg
 
-    m' <- updateState pg st msg
+    m <- updateState st msg
 
-    let bs = render pg m'
+    let bs = render m
     WS.sendTextData conn bs
 
-render :: Page params model action IO -> model -> ByteString
-render pg m =
-  let h = (Runtime.view pg) m
-  in Lucid.renderBS h
-
-updateState :: forall params action model. (LiveAction action, Show model) => Page params model action IO -> MVar model -> Message -> IO model
-updateState pg st msg = do
-  modifyMVar st update
   where
-    update :: model -> IO model
-    update m = do
-      case decodeAction (cs $ fromMessage msg) of
-        Error _ -> throw $ InvalidAction msg
-        Success act -> do
-          m' <- (Runtime.update pg) act m
-          pure m'
+
+    render :: model -> ByteString
+    render m =
+      let h = (Runtime.view pg) m
+      in Lucid.renderBS h
+
+
+    updateState :: MVar model -> Message -> IO model
+    updateState st msg = do
+      modifyMVar st update
+      where
+        update :: model -> IO model
+        update m = do
+          case decodeAction (cs $ fromMessage msg) of
+            Error _ -> throw $ InvalidAction msg
+            Success act -> do
+              m' <- (Runtime.update pg) act m
+              pure m'
 
 
 
@@ -213,14 +200,10 @@ data SocketError
   deriving (Show, Exception)
 
 
--- ok, that's easy
 
 
 
-
-
-
--- Taken from Control.Concurrent. Why doesn't this exist?
+-- Taken from Control.Concurrent. Returns the modified variable at the end
 modifyMVar :: MVar a -> (a -> IO a) -> IO a
 modifyMVar m io =
   mask $ \restore -> do

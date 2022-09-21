@@ -37,7 +37,11 @@ view m = section_ [ class_ "page" ] $ do
       button_ [ onClick Decrement] "Decrement"
       button_ [ onClick Increment] "Increment"
 
+    -- div_ $ do
+    --   input_ [type_ "text", value_ "test"]
+
     div_ $ toHtml $ show m.count
+
 
 
 page :: MonadIO m => Page () Model Action m
