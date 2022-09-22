@@ -15,7 +15,7 @@ import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text (Text)
 import Data.Maybe (fromMaybe)
 import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
-import Lucid (Html, toHtml, toHtmlRaw, renderBS)
+import Lucid (Html, toHtml, toHtmlRaw, renderBS, Term, term)
 import Lucid.Html5
 
 
@@ -45,9 +45,13 @@ view :: Model -> Html ()
 view m = section_ [ class_ "page" ] $ do
   div_ [ class_ "section" ] $ do
     -- Inputs are committed on blur or enter
-    div_ $ input_ [ value_ m.one, onInput One ]
-    div_ $ input_ [ value_ m.two, onInput Two ]
+    div_ $ input' [ value_ m.one, onInput One ] ""
+    div_ $ input' [ value_ m.two, onInput Two ] ""
     div_ $ toHtml $ m.one <> " " <> m.two
+
+
+input' :: Term arg result => arg -> result
+input' = term "input"
 
 
 instance SParams Model () where

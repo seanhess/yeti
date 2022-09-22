@@ -50,11 +50,18 @@ window.addEventListener("load", function() {
 })
 
 
-// Handle Click Events, Easy!
+// Handle Click Events via bubbling, Easy!
 document.addEventListener("click", function(e) {
   let el = e.target as HTMLElement
   if (el.dataset.onClick) {
-    console.log("Click", el.dataset.onClick)
     socket.send(el.dataset.onClick)
+  }
+})
+
+document.addEventListener("input", function(e) {
+  let el = e.target as HTMLInputElement
+  if (el.dataset.onInput) {
+    let val = JSON.stringify(el.value)
+    socket.send(el.dataset.onInput + "\t" + val)
   }
 })

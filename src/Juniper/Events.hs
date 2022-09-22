@@ -44,7 +44,7 @@ onClick :: (LiveAction action) => action -> Attributes
 onClick = on "click"
 
 onInput :: (LiveAction action) => (Text -> action) -> Attributes
-onInput = onValue "text-input"
+onInput = onValue "input"
 
 -- | capture the input event and commit immediately. Should not be used for text inputs
 onSelect :: (LiveAction action, Input val) => (val -> action) -> Attributes

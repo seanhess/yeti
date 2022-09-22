@@ -15,7 +15,7 @@ import Lucid
 import Juniper.Encode
 import qualified Juniper.Runtime as Runtime hiding (run)
 import Control.Concurrent (forkIO)
-import Control.Exception (finally, Exception, throw, mask, onException)
+import Control.Exception (finally, Exception, throw, mask, onException, catch)
 import Control.Monad (forM_, forever)
 import Control.Concurrent (MVar, newMVar, putMVar, takeMVar)
 import qualified Page.Counter as Counter
@@ -53,7 +53,8 @@ startWebServer = do
       file "dist/main.js"
 
     get "/" $ do
-      handle cfg Counter.page
+      -- handle cfg Counter.page
+      handle cfg Focus.page
       -- html $
       --   "This is a test <script src='/live.js'></script>"
 
@@ -81,7 +82,7 @@ newtype Message = Message { fromMessage :: ByteString }
   deriving newtype (Eq, WS.WebSocketsData)
 
 instance Show Message where
-  show (Message m) = " |> " <> cs m
+  show (Message m) = "|" <> cs m <> "|"
 
 
 
@@ -125,7 +126,8 @@ startLiveView pageRun = do
     conn <- WS.acceptRequest pending
     page <- identify conn
     run <- pageRun page
-    connect run conn
+
+    connect run conn `catch` onError
 
   where
     identify :: WS.Connection -> IO page
@@ -146,10 +148,15 @@ startLiveView pageRun = do
       WS.withPingThread conn 30 (return ()) $ do
         finally disconnect $ forever (run conn)
 
+    onError :: SocketError -> IO ()
+    onError e = do
+      -- putStrLn "ERROR"
+      print e
 
     disconnect :: IO ()
     disconnect = do
       -- perform any cleanup here
+      putStrLn "DISCONNECT!"
       pure ()
 
 
