@@ -1,1 +1,1 @@
--o ghcid.txt
+--test SocketExample.startServers -o ghcid.txt

@@ -14,8 +14,9 @@ import Data.Text (Text)
 import Lucid
 import Juniper.Encode
 import qualified Juniper.Runtime as Runtime hiding (run)
-import Control.Concurrent (forkIO)
-import Control.Exception (finally, Exception, throw, mask, onException, catch)
+import Control.Concurrent (forkIO, ThreadId, throwTo)
+import Control.Concurrent.Async (withAsync, wait, race_)
+import Control.Exception (finally, Exception, throw, mask, onException, catch, AsyncException)
 import Control.Monad (forM_, forever)
 import Control.Concurrent (MVar, newMVar, putMVar, takeMVar)
 import qualified Page.Counter as Counter
@@ -37,9 +38,26 @@ import Web.Scotty as Scotty
 
 start :: IO ()
 start = do
-  forkIO startSocket
-  startWebServer
-  pure ()
+  startServers
+
+
+
+
+
+startServers :: IO ()
+startServers = do
+  -- start both, catch any async exceptions and throw to both threads
+  wt <- (forkIO startWebServer)
+  startSocket `catch` (onInterrupt wt)
+  where
+    onInterrupt :: ThreadId -> AsyncException -> IO ()
+    onInterrupt wt e = do
+      throwTo wt e
+      throw e
+
+
+
+
 
 
 startWebServer :: IO ()
@@ -122,7 +140,10 @@ startSocket = do
 startLiveView :: forall page m a. (FromJSON page, Show page) => (page -> IO (WS.Connection -> IO ())) -> IO ()
 startLiveView pageRun = do
 
+  putStrLn "startLiveView"
   liftIO $ WS.runServer "127.0.0.1" 9160 $ \pending -> do
+    putStrLn "Connection!"
+
     conn <- WS.acceptRequest pending
     page <- identify conn
     run <- pageRun page
@@ -146,7 +167,8 @@ startLiveView pageRun = do
     connect run conn = do
       putStrLn "Connect"
       WS.withPingThread conn 30 (return ()) $ do
-        finally disconnect $ forever (run conn)
+        -- finally disconnect $ forever (run conn)
+        forever (run conn)
 
     onError :: SocketError -> IO ()
     onError e = do

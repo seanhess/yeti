@@ -43,6 +43,7 @@ update (Two t) m = pure $ m { two = t }
 
 view :: Model -> Html ()
 view m = section_ [ class_ "page" ] $ do
+  "FOCUS: !"
   div_ [ class_ "section" ] $ do
     -- Inputs are committed on blur or enter
     div_ $ input' [ value_ m.one, onInput One ] ""

@@ -70,6 +70,7 @@ library
   ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes
   build-depends:
       aeson
+    , async
     , base >=4.7 && <5
     , base64
     , binary
@@ -151,6 +152,7 @@ executable juniper-exe
   ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
+    , async
     , base >=4.7 && <5
     , base64
     , binary
@@ -226,6 +228,7 @@ test-suite juniper-test
   ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
+    , async
     , base >=4.7 && <5
     , base64
     , binary
