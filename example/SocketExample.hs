@@ -28,6 +28,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.UUID as UUID (UUID)
 import Data.UUID.V4 as UUID
+import System.IO (hSetBuffering, stdout, stdin, BufferMode(NoBuffering))
 
 import qualified Network.WebSockets as WS
 import Sockets
@@ -36,26 +37,24 @@ import Sockets
 import Web.Scotty as Scotty
 
 
-start :: IO ()
-start = do
-  startServers
+
+startLive :: IO ()
+startLive = do
+  concurrent
+    startWebServer
+    startSocket
 
 
 
-
-
-startServers :: IO ()
-startServers = do
-  -- start both, catch any async exceptions and throw to both threads
-  wt <- (forkIO startWebServer)
-  startSocket `catch` (onInterrupt wt)
+concurrent :: IO () -> IO () -> IO ()
+concurrent act1 act2 = do
+  t <- (forkIO act1)
+  act2 `catch` (onInterrupt t)
   where
     onInterrupt :: ThreadId -> AsyncException -> IO ()
-    onInterrupt wt e = do
-      throwTo wt e
+    onInterrupt t e = do
+      throwTo t e
       throw e
-
-
 
 
 
