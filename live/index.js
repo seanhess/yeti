@@ -1,4 +1,4 @@
-import { patch } from 'million';
+import { hydrate, patch, render } from 'million';
 import { fromDomNodeToVNode, fromStringToDomNode } from 'million/utils';
 
 console.log("VERSION 1")
@@ -43,8 +43,14 @@ socket.addEventListener('error', (e) => {
 window.addEventListener("load", function() {
   console.log("State:", juniperState)
   rootElement = document.getElementById("juniper-root-content")
+
+  // Hydrate it! (hydrate doesn't work, ironically)
+  let initContent = fromDomNodeToVNode(rootElement.children[0])
+  rootElement = patch(rootElement, initContent)
 })
 
 document.addEventListener("click", function(e) {
-  socket.send("Increment")
+  if (e.target.type == "submit") {
+    socket.send("Increment")
+  }
 })

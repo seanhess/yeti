@@ -8,7 +8,7 @@ import Sockets
 import Prelude
 import Juniper
 import Control.Monad.IO.Class (MonadIO)
-import Lucid (Html, toHtml)
+import Lucid (Html, toHtml, Term, term)
 import Lucid.Html5
 
 data Model = Model
@@ -37,11 +37,17 @@ view m = section_ [ class_ "page" ] $ do
       button_ [ onClick Decrement] "Decrement"
       button_ [ onClick Increment] "Increment"
 
-    -- div_ $ do
-    --   input_ [type_ "text", value_ "test"]
+    div_ $ do
+      input' [type_ "text"] ""
 
     div_ $ toHtml $ show m.count
 
+
+
+-- | @input@ element
+
+input' :: Term arg result => arg -> result
+input' = term "input"
 
 
 page :: MonadIO m => Page () Model Action m

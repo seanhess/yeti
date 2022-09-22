@@ -10,7 +10,7 @@ import Data.Text (pack, unpack, Text)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad (forM_)
 import Lucid (Html, toHtml)
-import Lucid.Base (makeAttribute, Attribute)
+import Lucid.Base (makeAttributes, Attributes)
 import Lucid.Html5
 
 data Model = Model
@@ -68,7 +68,7 @@ view m = section_ [ class_ "g10 p10 col", id_ "parent" ] $ do
         div_ $ toHtml item
 
 
-deleteList :: [Attribute] -> [String] -> (String -> Action) -> Html ()
+deleteList :: [Attributes] -> [String] -> (String -> Action) -> Html ()
 deleteList as items act = 
   div_ ([component "comp", dataInput items, onValue "delete" (act . unpack)] <> as) $ pure ()
 

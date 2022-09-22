@@ -29,7 +29,7 @@ dependencies:
 - file-embed
 - http-types
 - lens
-- lucid
+- lucid2
 - lifted-base
 - megaparsec
 - mtl

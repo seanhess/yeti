@@ -13,7 +13,7 @@ import Data.Text as Text (Text, takeWhile, dropWhile, dropWhileEnd, splitOn)
 import Data.Char (isAlphaNum)
 import Data.Default (Default(..))
 import Juniper.Encode
-import Lucid.Base (makeAttribute, Attribute)
+import Lucid.Base (makeAttributes, Attributes)
 import Lucid.Html5 (onchange_)
 
 
@@ -40,26 +40,26 @@ instance Read FormData where
 
 
 
-onClick :: (LiveAction action) => action -> Attribute
+onClick :: (LiveAction action) => action -> Attributes
 onClick = on "click"
 
-onInput :: (LiveAction action) => (Text -> action) -> Attribute
+onInput :: (LiveAction action) => (Text -> action) -> Attributes
 onInput = onValue "text-input"
 
 -- | capture the input event and commit immediately. Should not be used for text inputs
-onSelect :: (LiveAction action, Input val) => (val -> action) -> Attribute
+onSelect :: (LiveAction action, Input val) => (val -> action) -> Attributes
 onSelect = onValue "input"
 
-onEnter :: (LiveAction action) => action -> Attribute
+onEnter :: (LiveAction action) => action -> Attributes
 onEnter = on "enter"
 
 
 
-on :: (LiveAction action) => Text -> (action) -> Attribute
-on name act = makeAttribute ("data-on-" <> name) $ encodeAction act
+on :: (LiveAction action) => Text -> (action) -> Attributes
+on name act = makeAttributes ("data-on-" <> name) $ encodeAction act
 
-onValue :: (LiveAction action, Input val) => Text -> (val -> action) -> Attribute
-onValue name con = makeAttribute ("data-on-" <> name) $ encodeAction1 con
+onValue :: (LiveAction action, Input val) => Text -> (val -> action) -> Attributes
+onValue name con = makeAttributes ("data-on-" <> name) $ encodeAction1 con
 
 
 

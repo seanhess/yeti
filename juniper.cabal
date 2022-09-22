@@ -80,7 +80,7 @@ library
     , http-types
     , lens
     , lifted-base
-    , lucid
+    , lucid2
     , megaparsec
     , monad-loops
     , mtl
@@ -162,7 +162,7 @@ executable juniper-exe
     , juniper
     , lens
     , lifted-base
-    , lucid
+    , lucid2
     , megaparsec
     , monad-loops
     , mtl
@@ -237,7 +237,7 @@ test-suite juniper-test
     , juniper
     , lens
     , lifted-base
-    , lucid
+    , lucid2
     , megaparsec
     , monad-loops
     , mtl
