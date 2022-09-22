@@ -1,23 +1,26 @@
-import { hydrate, patch, render } from 'million';
+import { hydrate, patch, render, DOMNode } from 'million';
 import { fromDomNodeToVNode, fromStringToDomNode } from 'million/utils';
 
+declare const JUNIPER_STATE:string;
+
 console.log("VERSION 1")
+
 
 const PORT = 9160
 const HOST = location.hostname
 const PATH = location.pathname
 console.log("Connecting: ", HOST, PORT)
 
-const socket = new WebSocket('ws://' + HOST + ':' + PORT)
+var socket:WebSocket = new WebSocket('ws://' + HOST + ':' + PORT)
 
-var rootElement
+var rootElement:DOMNode
 
 // Connection opened
 socket.addEventListener('open', (event) => {
     console.log("Open")
 
     // 1. send our initial state to register
-    socket.send(juniperState);
+    socket.send(JUNIPER_STATE);
 });
 
 // Listen for messages
@@ -38,19 +41,20 @@ socket.addEventListener('error', (e) => {
 });
 
 window.addEventListener("load", function() {
-  console.log("State:", juniperState)
+  console.log("State:", JUNIPER_STATE)
   rootElement = document.getElementById("juniper-root-content")
 
-  // 0. Hydrate content so we don't lose focus, etc
-  let initContent = fromDomNodeToVNode(rootElement.children[0])
+  let firstChild = rootElement.firstChild as DOMNode
+  let initContent = fromDomNodeToVNode(firstChild)
   rootElement = patch(rootElement, initContent)
 })
 
 
 // Handle Click Events, Easy!
 document.addEventListener("click", function(e) {
-  let click = e.target.dataset.onClick
-  if (click) {
-    socket.send(click)
+  let el = e.target as HTMLElement
+  if (el.dataset.onClick) {
+    console.log("Click", el.dataset.onClick)
+    socket.send(el.dataset.onClick)
   }
 })
