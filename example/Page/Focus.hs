@@ -55,13 +55,3 @@ input' :: Term arg result => arg -> result
 input' = term "input"
 
 
-instance SParams Model () where
-  params' = const ()
-
-instance SView Model where
-  view' = view
-
-instance MonadIO m => SUpdate Model m where
-  type Msg Model = Action
-  load' = load
-  update' = update

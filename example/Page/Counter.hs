@@ -54,16 +54,13 @@ page :: MonadIO m => Page () Model Action m
 page = simplePage load update view
 
 
-instance SParams Model () where
-  params' = const ()
-
-instance SView Model where
-  view' = view
-
-instance MonadIO m => SUpdate Model m where
-  type Msg Model = Action
-  load' = load
-  update' = update
+-- instance MonadIO m => SPage Model m where
+--   type Params Model = ()
+--   type Msg Model = Action
+--   load' = load
+--   params' = const ()
+--   update' = update
+--   view' = view
 
   -- type Msg Model = Action
   -- load' = load

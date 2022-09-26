@@ -5,6 +5,7 @@ module SocketExample where
 
 import Juniper.Prelude
 import Juniper hiding (page)
+import Control.Concurrent.STM (newTVar, atomically, TVar)
 import Data.Char (isPunctuation, isSpace)
 import qualified Data.Map as Map
 import Data.ByteString.Lazy (ByteString)
@@ -12,6 +13,8 @@ import Data.Monoid (mappend)
 import Data.Text (Text)
 -- import Control.Monad.Loops (iterateM_)
 import Lucid
+import Juniper.Params as Params
+import qualified Juniper.Web as Web
 import Juniper.Encode
 import qualified Juniper.Runtime as Runtime hiding (run)
 import Control.Concurrent (forkIO, ThreadId, throwTo)
@@ -21,6 +24,8 @@ import Control.Monad (forM_, forever)
 import Control.Concurrent (MVar, newMVar, putMVar, takeMVar)
 import qualified Page.Counter as Counter
 import qualified Page.Focus as Focus
+import qualified Page.Todo as Todo
+import Page.Todo (Todo(..))
 import GHC.Generics
 import Data.Aeson as Aeson (ToJSON, FromJSON(..), decode, Result(..))
 import Data.Aeson.Types (Parser)
@@ -34,15 +39,22 @@ import qualified Network.WebSockets as WS
 import Sockets
 
 
-import Web.Scotty as Scotty
+import Web.Scotty (scotty)
+import Web.Scotty.Trans as Scotty
+
+
+-- TODO store session information by user id. Embed the user id instead of the state
+-- TODO need to make initialization way easier and type safe, right now you have to add it to the routes
+  -- and you also need to add it to sockets
 
 
 
 startLive :: IO ()
 startLive = do
+  todos <- atomically $ newTVar [Todo "Test Item" Todo.Errand False]
   concurrent
-    startWebServer
-    startSocket
+    (startWebServer todos)
+    (startSocket todos)
 
 
 
@@ -59,8 +71,9 @@ concurrent act1 act2 = do
 
 
 
-startWebServer :: IO ()
-startWebServer = do
+startWebServer :: TVar [Todo] -> IO ()
+startWebServer todos = do
+
 
   let cfg = Render False toDocument
 
@@ -69,11 +82,30 @@ startWebServer = do
       addHeader "Content-Type" "text/javascript"
       file "dist/main.js"
 
-    get "/" $ do
-      -- handle cfg Counter.page
-      handle cfg Focus.page
-      -- html $
-      --   "This is a test <script src='/live.js'></script>"
+    -- get "/" $ do
+    --   -- handle cfg Counter.page
+    --   handle cfg Focus.page
+    --   -- html $
+    --   --   "This is a test <script src='/live.js'></script>"
+
+    pageRoute cfg "/focus" Focus.page
+    pageRoute cfg "/counter" Counter.page
+    pageRoute cfg "/todo" (Todo.page todos)
+ 
+    -- page "focus" Focus
+    -- it's (model -> Page') that does the trick
+
+
+-- TODO can we do this with just the constructor?
+pageRoute :: (MonadIO m, LiveModel mod, LiveAction act, ToParams prm, ScottyError e) => Render -> RoutePattern -> Page prm mod act (ActionT e m) -> ScottyT e m ()
+pageRoute cfg r pg = do
+  -- 1. load, then go
+  Scotty.get r $ do
+    handle cfg pg
+
+    pure ()
+
+
 
 
 toDocument :: Html () -> Html ()
@@ -102,28 +134,23 @@ instance Show Message where
   show (Message m) = "|" <> cs m <> "|"
 
 
-
--- List of Functions that MIGHT parse it
--- Register them
-
--- page (parse :: CounterCounter..Model)
--- no, they have to be the same type
-
 data Page'
   = Counter Counter.Model
   | Focus Focus.Model
+  | Todos Todo.Model
   deriving (Generic, Show)
 
 instance FromJSON Page' where
   parseJSON v =
         Counter <$> parseJSON v
     <|> Focus <$> parseJSON v
+    <|> Todos <$> parseJSON v
 
 
 -- can you run this in other than IO?
 -- not for now
-startSocket :: IO ()
-startSocket = do
+startSocket :: TVar [Todo] -> IO ()
+startSocket todos = do
   startLiveView $ \pg ->
     case pg of
       Counter m -> do
@@ -131,6 +158,9 @@ startSocket = do
 
       Focus m -> do
         register Focus.page m
+
+      Todos m -> do
+        register (Todo.page todos) m
 
 
 

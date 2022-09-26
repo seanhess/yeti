@@ -11,6 +11,7 @@ module Juniper.Web
   , simpleDocument
   , lucid
   , queryToText
+  , params
   ) where
 
 import Juniper.Prelude
@@ -62,7 +63,7 @@ instance Default Render where
 
 -- handle handles it if you're in actionM
 handle
-  :: forall params model action e m. (MonadIO m, ScottyError e, Show action, LiveModel model, LiveAction action, ToParams params)
+  :: forall params model action e m. (MonadIO m, ScottyError e, LiveModel model, LiveAction action, ToParams params)
   => Render
   -> Page params model action (ActionT e m)
   -> ActionT e m ()
@@ -167,6 +168,9 @@ simpleDocument t extra content = do
       content
 
 
+
+params :: (Monad m, ToParams p) => ActionT e m (Maybe p)
+params = Params.fromParams <$> query
 
 
 

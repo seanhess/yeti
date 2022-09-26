@@ -24,7 +24,7 @@ data Model = Model
   , search :: Text
   , addContent :: Text
   , addCategory :: Category
-  } deriving (Show, Generic, LiveModel)
+  } deriving (Show, Generic, LiveModel, FromJSON)
 
 -- the only parameter is the search text
 data Params = Params
