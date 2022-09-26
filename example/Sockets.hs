@@ -5,7 +5,7 @@ import Lucid
 
 import qualified Data.Text as Text
 import qualified Juniper.Runtime as Runtime
-import Juniper.Runtime (Response(..), Handler)
+import Juniper.Runtime (Response(..), PageHandler)
 import Juniper hiding (page)
 import Juniper.Encode (Encoded(..), Encoding(..))
 import Data.ByteString.Lazy (ByteString)
@@ -52,22 +52,23 @@ newtype Message = Message { fromMessage :: Text }
 
 startLiveView
   :: forall page m a. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, FromJSON page, Show page)
-  => Handler page m
+  => PageHandler page m
   -> IO ()
 startLiveView pageResponse = do
   putStrLn "startLiveView"
-  WS.runServer "127.0.0.1" 9160 (application pageResponse)
+  WS.runServer "127.0.0.1" 9160 (liveApp pageResponse)
 
 
-application
+
+liveApp
   :: forall page m a. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, FromJSON page, Show page)
-  => Handler page m
+  => PageHandler page m
   -> WS.PendingConnection
   -> IO ()
-application pageResponse pending = do
+liveApp pageResponse pending = do
   putStrLn "Connection!"
 
-  flip catch onError $ do
+  liftIO $ flip catch onError $ do
     conn <- liftIO $ WS.acceptRequest pending
     id <- identify conn
     print (page id)
@@ -141,7 +142,7 @@ talk
   :: forall page m. (Show page, MonadIO m, MonadBase IO m, MonadBase m IO, MonadBaseControl IO m)
   => Identified page
   -> MVar (Encoded 'Model)
-  -> Handler page m
+  -> PageHandler page m
   -> WS.Connection ->
   m ()
 talk (Identified page encModel) state run conn = do

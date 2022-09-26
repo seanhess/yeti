@@ -7,7 +7,7 @@ module Juniper
  , ToParams(..), ToParam(..)
 --  , Value(..)
  , page
- , handle, simpleDocument
+ , respond, simpleDocument
  , Render(..)
  , onInput, onClick, onEnter, onSelect, onValue, on
  , scripts

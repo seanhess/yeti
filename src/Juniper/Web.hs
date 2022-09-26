@@ -1,8 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 module Juniper.Web
-  ( handle
-  , Render(..)
+  ( Render(..)
   , respond
   , static
   , def
@@ -15,7 +14,7 @@ module Juniper.Web
   ) where
 
 import Juniper.Prelude
-import Juniper.Runtime as Runtime (Response(..), Page, Handler)
+import Juniper.Runtime as Runtime (Response(..), Page, PageHandler)
 import Juniper.Encode (LiveModel, LiveAction, encodeModel, fromEncoded)
 import qualified Juniper.Runtime as Runtime
 import Juniper.Params as Params (ToParams(..), urlEncode, urlDecode)
@@ -35,6 +34,10 @@ import Data.Binary.Builder (toLazyByteString, Builder)
 import Network.URI.Encode (encodeTextWith, encodeText)
 import Network.URI (isUnreserved)
 import Data.Default (Default, def)
+import Network.Wai (ResponseReceived)
+import qualified Network.Wai as Wai
+
+import Network.HTTP.Types (status200)
 
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Aeson as Aeson
@@ -62,19 +65,19 @@ instance Default Render where
   def = Render True (simpleDocument "" "")
 
 -- Always a load
-handle
-  :: (MonadIO m, ScottyError e, ToJSON page)
-  => Render
-  -> page
-  -> Handler page (ActionT e m)
-  -> ActionT e m ()
-handle cfg pg runPage = do
-  -- mps <- Params.fromParams <$> query
-  -- (mm, cmds) <- Runtime.parseBody =<< Scotty.body
+-- handle
+--   :: (MonadIO m, ScottyError e, ToJSON page)
+--   => Render
+--   -> page
+--   -> PageHandler page (ActionT e m)
+--   -> ActionT e m ()
+-- handle cfg pg runPage = do
+--   -- mps <- Params.fromParams <$> query
+--   -- (mm, cmds) <- Runtime.parseBody =<< Scotty.body
 
-  res <- runPage pg Nothing []
+--   res <- runPage pg Nothing []
 
-  respond cfg pg res
+--   respond cfg pg res
 
 
 
@@ -88,28 +91,21 @@ pageUrl path ps =
 
 
 
+respond :: (ToJSON page) => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
+respond (Render embJS toDocument) pg (Response encModel encParams view) respWai = do
 
-respond :: (Monad m, ScottyError e, ToJSON page) => Render -> page -> Response -> ActionT e m ()
-respond (Render embJS toDocument) pg (Response encModel encParams view) = do
+  let content = Lucid.renderBS $ toDocument $ embedContent view
 
-  setParams
-
-  -- Web no longer handles any requests
-
-  -- Scotty.header "Accept" >>= \case
-  --   Just "application/vdom" -> do
-  --     vdom (cs $ fromEncoded $ encModel) view
-      
-  --   _ -> do
-
-  lucid $ toDocument $ embedContent view
+  respWai $ Wai.responseLBS status200 headers content
 
   where
+    headers =
+      [ ("X-Params", cs $ queryToText encParams)
+      , ("Content-Type", "text/html")
+      ]
+
     stateJSON :: ByteString
     stateJSON = Aeson.encode $ fromEncoded encModel
-
-    setParams = 
-      Scotty.setHeader "X-Params" $ cs $ queryToText encParams
 
     embedStateScript :: Html ()
     embedStateScript = 
@@ -119,7 +115,6 @@ respond (Render embJS toDocument) pg (Response encModel encParams view) = do
         , "var juniperPage = " <> cs (Aeson.encode pg)
         , ""
         ]
-
 
     -- render the root node and embed the javascript
     embedContent :: Html () -> Html ()

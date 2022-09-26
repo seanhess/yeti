@@ -28,7 +28,7 @@ data Response = Response
   } deriving (Show, Generic)
 
 
-type Handler page m = page -> Maybe (Encoded 'Model) -> [Encoded 'Action] -> m Response
+type PageHandler page m = page -> Maybe (Encoded 'Model) -> [Encoded 'Action] -> m Response
 
 data Command action
   = Submit
