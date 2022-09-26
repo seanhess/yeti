@@ -23,28 +23,31 @@ import GHC.Generics
 import Data.Aeson (FromJSON(..))
 import Web.Scotty (scotty)
 import Web.Scotty.Trans as Scotty (addHeader, file, get)
-
-
 import Sockets
+
+-- TODO Actually wire up the generalized function
+-- TODO Params
 
 
 mainLive :: IO ()
 mainLive = do
   todos <- atomically $ newTVar [Todo "Test Item" Todo.Errand False]
-  pure ()
-  -- concurrent
-  --   (startWebServer todos)
-    -- (startSocket todos)
+  startLive todos
 
 
 startLive :: TVar [Todo] -> IO ()
 startLive todos = 
-  pure ()
+  concurrent
+    (startWebServer todos)
+    (startSocket todos)
   where
     run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
-    run Focus m as   = Runtime.runPage Focus.page m as
-    run Counter m as = Runtime.runPage Counter.page m as
-    run Todos m as   = Runtime.runPage (Todo.page todos) m as
+    run Focus   = Runtime.runPage Focus.page
+    run Counter = Runtime.runPage Counter.page
+    run Todos   = Runtime.runPage (Todo.page todos)
+
+
+
 
 
 
@@ -54,6 +57,14 @@ data AppPage
   | Todos
   deriving (Generic, Show)
 
+
+-- I can associate them?
+class RoutePage page where
+  type Model p :: *
+  type Page p :: *
+
+instance RoutePage AppPage where
+  type Model AppPage = Counter.Model
 
 
 

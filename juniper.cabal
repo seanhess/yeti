@@ -83,6 +83,7 @@ library
     , lifted-base
     , lucid2
     , megaparsec
+    , monad-control
     , monad-loops
     , mtl
     , network
@@ -94,6 +95,7 @@ library
     , tagged
     , text
     , time
+    , transformers-base
     , unordered-containers
     , uri-encode
     , url
@@ -101,6 +103,8 @@ library
     , vector
     , wai
     , wai-middleware-static
+    , wai-transformers
+    , wai-websockets
     , websockets
   default-language: Haskell2010
 
@@ -166,6 +170,7 @@ executable juniper-exe
     , lifted-base
     , lucid2
     , megaparsec
+    , monad-control
     , monad-loops
     , mtl
     , network
@@ -179,6 +184,7 @@ executable juniper-exe
     , tagged
     , text
     , time
+    , transformers-base
     , unordered-containers
     , uri-encode
     , url
@@ -186,6 +192,8 @@ executable juniper-exe
     , vector
     , wai
     , wai-middleware-static
+    , wai-transformers
+    , wai-websockets
     , websockets
   default-language: Haskell2010
 
@@ -242,6 +250,7 @@ test-suite juniper-test
     , lifted-base
     , lucid2
     , megaparsec
+    , monad-control
     , monad-loops
     , mtl
     , network
@@ -253,6 +262,7 @@ test-suite juniper-test
     , tagged
     , text
     , time
+    , transformers-base
     , unordered-containers
     , uri-encode
     , url
@@ -260,5 +270,7 @@ test-suite juniper-test
     , vector
     , wai
     , wai-middleware-static
+    , wai-transformers
+    , wai-websockets
     , websockets
   default-language: Haskell2010

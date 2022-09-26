@@ -3,18 +3,24 @@ module Sockets where
 import Juniper.Prelude
 import Lucid
 
+import qualified Data.Text as Text
 import qualified Juniper.Runtime as Runtime
+import Juniper.Runtime (Response(..))
 import Juniper hiding (page)
-import Juniper.Encode (Encoded(..))
+import Juniper.Encode (Encoded(..), Encoding(..))
 import Data.ByteString.Lazy (ByteString)
 import qualified Network.WebSockets as WS
 import Network.WebSockets (WebSocketsData)
-import Control.Exception (finally, Exception, throw, mask, onException, catch, AsyncException)
-import Control.Concurrent (forkIO, ThreadId, throwTo, MVar, newMVar, putMVar, takeMVar)
+import Control.Exception.Lifted (finally, Exception, throw, mask, onException, catch, AsyncException)
+import Control.Concurrent (forkIO, ThreadId, throwTo)
+import Control.Concurrent.MVar.Lifted (MVar, newMVar, modifyMVar)
 import Control.Monad (forever, forM_)
+import Control.Monad.Trans.Control (MonadBaseControl)
+import Control.Monad.Base (MonadBase)
 import Data.Aeson as Aeson
 import Data.Aeson.Types
 import Web.Scotty.Trans as Scotty
+import Network.WebSockets.Trans (liftServerApp, runServerAppT, ServerAppT)
 
 -- class SPage model m | model -> m where
 --   type Msg model :: *
@@ -38,50 +44,80 @@ pageRoute cfg r pg = do
 
 
 
-newtype Message = Message { fromMessage :: ByteString }
-  deriving newtype (Eq, WS.WebSocketsData)
+newtype Message = Message { fromMessage :: [Text] }
+  deriving newtype (Eq, Show)
 
-instance Show Message where
-  show (Message m) = "|" <> cs m <> "|"
+instance WebSocketsData Message where
+
+
+-- instance Show Message where
+--   show (Message m) = "|" <> cs m <> "|"
 
 
 
 -- we could just have all of this run in their monad?
 
-startLiveView :: forall page m a. (FromJSON page, Show page) => (page -> IO (WS.Connection -> IO ())) -> IO ()
-startLiveView pageRun = do
+-- run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
+-- (page -> IO (WS.Connection -> IO ()))
+startLiveView :: forall page m a. (MonadBase IO m, MonadBaseControl IO m, MonadIO m) => (FromJSON page, Show page) => (page -> Encoded 'Model -> [Encoded 'Action] -> m Response) -> m ()
+startLiveView pageResponse = do
 
   putStrLn "startLiveView"
-  liftIO $ WS.runServer "127.0.0.1" 9160 $ \pending -> do
-    putStrLn "Connection!"
-
-    conn <- WS.acceptRequest pending
-    page <- identify conn
-    run <- pageRun page
-
-    connect run conn `catch` onError
+  app <- runServerAppT accept :: m WS.ServerApp
+  liftIO $ WS.runServer "127.0.0.1" 9160 app
 
   where
-    identify :: WS.Connection -> IO page
+
+    accept :: WS.PendingConnection -> m ()
+    accept pending = do
+      putStrLn "Connection!"
+
+      conn <- liftIO $ WS.acceptRequest pending
+      id <- identify conn
+      var <- newMVar (state id)
+
+      let run = pageRun id var
+      connect run conn `catch` onError
+
+    pageRun :: Identified page -> MVar (Encoded 'Model) -> WS.Connection -> m ()
+    pageRun i var =
+      register i pageResponse var
+
+    -- this needs to return page and state
+    identify :: WS.Connection -> m (Identified page)
     identify conn = do
-      msg <- WS.receiveData conn :: IO Message
-      case Aeson.decode (fromMessage msg) of
+      msg <- liftIO $ WS.receiveData conn :: m Message
+      id <- parseIdentify msg
+      putStrLn "Identified"
+      pure id
+
+    -- Format:
+    -- <Page>
+    -- <Encoded Model>
+    parseIdentify :: Message -> m (Identified page)
+    parseIdentify (Message [pt, mt]) = do
+      p <- parsePage pt
+      pure $ Identified p (Encoded mt)
+
+    parsePage :: Text -> m page
+    parsePage p =
+      case Aeson.decode (cs p) of
         Nothing -> do
-          throw $ NoIdentify msg
+          throw $ NoIdentifyPage p
         Just p -> do
-          putStrLn "Identified"
-          print p
-          -- WS.sendTextData conn ("Identified" :: Text)
           pure p
 
-    connect :: (WS.Connection -> IO ()) -> WS.Connection -> IO ()
+    connect :: (WS.Connection -> m ()) -> WS.Connection -> m ()
     connect run conn = do
       putStrLn "Connect"
-      WS.withPingThread conn 30 (return ()) $ do
-        -- finally disconnect $ forever (run conn)
-        forever (run conn)
 
-    onError :: SocketError -> IO ()
+      -- Can't figure out how to lift this
+      -- WS.withPingThread conn 30 (return ()) $ do
+      -- finally disconnect $ forever (run conn)
+
+      forever (run conn)
+
+    onError :: SocketError -> m ()
     onError e = do
       -- putStrLn "ERROR"
       print e
@@ -93,50 +129,75 @@ startLiveView pageRun = do
       pure ()
 
 
-
+data Identified page = Identified
+  { page :: page
+  , state :: Encoded 'Model
+  }
 
 -- It's all right here, except for the connection
-register :: forall action model params. (LiveAction action, Show model) => Page params model action IO -> model -> IO (WS.Connection -> IO ())
-register pg initModel = do
-  putStrLn "Register"
-  st <- liftIO $ newMVar initModel
-  putStrLn "Registered"
+-- run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
+register :: forall page m. (MonadIO m, MonadBase IO m, MonadBaseControl IO m) => Identified page -> (page -> Encoded 'Model -> [Encoded 'Action] -> m Response) -> MVar (Encoded 'Model) -> WS.Connection -> m ()
+register (Identified page encModel) run state conn = do
+  putStrLn "Talk"
+  msg <- liftIO $ WS.receiveData conn :: m Message
+  print msg
 
-  pure $ \conn -> do
-    putStrLn "Talk"
-    msg <- WS.receiveData conn :: IO Message
-    print msg
+  res <- updateState state msg
 
-    m <- updateState st msg
-
-    let bs = render m
-    WS.sendTextData conn bs
+  let out = Lucid.renderBS (resView res)
+  liftIO $ WS.sendTextData conn out
 
   where
 
-    render :: model -> ByteString
-    render m =
-      let h = (Runtime.view pg) m
-      in Lucid.renderBS h
 
 
-    updateState :: MVar model -> Message -> IO model
+    updateState :: MVar (Encoded 'Model) -> Message -> m Response
     updateState st msg = do
-      modifyMVar st update
+      res <- modifyMVar st updateEnc
+      pure res
+
       where
-        update :: model -> IO model
-        update m = do
-          case decodeAction (Encoded $ cs $ fromMessage msg) of
-            Error _ -> throw $ InvalidAction msg
-            Success act -> do
-              m' <- (Runtime.update pg) act m
-              pure m'
+        -- no type safety yet
+        -- grr 
+        updateEnc :: Encoded 'Model -> m (Encoded 'Model, Response)
+        updateEnc encModel = do
+          -- (Runtime.update page)
+          let encActions = map Encoded $ fromMessage msg :: [Encoded 'Action]
+          res <- run page encModel encActions
+          pure (resModel res, res)
+
+
+          -- pure (res
+
+
+        -- TODO move to Runtime
+        parseModel :: LiveModel model => Encoded 'Model -> m model
+        parseModel encModel = do
+          case decodeModel encModel of
+            Error e -> throw $ InvalidModel (show page) encModel
+            Success m -> pure m
+
+        -- parseActions :: Encoded 'Model -> IO []
+        -- parseActions encModel = do
+        --   case decodeModel encModel of
+        --     Error e -> throw $ InvalidModel page encModel
+        --     Success m -> pure m
+
+        -- update :: model -> IO model
+        -- update m = do
+        --   case decodeAction (Encoded $ cs $ fromMessage msg) of
+        --     Error _ -> throw $ InvalidAction msg
+        --     Success act -> do
+        --       m' <- (Runtime.update pg) act m
+        --       pure m'
 
 
 
 data SocketError
   = NoIdentify Message
-  | InvalidAction Message
+  | NoIdentifyPage Text
+  | InvalidModel String (Encoded 'Model)
+  | InvalidAction String Message
   deriving (Show, Exception)
 
 
@@ -144,13 +205,13 @@ data SocketError
 
 
 -- Taken from Control.Concurrent. Returns the modified variable at the end
-modifyMVar :: MVar a -> (a -> IO a) -> IO a
-modifyMVar m io =
-  mask $ \restore -> do
-    a  <- takeMVar m
-    a' <- restore (io a) `onException` putMVar m a
-    putMVar m a'
-    pure a'
+-- modifyMVar :: MVar a -> (a -> IO a) -> IO a
+-- modifyMVar m io =
+--   mask $ \restore -> do
+--     a  <- takeMVar m
+--     a' <- restore (io a) `onException` putMVar m a
+--     putMVar m a'
+--     pure a'
 
 -- Run two actions, forward exceptions to the forked thread
 concurrent :: IO () -> IO () -> IO ()
