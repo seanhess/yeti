@@ -3,6 +3,7 @@ import { fromDomNodeToVNode, fromStringToDomNode } from 'million/utils';
 import { SocketAddress } from 'net';
 
 declare var juniperState:string;
+declare var juniperPage:string;
 
 console.log("VERSION 1")
 
@@ -26,7 +27,7 @@ function open() {
       console.log("Open, register: ", juniperState)
 
       // 1. send our initial state to register
-      socketSend([JSON.stringify("Counter"), juniperState]);
+      socketSend([JSON.stringify(juniperPage), juniperState]);
   });
 
   // Listen for messages

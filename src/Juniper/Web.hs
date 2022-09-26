@@ -61,20 +61,20 @@ data Render = Render
 instance Default Render where
   def = Render True (simpleDocument "" "")
 
--- handle handles it if you're in actionM
+-- Always a load
 handle
-  :: (MonadIO m, ScottyError e)
+  :: (MonadIO m, ScottyError e, ToJSON page)
   => Render
   -> page
   -> Handler page (ActionT e m)
   -> ActionT e m ()
-handle (Render js doc) pg runPage = do
+handle cfg pg runPage = do
   -- mps <- Params.fromParams <$> query
   -- (mm, cmds) <- Runtime.parseBody =<< Scotty.body
 
   res <- runPage pg Nothing []
 
-  respond js doc res
+  respond cfg pg res
 
 
 
@@ -89,17 +89,20 @@ pageUrl path ps =
 
 
 
-respond :: (Monad m, ScottyError e) => Bool -> (Html() -> Html ()) -> Response -> ActionT e m ()
-respond embJS toDocument (Response encModel encParams view) = do
+respond :: (Monad m, ScottyError e, ToJSON page) => Render -> page -> Response -> ActionT e m ()
+respond (Render embJS toDocument) pg (Response encModel encParams view) = do
 
   setParams
 
-  Scotty.header "Accept" >>= \case
-    Just "application/vdom" -> do
-      vdom (cs $ fromEncoded $ encModel) view
+  -- Web no longer handles any requests
+
+  -- Scotty.header "Accept" >>= \case
+  --   Just "application/vdom" -> do
+  --     vdom (cs $ fromEncoded $ encModel) view
       
-    _ -> do
-      lucid $ toDocument $ embedContent view
+  --   _ -> do
+
+  lucid $ toDocument $ embedContent view
 
   where
     stateJSON :: ByteString
@@ -110,7 +113,12 @@ respond embJS toDocument (Response encModel encParams view) = do
 
     embedStateScript :: Html ()
     embedStateScript = 
-      script_ [type_ "text/javascript", id_ "juniper-state" ] ("\nlet juniperState = " <> stateJSON <> "\n")
+      script_ [type_ "text/javascript", id_ "juniper-state" ] $ Text.intercalate "\n"
+        [ ""
+        , "var juniperState = " <> cs stateJSON
+        , "var juniperPage = " <> cs (Aeson.encode pg)
+        , ""
+        ]
 
 
     -- render the root node and embed the javascript
@@ -129,11 +137,11 @@ respond embJS toDocument (Response encModel encParams view) = do
       -- script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
       -- script_ [type_ "text/javascript", src_ "/edom/run.js"] ("" :: Text)
 
-    vdom :: (ScottyError e, Monad m) => Text -> Html () -> ActionT e m ()
-    vdom s h = do
-      Scotty.setHeader "Content-Type" "application/vdom"
-      Scotty.raw $
-        cs s <> "\n" <> (Lucid.renderBS h)
+    -- vdom :: (ScottyError e, Monad m) => Text -> Html () -> ActionT e m ()
+    -- vdom s h = do
+    --   Scotty.setHeader "Content-Type" "application/vdom"
+    --   Scotty.raw $
+    --     cs s <> "\n" <> (Lucid.renderBS h)
 
 
 
