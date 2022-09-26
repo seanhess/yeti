@@ -5,6 +5,7 @@ import Lucid
 
 import qualified Juniper.Runtime as Runtime
 import Juniper hiding (page)
+import Juniper.Encode (Encoded(..))
 import Data.ByteString.Lazy (ByteString)
 import qualified Network.WebSockets as WS
 import Network.WebSockets (WebSocketsData)
@@ -125,7 +126,7 @@ register pg initModel = do
       where
         update :: model -> IO model
         update m = do
-          case decodeAction (cs $ fromMessage msg) of
+          case decodeAction (Encoded $ cs $ fromMessage msg) of
             Error _ -> throw $ InvalidAction msg
             Success act -> do
               m' <- (Runtime.update pg) act m

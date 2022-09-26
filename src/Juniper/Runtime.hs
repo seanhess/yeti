@@ -4,6 +4,7 @@ module Juniper.Runtime where
 import Juniper.Prelude
 
 import Juniper.Encode
+import Juniper.Params (ToParams(..))
 import qualified Data.Aeson as Aeson
 import Data.Aeson (ToJSON, FromJSON, Result(..))
 import Data.ByteString.Lazy (ByteString)
@@ -15,12 +16,15 @@ import Lucid (Html, renderBS)
 import Text.Read (readMaybe)
 import Data.Map ((!?))
 import Control.Monad (foldM)
+import Network.HTTP.Types.URI (QueryText)
 
 
 
-data Response params = Response
-  { resView :: Html ()
-  , resParams :: params
+-- This needs to be encoded already
+data Response = Response
+  { resModel :: Encoded 'Model
+  , resParams :: QueryText
+  , resView :: Html ()
   } deriving (Show, Generic)
 
 
@@ -61,8 +65,21 @@ runActions (Page params load update view) m cmds = do
   foldM (runCommand update) m cmds
 
 
-response :: Page params model action m -> model -> Response params
-response (Page params _ _ view) m = Response (view m) (params m)
+runPage
+  :: forall m model params action. (MonadFail m, LiveAction action, LiveModel model, ToParams params)
+  => Page params model action m
+  -> Encoded 'Model
+  -> [Encoded 'Action]
+  -> m Response
+runPage pg encModel as = do
+  cmds <- mapM parseCommand as :: m [Command action]
+  m <- parseModel encModel
+  m' <- runActions pg m cmds
+  pure $ response pg m'
+
+
+response :: (LiveModel model, ToParams params) => Page params model action m -> model -> Response
+response (Page params _ _ view) m = Response (encodeModel m) (toParams $ params m) (view m)
 
 
 runCommand :: (Monad m) => (action -> model -> m model) -> model -> Command action -> m model
@@ -72,35 +89,33 @@ runCommand update m cmd =
     Update a -> update a m
 
 
-parseBody :: (MonadIO m, MonadFail m, LiveAction action, LiveModel model) => ByteString -> m (Maybe model, [Command action])
+parseBody :: (MonadFail m, LiveAction action, LiveModel model) => ByteString -> m (Maybe model, [Command action])
 parseBody body = do
   case BSL.split newline body of
     [] -> pure (Nothing, [])
     (ml:cls) -> do
       -- the first line is always the model, you can't run actions without it
-      m <- parseModel ml
+      m <- parseModel $ Encoded $ cs ml
 
       -- each other line contains an action
-      cmds <- mapM parseCommand cls
+      cmds <- mapM (parseCommand . Encoded . cs) cls
 
       pure (Just m, cmds)
   where newline = 10 -- fromEnum '\n'
 
 
-parseModel :: (MonadFail m, MonadIO m, LiveModel model) => ByteString -> m model
-parseModel inp = do
-  case decodeModel (cs inp) of
-    Error e -> fail $ "Could not parse model: " <> cs inp <> " " <> e
+parseModel :: (MonadFail m, LiveModel model) => Encoded 'Model -> m model
+parseModel enc = do
+  case decodeModel enc of
+    Error e -> fail $ "Could not parse model: " <> cs (fromEncoded enc) <> " " <> e
     Success m -> pure m
 
-
-
-parseCommand :: (MonadFail m, MonadIO m, LiveAction action) => ByteString -> m (Command action)
+parseCommand :: (MonadFail m, LiveAction action) => Encoded 'Action -> m (Command action)
 parseCommand "|Submit|" = pure Submit
-parseCommand t =
-  case decodeAction (cs t) of
+parseCommand e =
+  case decodeAction e of
     Success (a :: action) -> pure $ Update a
-    Error err -> fail $ "Could not parse action: " <> cs t <> " " <> err
+    Error err -> fail $ "Could not parse action: " <> cs (fromEncoded e) <> " " <> err
 
 
 

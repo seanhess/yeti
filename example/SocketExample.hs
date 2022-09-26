@@ -4,6 +4,8 @@
 module SocketExample where
 
 import Juniper.Prelude
+import Juniper.Encode as Encode (Encoded(..), Encoding(..))
+import Juniper.Runtime as Runtime (Response(..), runPage, Command)
 import Juniper hiding (page)
 import Control.Concurrent.STM (newTVar, atomically, TVar)
 import Data.Char (isPunctuation, isSpace)
@@ -26,13 +28,49 @@ import Web.Scotty.Trans as Scotty (addHeader, file, get)
 import Sockets
 
 
-startLive :: IO ()
-startLive = do
+mainLive :: IO ()
+mainLive = do
   todos <- atomically $ newTVar [Todo "Test Item" Todo.Errand False]
-  concurrent
-    (startWebServer todos)
-    (startSocket todos)
+  pure ()
+  -- concurrent
+  --   (startWebServer todos)
+    -- (startSocket todos)
 
+
+startLive :: TVar [Todo] -> IO ()
+startLive todos = 
+  pure ()
+  where
+    run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
+    run Focus m as   = Runtime.runPage Focus.page m as
+    run Counter m as = Runtime.runPage Counter.page m as
+    run Todos m as   = Runtime.runPage (Todo.page todos) m as
+
+
+
+data AppPage
+  = Counter
+  | Focus
+  | Todos
+  deriving (Generic, Show)
+
+
+
+
+-- -- can you run this in other than IO?
+-- -- not for now
+-- startSocket :: TVar [Todo] -> IO ()
+-- startSocket todos = do
+--   startLiveView $ \pg ->
+--     case pg of
+--       Counter -> do
+--         register Counter.page m
+
+--       Focus -> do
+--         register Focus.page m
+
+--       Todos -> do
+--         register (Todo.page todos) m
 
 
 
@@ -55,9 +93,9 @@ startWebServer todos = do
     --   -- html $
     --   --   "This is a test <script src='/live.js'></script>"
 
-    pageRoute cfg "/focus" Focus.page
+    pageRoute cfg "/focus"   Focus.page
     pageRoute cfg "/counter" Counter.page
-    pageRoute cfg "/todo" (Todo.page todos)
+    pageRoute cfg "/todo"    (Todo.page todos)
  
     -- page "focus" Focus
     -- it's (model -> Page') that does the trick
@@ -82,34 +120,4 @@ toDocument = simpleDocument "Example" $ do
 
 
 
-
-
-
-data Page'
-  = Counter Counter.Model
-  | Focus Focus.Model
-  | Todos Todo.Model
-  deriving (Generic, Show)
-
-instance FromJSON Page' where
-  parseJSON v =
-        Counter <$> parseJSON v
-    <|> Focus <$> parseJSON v
-    <|> Todos <$> parseJSON v
-
-
--- can you run this in other than IO?
--- not for now
-startSocket :: TVar [Todo] -> IO ()
-startSocket todos = do
-  startLiveView $ \pg ->
-    case pg of
-      Counter m -> do
-        register Counter.page m
-
-      Focus m -> do
-        register Focus.page m
-
-      Todos m -> do
-        register (Todo.page todos) m
 

@@ -16,7 +16,7 @@ module Juniper.Web
 
 import Juniper.Prelude
 import Juniper.Runtime as Runtime (Response(..), Page)
-import Juniper.Encode (LiveModel, LiveAction, encodeModel)
+import Juniper.Encode (LiveModel, LiveAction, encodeModel, fromEncoded)
 import qualified Juniper.Runtime as Runtime
 import Juniper.Params as Params (ToParams(..), urlEncode, urlDecode)
 import Juniper.JS as JS
@@ -73,8 +73,8 @@ handle (Render js doc) pg = do
 
   m <- Runtime.run pg mps mm cmds
 
-  let Response h ps = Runtime.response pg m
-  respond js doc ps m h
+  let res = Runtime.response pg m
+  respond js doc res
 
 
 
@@ -99,27 +99,24 @@ pageUrl path ps =
 -- TODO they should embed the html itself?
 -- do we choose how to embed it or not?
 
-respond :: (Monad m, ScottyError e, LiveModel model, ToParams params) => Bool -> (Html() -> Html ()) -> params -> model -> Html () -> ActionT e m ()
-respond embJS toDocument ps model view = do
+respond :: (Monad m, ScottyError e) => Bool -> (Html() -> Html ()) -> Response -> ActionT e m ()
+respond embJS toDocument (Response encModel encParams view) = do
 
   setParams
 
   Scotty.header "Accept" >>= \case
     Just "application/vdom" -> do
-      vdom (cs $ stateString) view
+      vdom (cs $ fromEncoded $ encModel) view
       
     _ -> do
       lucid $ toDocument $ embedContent view
 
   where
-    stateString :: Text
-    stateString = encodeModel model
-
     stateJSON :: ByteString
-    stateJSON = Aeson.encode stateString
+    stateJSON = Aeson.encode $ fromEncoded encModel
 
     setParams = 
-      Scotty.setHeader "X-Params" $ cs $ queryToText $ Params.toParams ps
+      Scotty.setHeader "X-Params" $ cs $ queryToText encParams
 
     embedStateScript :: Html ()
     embedStateScript = 

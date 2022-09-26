@@ -56,10 +56,10 @@ onEnter = on "enter"
 
 
 on :: (LiveAction action) => Text -> (action) -> Attributes
-on name act = makeAttributes ("data-on-" <> name) $ encodeAction act
+on name act = makeAttributes ("data-on-" <> name) $ fromEncoded $ encodeAction act
 
 onValue :: (LiveAction action, Input val) => Text -> (val -> action) -> Attributes
-onValue name con = makeAttributes ("data-on-" <> name) $ encodeAction1 con
+onValue name con = makeAttributes ("data-on-" <> name) $ fromEncoded $ encodeAction1 con
 
 
 
@@ -67,9 +67,9 @@ onValue name con = makeAttributes ("data-on-" <> name) $ encodeAction1 con
 data Submit = Submit
 
 instance LiveAction Submit where
-  encodeAction' _ = EncodedAction "|Submit|" []
+  toConstructor _ = Constructor "|Submit|" []
 
-  decodeAction' (EncodedAction "|Submit|" []) = pure Submit
-  decodeAction' x = fail $ "Could not parse submit: " <> show x
+  fromConstructor (Constructor "|Submit|" []) = pure Submit
+  fromConstructor x = fail $ "Could not parse submit: " <> show x
 
 

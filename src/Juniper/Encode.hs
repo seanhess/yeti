@@ -1,7 +1,7 @@
 module Juniper.Encode where
 
 import Juniper.Prelude
-import GHC.Generics
+import GHC.Generics hiding (Constructor)
 import Control.Monad (foldM)
 import qualified Data.Aeson as Aeson
 import Data.Aeson (ToJSON, FromJSON(parseJSON), Value(..), Result(..), fromJSON, toJSON, GToJSON', GFromJSON, Zero, Options(..), defaultOptions, genericToJSON, SumEncoding(..), genericParseJSON)
@@ -10,36 +10,42 @@ import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as Aeson
 import qualified Data.Vector as Vector
 import Data.Text (pack, intercalate, splitOn)
+import Data.String (IsString)
 
+
+data Encoding
+  = Model
+  | Params
+  | Action
 
 class LiveModel a where
-  encodeModel :: a -> Text
-  decodeModel :: Text -> Result a
+  encodeModel :: a -> Encoded 'Model
+  decodeModel :: Encoded 'Model -> Result a
 
-  default encodeModel :: (Generic a, GToJSON' Value Zero (Rep a)) => a -> Text
-  encodeModel = cs . Aeson.encode . genericToJSON defaultOptions
+  default encodeModel :: (Generic a, GToJSON' Value Zero (Rep a)) => a -> Encoded 'Model
+  encodeModel = Encoded . cs . Aeson.encode . genericToJSON defaultOptions
 
-  default decodeModel :: (Generic a, GFromJSON Zero (Rep a)) => Text -> Result a
-  decodeModel t =
+  default decodeModel :: (Generic a, GFromJSON Zero (Rep a)) => Encoded 'Model -> Result a
+  decodeModel (Encoded t) =
     case Aeson.decode $ cs t of
       Nothing -> fail $ "Invalid JSON: " <> cs t
       Just val ->
         Aeson.parse (genericParseJSON defaultOptions) val
 
 class LiveAction a where
-  encodeAction' :: a -> EncodedAction
-  decodeAction' :: EncodedAction -> Result a
+  toConstructor :: a -> Constructor
+  fromConstructor :: Constructor -> Result a
 
-  default encodeAction' :: (Generic a, GToJSON' Value Zero (Rep a)) => a -> EncodedAction
-  encodeAction' a =
+  default toConstructor :: (Generic a, GToJSON' Value Zero (Rep a)) => a -> Constructor
+  toConstructor a =
     -- we should ALWAYS be able to map from this to an encoding
     let val = genericToJSON options a
     in case fromJSON val of
       Error err -> error $ "could not convert from JSON representation: " <> err <> " | " <> show val
       Success enc -> enc
 
-  default decodeAction' :: (Generic a, GFromJSON Zero (Rep a)) => EncodedAction -> Result a
-  decodeAction' e =
+  default fromConstructor :: (Generic a, GFromJSON Zero (Rep a)) => Constructor -> Result a
+  fromConstructor e =
     Aeson.parse (genericParseJSON options) (toJSON e)
 
 -- λ> :kind! (Rep Test)
@@ -131,16 +137,18 @@ instance Input Bool where
 
 
 
+newtype Encoded a = Encoded { fromEncoded :: Text }
+  deriving newtype (Show, IsString, Eq)
 
 
 -- A newtype for Value that only allows constructor serialization
-data EncodedAction = EncodedAction
+data Constructor = Constructor
   { constructor :: Text
   , values :: [Value]
   } deriving (Generic, Show)
 
 -- Decode the variants of generic JSON encoding to our Encoded type
-instance FromJSON EncodedAction where
+instance FromJSON Constructor where
   parseJSON (Array v) = do
 
     -- Array [String "TestA",Array []]
@@ -150,30 +158,30 @@ instance FromJSON EncodedAction where
     case Vector.toList v of
       -- Single Tag
       (String c : [Array []]) ->
-        pure $ EncodedAction c []
+        pure $ Constructor c []
 
       -- Multiple Argument
       [String c, Array vs] ->
-        pure $ EncodedAction c (Vector.toList vs)
+        pure $ Constructor c (Vector.toList vs)
 
       -- One Argument
       [String c, v1] ->
-        pure $ EncodedAction c [v1]
+        pure $ Constructor c [v1]
 
 
       val -> fail $ "Expected [constructor, values...] but got: " <> show val
 
   parseJSON x = fail $ "Expected Array, but got: " <> show x
 
-instance ToJSON EncodedAction where
+instance ToJSON Constructor where
   -- Array [String "TestA",Array []]
   -- Array [String "TestB",String "woot"]
   -- Array [String "TestC",Array [Bool True,String "woot"]]
 
-  toJSON (EncodedAction c [v]) =
+  toJSON (Constructor c [v]) =
     Array (Vector.fromList [String c, v])
 
-  toJSON (EncodedAction c vs) =
+  toJSON (Constructor c vs) =
     Array (Vector.fromList [String c, Array (Vector.fromList vs)])
 
 
@@ -181,16 +189,16 @@ resultMaybe :: Result a -> Maybe a
 resultMaybe (Error e) = Nothing
 resultMaybe (Success a) = Just a
 
-serialize :: EncodedAction -> Text
-serialize (EncodedAction c vs) =
-  intercalate "\t"
+serialize :: Constructor -> Encoded 'Action
+serialize (Constructor c vs) =
+  Encoded $ intercalate "\t"
     (c : map (cs . Aeson.encode) vs)
 
-deserialize :: Text -> Maybe EncodedAction
-deserialize t = do
-  c:vts <- pure $ splitOn "\t" t
+deserialize :: Encoded 'Action -> Maybe Constructor
+deserialize (Encoded e) = do
+  c:vts <- pure $ splitOn "\t" e
   vs <- mapM (Aeson.decode . cs) vts
-  pure $ EncodedAction c vs
+  pure $ Constructor c vs
 
 
 
@@ -204,26 +212,26 @@ options = defaultOptions
 
 
 -- Encode an unapplied constructor accepting 1 input
-encodeAction1' :: forall a inp. (LiveAction a, Input inp) => (inp -> a) -> EncodedAction
-encodeAction1' f = 
-  let EncodedAction c vs = encodeAction' (f empty :: a) :: EncodedAction
-  in EncodedAction c (dropEnd vs)
+toConstructor1 :: forall a inp. (LiveAction a, Input inp) => (inp -> a) -> Constructor
+toConstructor1 f = 
+  let Constructor c vs = toConstructor (f empty :: a) :: Constructor
+  in Constructor c (dropEnd vs)
   where
     dropEnd :: [x] -> [x]
     dropEnd [] = []
     dropEnd as = init as
 
-encodeAction1 :: forall a inp. (LiveAction a, Input inp) => (inp -> a) -> Text
-encodeAction1 = serialize . encodeAction1'
+encodeAction1 :: forall a inp. (LiveAction a, Input inp) => (inp -> a) -> Encoded 'Action
+encodeAction1 = serialize . toConstructor1
 
-encodeAction :: LiveAction act => act -> Text
-encodeAction = serialize . encodeAction'
+encodeAction :: LiveAction act => act -> Encoded 'Action
+encodeAction = serialize . toConstructor
 
-decodeAction :: LiveAction act => Text -> Result act
-decodeAction t =
-  case deserialize t of
-    Nothing -> Error $ "Could not parse action: " <> cs t
-    Just ea -> decodeAction' ea
+decodeAction :: LiveAction act => Encoded 'Action -> Result act
+decodeAction e =
+  case deserialize e of
+    Nothing -> Error $ "Could not parse action: " <> cs (fromEncoded e)
+    Just ea -> fromConstructor ea
 
 
 
