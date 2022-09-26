@@ -5,7 +5,7 @@ module SocketExample where
 
 import Juniper.Prelude
 import Juniper.Encode as Encode (Encoded(..), Encoding(..))
-import Juniper.Runtime as Runtime (Response(..), runPage, Command)
+import Juniper.Runtime as Runtime (Response(..), runPage, Command, Handler)
 import Juniper hiding (page)
 import Control.Concurrent.STM (newTVar, atomically, TVar)
 import Data.Char (isPunctuation, isSpace)
@@ -49,35 +49,6 @@ data AppPage
   deriving (Generic, Show, FromJSON, ToJSON)
 
 
--- -- I can associate them?
--- class RoutePage page where
---   type Model p :: *
---   type Page p :: *
-
--- instance RoutePage AppPage where
---   type Model AppPage = Counter.Model
-
-
-
--- -- can you run this in other than IO?
--- -- not for now
--- startSocket :: TVar [Todo] -> IO ()
--- startSocket todos = do
---   startLiveView $ \pg ->
---     case pg of
---       Counter -> do
---         register Counter.page m
-
---       Focus -> do
---         register Focus.page m
-
---       Todos -> do
---         register (Todo.page todos) m
-
-
-
-
-
 startWebServer :: TVar [Todo] -> IO ()
 startWebServer todos = do
 
@@ -86,37 +57,36 @@ startWebServer todos = do
   scotty 3031 $ do
     middleware socketMiddleware
 
-    get "/live.js" $ do
+    -- we can serve this up static
+    -- juniper.js
+    get "/juniper.js" $ do
       addHeader "Content-Type" "text/javascript"
       file "dist/main.js"
 
-    -- get "/" $ do
-    --   -- handle cfg Counter.page
-    --   handle cfg Focus.page
-    --   -- html $
-    --   --   "This is a test <script src='/live.js'></script>"
+    get "/focus" $ do
+      Web.handle cfg Focus run
 
+    get "/counter" $ do
+      Web.handle cfg Counter run
 
-    pageRoute cfg "/focus"   Focus.page
-    pageRoute cfg "/counter" Counter.page
-    pageRoute cfg "/todo"    (Todo.page todos)
+    get "/todos" $ do
+      Web.handle cfg Todos run
 
+    -- pageRoute cfg "/focus"   Focus.page
+    -- pageRoute cfg "/counter" Counter.page
+    -- pageRoute cfg "/todo"    (Todo.page todos)
 
- 
-    -- page "focus" Focus
-    -- it's (model -> Page') that does the trick
   where
+
+
     socketMiddleware :: Application -> Application
     socketMiddleware app = do
-      -- liftIO $ putStrLn "MIDDLEWARE"
       websocketsOr defaultConnectionOptions (application run) app
 
-    run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
+    run :: (MonadFail m, MonadIO m) => Handler AppPage m
     run Focus   = Runtime.runPage Focus.page
     run Counter = Runtime.runPage Counter.page
     run Todos   = Runtime.runPage (Todo.page todos)
-
-
 
 
 
@@ -132,7 +102,7 @@ toDocument = simpleDocument "Example" $ do
   -- script_ [type_ "text/javascript", src_ "/run.js"] ("" :: Text)
 
   -- Custom Javascript should be last
-  script_ [type_ "text/javascript", src_ "/live.js"] ("" :: Text)
+  script_ [type_ "text/javascript", src_ "/juniper.js"] ("" :: Text)
 
 
 

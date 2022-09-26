@@ -28,6 +28,7 @@ data Response = Response
   } deriving (Show, Generic)
 
 
+type Handler page m = page -> Maybe (Encoded 'Model) -> [Encoded 'Action] -> m Response
 
 data Command action
   = Submit
@@ -68,10 +69,14 @@ runActions (Page params load update view) m cmds = do
 runPage
   :: forall m model params action. (MonadFail m, LiveAction action, LiveModel model, ToParams params)
   => Page params model action m
-  -> Encoded 'Model
+  -> Maybe (Encoded 'Model)
   -> [Encoded 'Action]
   -> m Response
-runPage pg encModel as = do
+runPage pg Nothing _ = do
+  m <- (load pg) Nothing
+  pure $ response pg m
+
+runPage pg (Just encModel) as = do
   cmds <- mapM parseCommand as :: m [Command action]
   m <- parseModel encModel
   m' <- runActions pg m cmds

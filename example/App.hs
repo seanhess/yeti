@@ -42,9 +42,6 @@ import Juniper.Router (parsePath)
 import Juniper.Web (page, lucid, static, handle, simpleDocument, Render(..))
 
 
--- TODO Example: tab navigation
--- TODO Example: component
-
 
 
 start :: IO ()

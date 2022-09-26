@@ -5,7 +5,7 @@ import Lucid
 
 import qualified Data.Text as Text
 import qualified Juniper.Runtime as Runtime
-import Juniper.Runtime (Response(..))
+import Juniper.Runtime (Response(..), Handler)
 import Juniper hiding (page)
 import Juniper.Encode (Encoded(..), Encoding(..))
 import Data.ByteString.Lazy (ByteString)
@@ -33,16 +33,6 @@ import Network.WebSockets.Connection (defaultConnectionOptions, ConnectionOption
 --   update' :: Msg model -> model -> m model
 --   view' :: model -> Html ()
 
--- TODO can we do this with just the constructor?
-pageRoute :: (MonadIO m, LiveModel mod, LiveAction act, ToParams prm, ScottyError e) => Render -> RoutePattern -> Page prm mod act (ActionT e m) -> ScottyT e m ()
-pageRoute cfg r pg = do
-  -- 1. load, then go
-  Scotty.get r $ do
-    handle cfg pg
-
-    pure ()
-
-
 
 
 newtype Message = Message { fromMessage :: Text }
@@ -58,9 +48,11 @@ newtype Message = Message { fromMessage :: Text }
 
 -- run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
 -- (page -> IO (WS.Connection -> IO ()))
+
+
 startLiveView
   :: forall page m a. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, FromJSON page, Show page)
-  => (page -> Encoded 'Model -> [Encoded 'Action] -> m Response)
+  => Handler page m
   -> IO ()
 startLiveView pageResponse = do
   putStrLn "startLiveView"
@@ -69,7 +61,7 @@ startLiveView pageResponse = do
 
 application
   :: forall page m a. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, FromJSON page, Show page)
-  => (page -> Encoded 'Model -> [Encoded 'Action] -> m Response)
+  => Handler page m
   -> WS.PendingConnection
   -> IO ()
 application pageResponse pending = do
@@ -149,7 +141,7 @@ talk
   :: forall page m. (Show page, MonadIO m, MonadBase IO m, MonadBase m IO, MonadBaseControl IO m)
   => Identified page
   -> MVar (Encoded 'Model)
-  -> (page -> Encoded 'Model -> [Encoded 'Action] -> m Response)
+  -> Handler page m
   -> WS.Connection ->
   m ()
 talk (Identified page encModel) state run conn = do
@@ -181,10 +173,9 @@ talk (Identified page encModel) state run conn = do
         -- grr 
         updateEnc :: Encoded 'Model -> m (Encoded 'Model, Response)
         updateEnc em = do
-          -- (Runtime.update page)
           let als = Text.splitOn "\n" $ fromMessage msg :: [Text]
           let encActions = map Encoded als :: [Encoded 'Action]
-          res <- run page em encActions
+          res <- run page (Just em) encActions
           pure (resModel res, res)
 
 

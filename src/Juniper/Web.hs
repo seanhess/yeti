@@ -15,7 +15,7 @@ module Juniper.Web
   ) where
 
 import Juniper.Prelude
-import Juniper.Runtime as Runtime (Response(..), Page)
+import Juniper.Runtime as Runtime (Response(..), Page, Handler)
 import Juniper.Encode (LiveModel, LiveAction, encodeModel, fromEncoded)
 import qualified Juniper.Runtime as Runtime
 import Juniper.Params as Params (ToParams(..), urlEncode, urlDecode)
@@ -63,17 +63,17 @@ instance Default Render where
 
 -- handle handles it if you're in actionM
 handle
-  :: forall params model action e m. (MonadIO m, ScottyError e, LiveModel model, LiveAction action, ToParams params)
+  :: (MonadIO m, ScottyError e)
   => Render
-  -> Page params model action (ActionT e m)
+  -> page
+  -> Handler page (ActionT e m)
   -> ActionT e m ()
-handle (Render js doc) pg = do
-  mps <- Params.fromParams <$> query
-  (mm, cmds) <- Runtime.parseBody =<< Scotty.body
+handle (Render js doc) pg runPage = do
+  -- mps <- Params.fromParams <$> query
+  -- (mm, cmds) <- Runtime.parseBody =<< Scotty.body
 
-  m <- Runtime.run pg mps mm cmds
+  res <- runPage pg Nothing []
 
-  let res = Runtime.response pg m
   respond js doc res
 
 
@@ -88,16 +88,6 @@ pageUrl path ps =
 
 
 
-
-
-
--- TODO Vdom encoding
--- How can I tell if they already have it? By the url?
--- Accept encoding!
--- If they ask for Html, give them the whole thing
--- if they ask for Vdom, just give them the one part
--- TODO they should embed the html itself?
--- do we choose how to embed it or not?
 
 respond :: (Monad m, ScottyError e) => Bool -> (Html() -> Html ()) -> Response -> ActionT e m ()
 respond embJS toDocument (Response encModel encParams view) = do
