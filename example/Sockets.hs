@@ -158,8 +158,14 @@ talk (Identified page encModel) state run conn = do
 
   res <- updateState state msg
 
-  let out = Lucid.renderBS (resView res)
-  liftIO $ WS.sendTextData conn out
+  -- FORMAT
+  -- state
+  -- html
+  liftIO $ WS.sendTextData conn $ mconcat
+    [ cs $ fromEncoded $ resModel res
+    , "\n"
+    , Lucid.renderBS (resView res)
+    ]
 
   where
 
