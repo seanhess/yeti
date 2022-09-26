@@ -120,7 +120,7 @@ respond embJS toDocument (Response encModel encParams view) = do
 
     embedStateScript :: Html ()
     embedStateScript = 
-      script_ [type_ "text/javascript", id_ "juniper-state" ] ("\nlet JUNIPER_STATE = " <> stateJSON <> "\n")
+      script_ [type_ "text/javascript", id_ "juniper-state" ] ("\nlet juniperState = " <> stateJSON <> "\n")
 
 
     -- render the root node and embed the javascript

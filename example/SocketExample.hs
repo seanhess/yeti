@@ -39,7 +39,8 @@ startLive :: TVar [Todo] -> IO ()
 startLive todos = 
   concurrent
     (startWebServer todos)
-    (startSocket todos)
+    (startLiveView run)
+
   where
     run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
     run Focus   = Runtime.runPage Focus.page
@@ -50,21 +51,20 @@ startLive todos =
 
 
 
-
 data AppPage
   = Counter
   | Focus
   | Todos
-  deriving (Generic, Show)
+  deriving (Generic, Show, FromJSON, ToJSON)
 
 
--- I can associate them?
-class RoutePage page where
-  type Model p :: *
-  type Page p :: *
+-- -- I can associate them?
+-- class RoutePage page where
+--   type Model p :: *
+--   type Page p :: *
 
-instance RoutePage AppPage where
-  type Model AppPage = Counter.Model
+-- instance RoutePage AppPage where
+--   type Model AppPage = Counter.Model
 
 
 

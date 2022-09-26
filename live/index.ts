@@ -1,7 +1,8 @@
 import { hydrate, patch, render, DOMNode } from 'million';
 import { fromDomNodeToVNode, fromStringToDomNode } from 'million/utils';
+import { SocketAddress } from 'net';
 
-declare const JUNIPER_STATE:string;
+declare const juniperState:string;
 
 console.log("VERSION 1")
 
@@ -20,8 +21,13 @@ socket.addEventListener('open', (event) => {
     console.log("Open")
 
     // 1. send our initial state to register
-    socket.send(JUNIPER_STATE);
+    socketSend([JSON.stringify("Counter"), juniperState]);
 });
+
+
+function socketSend(lines:string[]) {
+  socket.send(lines.join("\n"))
+}
 
 // Listen for messages
 socket.addEventListener('message', (event) => {
@@ -41,7 +47,7 @@ socket.addEventListener('error', (e) => {
 });
 
 window.addEventListener("load", function() {
-  console.log("State:", JUNIPER_STATE)
+  console.log("State:", juniperState)
   rootElement = document.getElementById("juniper-root-content")
 
   let firstChild = rootElement.firstChild as DOMNode

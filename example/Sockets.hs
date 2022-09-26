@@ -16,7 +16,7 @@ import Control.Concurrent (forkIO, ThreadId, throwTo)
 import Control.Concurrent.MVar.Lifted (MVar, newMVar, modifyMVar)
 import Control.Monad (forever, forM_)
 import Control.Monad.Trans.Control (MonadBaseControl)
-import Control.Monad.Base (MonadBase)
+import Control.Monad.Base (MonadBase, liftBase)
 import Data.Aeson as Aeson
 import Data.Aeson.Types
 import Web.Scotty.Trans as Scotty
@@ -44,10 +44,8 @@ pageRoute cfg r pg = do
 
 
 
-newtype Message = Message { fromMessage :: [Text] }
-  deriving newtype (Eq, Show)
-
-instance WebSocketsData Message where
+newtype Message = Message { fromMessage :: Text }
+  deriving newtype (Eq, Show, WebSocketsData)
 
 
 -- instance Show Message where
@@ -59,67 +57,71 @@ instance WebSocketsData Message where
 
 -- run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
 -- (page -> IO (WS.Connection -> IO ()))
-startLiveView :: forall page m a. (MonadBase IO m, MonadBaseControl IO m, MonadIO m) => (FromJSON page, Show page) => (page -> Encoded 'Model -> [Encoded 'Action] -> m Response) -> m ()
+startLiveView
+  :: forall page m a. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, FromJSON page, Show page)
+  => (page -> Encoded 'Model -> [Encoded 'Action] -> m Response)
+  -> IO ()
 startLiveView pageResponse = do
-
   putStrLn "startLiveView"
-  app <- runServerAppT accept :: m WS.ServerApp
-  liftIO $ WS.runServer "127.0.0.1" 9160 app
+  WS.runServer "127.0.0.1" 9160 accept
 
   where
-
-    accept :: WS.PendingConnection -> m ()
+    accept :: WS.PendingConnection -> IO ()
     accept pending = do
       putStrLn "Connection!"
 
-      conn <- liftIO $ WS.acceptRequest pending
-      id <- identify conn
-      var <- newMVar (state id)
+      flip catch onError $ do
+        conn <- liftIO $ WS.acceptRequest pending
+        id <- identify conn
+        print (page id)
+        run <- pageRun id
+        connect run conn
 
-      let run = pageRun id var
-      connect run conn `catch` onError
-
-    pageRun :: Identified page -> MVar (Encoded 'Model) -> WS.Connection -> m ()
-    pageRun i var =
-      register i pageResponse var
+    pageRun :: Identified page -> IO (WS.Connection -> IO ())
+    pageRun i = do
+      var <- newMVar (state i)
+      pure $ \conn -> liftBase $ register i var pageResponse conn
 
     -- this needs to return page and state
-    identify :: WS.Connection -> m (Identified page)
+    identify :: WS.Connection -> IO (Identified page)
     identify conn = do
-      msg <- liftIO $ WS.receiveData conn :: m Message
-      id <- parseIdentify msg
+      putStrLn "Waiting for Identify"
+      msg <- WS.receiveData conn
+      print msg
+      id <- parseIdentify $ Text.splitOn "\n" $ fromMessage msg
       putStrLn "Identified"
       pure id
 
     -- Format:
     -- <Page>
     -- <Encoded Model>
-    parseIdentify :: Message -> m (Identified page)
-    parseIdentify (Message [pt, mt]) = do
+    parseIdentify :: [Text] -> IO (Identified page)
+    parseIdentify [pt, mt] = do
       p <- parsePage pt
       pure $ Identified p (Encoded mt)
+    parseIdentify t = do
+      throw $ NoIdentify t
 
-    parsePage :: Text -> m page
+    parsePage :: Text -> IO page
     parsePage p =
       case Aeson.decode (cs p) of
         Nothing -> do
           throw $ NoIdentifyPage p
-        Just p -> do
-          pure p
+        Just pg -> do
+          pure pg
 
-    connect :: (WS.Connection -> m ()) -> WS.Connection -> m ()
+    connect :: (WS.Connection -> IO ()) -> WS.Connection -> IO ()
     connect run conn = do
-      putStrLn "Connect"
+      putStrLn "CONNECT"
 
-      -- Can't figure out how to lift this
-      -- WS.withPingThread conn 30 (return ()) $ do
-      -- finally disconnect $ forever (run conn)
+      WS.withPingThread conn 30 (return ()) $ do
+        -- finally disconnect $ forever (run conn)
+        forever (run conn)
 
-      forever (run conn)
 
-    onError :: SocketError -> m ()
+    onError :: SocketError -> IO ()
     onError e = do
-      -- putStrLn "ERROR"
+      putStrLn $ "ERROR!"
       print e
 
     disconnect :: IO ()
@@ -136,9 +138,15 @@ data Identified page = Identified
 
 -- It's all right here, except for the connection
 -- run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
-register :: forall page m. (MonadIO m, MonadBase IO m, MonadBaseControl IO m) => Identified page -> (page -> Encoded 'Model -> [Encoded 'Action] -> m Response) -> MVar (Encoded 'Model) -> WS.Connection -> m ()
-register (Identified page encModel) run state conn = do
-  putStrLn "Talk"
+register
+  :: forall page m. (Show page, MonadIO m, MonadBase IO m, MonadBase m IO, MonadBaseControl IO m)
+  => Identified page
+  -> MVar (Encoded 'Model)
+  -> (page -> Encoded 'Model -> [Encoded 'Action] -> m Response)
+  -> WS.Connection ->
+  m ()
+register (Identified page encModel) state run conn = do
+  putStrLn $ "TALK: " <> (show page)
   msg <- liftIO $ WS.receiveData conn :: m Message
   print msg
 
@@ -160,41 +168,24 @@ register (Identified page encModel) run state conn = do
         -- no type safety yet
         -- grr 
         updateEnc :: Encoded 'Model -> m (Encoded 'Model, Response)
-        updateEnc encModel = do
+        updateEnc em = do
           -- (Runtime.update page)
-          let encActions = map Encoded $ fromMessage msg :: [Encoded 'Action]
-          res <- run page encModel encActions
+          let als = Text.splitOn "\n" $ fromMessage msg :: [Text]
+          let encActions = map Encoded als :: [Encoded 'Action]
+          res <- run page em encActions
           pure (resModel res, res)
-
-
-          -- pure (res
 
 
         -- TODO move to Runtime
         parseModel :: LiveModel model => Encoded 'Model -> m model
-        parseModel encModel = do
+        parseModel em = do
           case decodeModel encModel of
-            Error e -> throw $ InvalidModel (show page) encModel
+            Error e -> throw $ InvalidModel (show page) em
             Success m -> pure m
-
-        -- parseActions :: Encoded 'Model -> IO []
-        -- parseActions encModel = do
-        --   case decodeModel encModel of
-        --     Error e -> throw $ InvalidModel page encModel
-        --     Success m -> pure m
-
-        -- update :: model -> IO model
-        -- update m = do
-        --   case decodeAction (Encoded $ cs $ fromMessage msg) of
-        --     Error _ -> throw $ InvalidAction msg
-        --     Success act -> do
-        --       m' <- (Runtime.update pg) act m
-        --       pure m'
-
 
 
 data SocketError
-  = NoIdentify Message
+  = NoIdentify [Text]
   | NoIdentifyPage Text
   | InvalidModel String (Encoded 'Model)
   | InvalidAction String Message
