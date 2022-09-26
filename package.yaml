@@ -53,7 +53,6 @@ dependencies:
 - uuid
 - vector
 - wai
-- wai-transformers
 - wai-websockets
 - wai-middleware-static
 

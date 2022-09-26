@@ -20,7 +20,8 @@ import Control.Monad.Base (MonadBase, liftBase)
 import Data.Aeson as Aeson
 import Data.Aeson.Types
 import Web.Scotty.Trans as Scotty
-import Network.WebSockets.Trans (liftServerApp, runServerAppT, ServerAppT)
+-- import Network.WebSockets.Trans (liftServerApp, runServerAppT, ServerAppT)
+import Network.WebSockets.Connection (defaultConnectionOptions, ConnectionOptions(..))
 
 -- class SPage model m | model -> m where
 --   type Msg model :: *
@@ -63,24 +64,30 @@ startLiveView
   -> IO ()
 startLiveView pageResponse = do
   putStrLn "startLiveView"
-  WS.runServer "127.0.0.1" 9160 accept
+  WS.runServer "127.0.0.1" 9160 (application pageResponse)
+
+
+application
+  :: forall page m a. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, FromJSON page, Show page)
+  => (page -> Encoded 'Model -> [Encoded 'Action] -> m Response)
+  -> WS.PendingConnection
+  -> IO ()
+application pageResponse pending = do
+  putStrLn "Connection!"
+
+  flip catch onError $ do
+    conn <- liftIO $ WS.acceptRequest pending
+    id <- identify conn
+    print (page id)
+    run <- pageRun id
+    connect run conn
 
   where
-    accept :: WS.PendingConnection -> IO ()
-    accept pending = do
-      putStrLn "Connection!"
-
-      flip catch onError $ do
-        conn <- liftIO $ WS.acceptRequest pending
-        id <- identify conn
-        print (page id)
-        run <- pageRun id
-        connect run conn
 
     pageRun :: Identified page -> IO (WS.Connection -> IO ())
     pageRun i = do
       var <- newMVar (state i)
-      pure $ \conn -> liftBase $ register i var pageResponse conn
+      pure $ \conn -> liftBase $ talk i var pageResponse conn
 
     -- this needs to return page and state
     identify :: WS.Connection -> IO (Identified page)
@@ -138,17 +145,16 @@ data Identified page = Identified
 
 -- It's all right here, except for the connection
 -- run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
-register
+talk
   :: forall page m. (Show page, MonadIO m, MonadBase IO m, MonadBase m IO, MonadBaseControl IO m)
   => Identified page
   -> MVar (Encoded 'Model)
   -> (page -> Encoded 'Model -> [Encoded 'Action] -> m Response)
   -> WS.Connection ->
   m ()
-register (Identified page encModel) state run conn = do
+talk (Identified page encModel) state run conn = do
   putStrLn $ "TALK: " <> (show page)
   msg <- liftIO $ WS.receiveData conn :: m Message
-  print msg
 
   res <- updateState state msg
 

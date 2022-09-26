@@ -22,7 +22,10 @@ import Page.Todo (Todo(..))
 import GHC.Generics
 import Data.Aeson (FromJSON(..))
 import Web.Scotty (scotty)
-import Web.Scotty.Trans as Scotty (addHeader, file, get)
+import Web.Scotty.Trans as Scotty (addHeader, file, get, middleware)
+import Network.Wai.Handler.WebSockets (websocketsOr)
+import Network.WebSockets.Connection (defaultConnectionOptions, ConnectionOptions(..))
+import Network.Wai (Application)
 import Sockets
 
 -- TODO Actually wire up the generalized function
@@ -32,20 +35,8 @@ import Sockets
 mainLive :: IO ()
 mainLive = do
   todos <- atomically $ newTVar [Todo "Test Item" Todo.Errand False]
-  startLive todos
+  startWebServer todos
 
-
-startLive :: TVar [Todo] -> IO ()
-startLive todos = 
-  concurrent
-    (startWebServer todos)
-    (startLiveView run)
-
-  where
-    run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
-    run Focus   = Runtime.runPage Focus.page
-    run Counter = Runtime.runPage Counter.page
-    run Todos   = Runtime.runPage (Todo.page todos)
 
 
 
@@ -90,10 +81,11 @@ data AppPage
 startWebServer :: TVar [Todo] -> IO ()
 startWebServer todos = do
 
-
   let cfg = Render False toDocument
 
   scotty 3031 $ do
+    middleware socketMiddleware
+
     get "/live.js" $ do
       addHeader "Content-Type" "text/javascript"
       file "dist/main.js"
@@ -104,12 +96,26 @@ startWebServer todos = do
     --   -- html $
     --   --   "This is a test <script src='/live.js'></script>"
 
+
     pageRoute cfg "/focus"   Focus.page
     pageRoute cfg "/counter" Counter.page
     pageRoute cfg "/todo"    (Todo.page todos)
+
+
  
     -- page "focus" Focus
     -- it's (model -> Page') that does the trick
+  where
+    socketMiddleware :: Application -> Application
+    socketMiddleware app = do
+      -- liftIO $ putStrLn "MIDDLEWARE"
+      websocketsOr defaultConnectionOptions (application run) app
+
+    run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
+    run Focus   = Runtime.runPage Focus.page
+    run Counter = Runtime.runPage Counter.page
+    run Todos   = Runtime.runPage (Todo.page todos)
+
 
 
 

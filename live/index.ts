@@ -7,7 +7,7 @@ declare const juniperState:string;
 console.log("VERSION 1")
 
 
-const PORT = 9160
+const PORT = 3031
 const HOST = location.hostname
 const PATH = location.pathname
 console.log("Connecting: ", HOST, PORT)
