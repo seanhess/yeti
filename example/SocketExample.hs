@@ -22,7 +22,7 @@ import Page.Todo (Todo(..))
 import GHC.Generics
 import Data.Aeson (FromJSON(..))
 import Web.Scotty (scotty)
-import Web.Scotty.Trans as Scotty (addHeader, file, get, middleware)
+import Web.Scotty.Trans as Scotty (addHeader, file, get, middleware, param)
 import Network.Wai.Handler.WebSockets (websocketsOr)
 import Network.WebSockets.Connection (defaultConnectionOptions, ConnectionOptions(..))
 import Network.Wai (Application)
@@ -43,7 +43,7 @@ mainLive = do
 
 
 data AppPage
-  = Counter
+  = Counter Integer
   | Focus
   | Todos
   deriving (Generic, Show, FromJSON, ToJSON)
@@ -66,8 +66,9 @@ startWebServer todos = do
     get "/focus" $ do
       Web.handle cfg Focus run
 
-    get "/counter" $ do
-      Web.handle cfg Counter run
+    get "/counter/:count" $ do
+      n <- param "count"
+      Web.handle cfg (Counter n) run
 
     get "/todos" $ do
       Web.handle cfg Todos run
@@ -85,7 +86,7 @@ startWebServer todos = do
 
     run :: (MonadFail m, MonadIO m) => Handler AppPage m
     run Focus   = Runtime.runPage Focus.page
-    run Counter = Runtime.runPage Counter.page
+    run (Counter n) = Runtime.runPage (Counter.page n)
     run Todos   = Runtime.runPage (Todo.page todos)
 
 

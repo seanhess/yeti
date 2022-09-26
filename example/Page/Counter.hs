@@ -23,8 +23,8 @@ data Action
 
 -- just run these in your monad
 -- oh, this doesn't want to worry about which monad it is run in
-load :: MonadIO m => m Model
-load = pure $ Model 0
+load :: MonadIO m => Integer -> m Model
+load n = pure $ Model n
 
 update :: MonadIO m => Action -> Model -> m Model
 update Increment m = pure $ m { count = count m + 1 }
@@ -50,8 +50,8 @@ input' :: Term arg result => arg -> result
 input' = term "input"
 
 
-page :: MonadIO m => Page () Model Action m
-page = simplePage load update view
+page :: MonadIO m => Integer -> Page () Model Action m
+page n = simplePage (load n) update view
 
 
 -- instance MonadIO m => SPage Model m where
