@@ -6,7 +6,7 @@ module Page.Focus where
 
 
 import Prelude
-import Juniper
+import Yeti
 import Sockets
 
 import Data.String.Conversions (cs)

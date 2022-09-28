@@ -5,7 +5,7 @@
 module Page.Comp where
 
 import Prelude
-import Juniper
+import Yeti
 import Data.Text (pack, unpack, Text)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad (forM_)

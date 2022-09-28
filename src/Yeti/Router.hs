@@ -1,4 +1,4 @@
-module Juniper.Router
+module Yeti.Router
   ( Path(..)
   , renderPath
   , parsePath
@@ -8,7 +8,7 @@ module Juniper.Router
   ) where
 
 
-import Juniper.Prelude
+import Yeti.Prelude
 import Data.String (IsString(..))
 import Text.Read (readMaybe)
 import Data.Map as Map (Map, toList, fromList, lookup)

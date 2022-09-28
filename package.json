@@ -1,7 +1,7 @@
 {
-  "name": "juniper",
+  "name": "yeti",
   "version": "1.0.0",
-  "description": "Juniper is a reactive server-side rendered web framework for Haskell.",
+  "description": "Yeti is a reactive server-side rendered web framework for Haskell.",
   "main": "live/index.js",
   "directories": {
     "live": "live",
@@ -12,15 +12,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/seanhess/juniper.git"
+    "url": "git+https://github.com/seanhess/yeti.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/seanhess/juniper/issues"
+    "url": "https://github.com/seanhess/yeti/issues"
   },
-  "homepage": "https://github.com/seanhess/juniper#readme",
+  "homepage": "https://github.com/seanhess/yeti#readme",
   "devDependencies": {
     "ts-loader": "^9.4.1",
     "typescript": "^4.8.3",

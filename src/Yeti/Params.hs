@@ -1,13 +1,13 @@
 {-# LANGUAGE InstanceSigs #-}
-module Juniper.Params where
+module Yeti.Params where
 
-import Juniper.Prelude
+import Yeti.Prelude
 import Data.List as List (lookup)
 import Data.Proxy (Proxy(..))
 import Data.Tagged (Tagged(..))
 import Data.Time.Calendar (Day)
 import Data.Time.Format (defaultTimeLocale, formatTime, parseTimeM)
-import Juniper.Encode (Encoding(..), Encoded(..))
+import Yeti.Encode (Encoding(..), Encoded(..))
 import GHC.Generics
 import Network.HTTP.Types.URI (QueryText)
 import Network.URI (isUnreserved, escapeURIString)

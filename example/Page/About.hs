@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Page.About where
 
-import Juniper.Web (pageUrl)
+import Yeti.Web (pageUrl)
 
 -- TODO we need an external "Routes" file so we don't get circular referenes
 -- import Page.Counter as Counter (Params)

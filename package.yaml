@@ -1,6 +1,6 @@
-name:                juniper
+name:                yeti
 version:             0.3.0
-github:              "seanhess/juniper"
+github:              "seanhess/yeti"
 license:             BSD3
 author:              "Sean Hess"
 maintainer:          "seanhess@gmail.com"
@@ -16,7 +16,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/seanhess/juniper#readme>
+description:         Please see the README on GitHub at <https://github.com/seanhess/yeti#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -98,7 +98,7 @@ library:
   source-dirs: src
 
 executables:
-  juniper-exe:
+  yeti-exe:
     main:                Main.hs
     source-dirs:         example
     ghc-options:
@@ -109,10 +109,10 @@ executables:
     dependencies:
     - record-dot-preprocessor
     - record-hasfield
-    - juniper
+    - yeti
 
 tests:
-  juniper-test:
+  yeti-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -120,4 +120,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - juniper
+    - yeti

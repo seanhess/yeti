@@ -1,10 +1,10 @@
 {-# LANGUAGE ConstraintKinds #-}
-module Juniper.Runtime where
+module Yeti.Runtime where
 
-import Juniper.Prelude
+import Yeti.Prelude
 
-import Juniper.Encode
-import Juniper.Params (ToParams(..))
+import Yeti.Encode
+import Yeti.Params (ToParams(..))
 import qualified Data.Aeson as Aeson
 import Data.Aeson (ToJSON, FromJSON, Result(..))
 import Data.ByteString.Lazy (ByteString)

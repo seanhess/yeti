@@ -4,11 +4,11 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 
-name:           juniper
+name:           yeti
 version:        0.3.0
-description:    Please see the README on GitHub at <https://github.com/seanhess/juniper#readme>
-homepage:       https://github.com/seanhess/juniper#readme
-bug-reports:    https://github.com/seanhess/juniper/issues
+description:    Please see the README on GitHub at <https://github.com/seanhess/yeti#readme>
+homepage:       https://github.com/seanhess/yeti#readme
+bug-reports:    https://github.com/seanhess/yeti/issues
 author:         Sean Hess
 maintainer:     seanhess@gmail.com
 copyright:      All Rights Reserved
@@ -20,22 +20,22 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/seanhess/juniper
+  location: https://github.com/seanhess/yeti
 
 library
   exposed-modules:
-      Juniper
-      Juniper.Component
-      Juniper.Encode
-      Juniper.Events
-      Juniper.JS
-      Juniper.Params
-      Juniper.Prelude
-      Juniper.Router
-      Juniper.Runtime
-      Juniper.Web
+      Yeti
+      Yeti.Component
+      Yeti.Encode
+      Yeti.Events
+      Yeti.JS
+      Yeti.Params
+      Yeti.Prelude
+      Yeti.Router
+      Yeti.Runtime
+      Yeti.Web
   other-modules:
-      Paths_juniper
+      Paths_yeti
   hs-source-dirs:
       src
   default-extensions:
@@ -107,7 +107,7 @@ library
     , websockets
   default-language: Haskell2010
 
-executable juniper-exe
+executable yeti-exe
   main-is: Main.hs
   other-modules:
       App
@@ -120,7 +120,7 @@ executable juniper-exe
       Page.Todo
       SocketExample
       Sockets
-      Paths_juniper
+      Paths_yeti
   hs-source-dirs:
       example
   default-extensions:
@@ -164,7 +164,6 @@ executable juniper-exe
     , data-default
     , file-embed
     , http-types
-    , juniper
     , lens
     , lifted-base
     , lucid2
@@ -193,13 +192,14 @@ executable juniper-exe
     , wai-middleware-static
     , wai-websockets
     , websockets
+    , yeti
   default-language: Haskell2010
 
-test-suite juniper-test
+test-suite yeti-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_juniper
+      Paths_yeti
   hs-source-dirs:
       test
   default-extensions:
@@ -243,7 +243,6 @@ test-suite juniper-test
     , data-default
     , file-embed
     , http-types
-    , juniper
     , lens
     , lifted-base
     , lucid2
@@ -270,4 +269,5 @@ test-suite juniper-test
     , wai-middleware-static
     , wai-websockets
     , websockets
+    , yeti
   default-language: Haskell2010

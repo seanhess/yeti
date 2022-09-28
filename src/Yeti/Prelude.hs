@@ -1,4 +1,4 @@
-module Juniper.Prelude
+module Yeti.Prelude
   ( module Prelude
   , (&)
   , (<|>)

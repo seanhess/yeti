@@ -6,7 +6,7 @@ module Page.Counter where
 
 import Sockets
 import Prelude
-import Juniper
+import Yeti
 import Control.Monad.IO.Class (MonadIO)
 import Lucid (Html, toHtml, Term, term)
 import Lucid.Html5

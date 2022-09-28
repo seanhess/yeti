@@ -2,8 +2,8 @@ import { hydrate, patch, render, DOMNode } from 'million';
 import { fromDomNodeToVNode, fromStringToDomNode } from 'million/utils';
 import { SocketAddress } from 'net';
 
-declare var juniperState:string;
-declare var juniperPage:string;
+declare var yetiState:string;
+declare var yetiPage:string;
 
 console.log("VERSION 1")
 
@@ -24,10 +24,10 @@ function open() {
 
   // Connection opened
   socket.addEventListener('open', (event) => {
-      console.log("Open, register: ", juniperState)
+      console.log("Open, register: ", yetiState)
 
       // 1. send our initial state to register
-      socketSend([JSON.stringify(juniperPage), juniperState]);
+      socketSend([JSON.stringify(yetiPage), yetiState]);
   });
 
   // Listen for messages
@@ -40,7 +40,7 @@ function open() {
 
       // This works, but it REALLY doesn't like the unclosed input tags from lucid
       rootElement = patch(rootElement, vnode)
-      juniperState = newState
+      yetiState = newState
   });
 
   socket.addEventListener('close', (e) => {
@@ -58,8 +58,8 @@ function socketSend(lines:string[]) {
 }
 
 window.addEventListener("load", function() {
-  console.log("State:", juniperState)
-  rootElement = document.getElementById("juniper-root-content")
+  console.log("State:", yetiState)
+  rootElement = document.getElementById("yeti-root-content")
 
   let firstChild = rootElement.firstChild as DOMNode
   let initContent = fromDomNodeToVNode(firstChild)

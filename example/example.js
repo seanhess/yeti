@@ -2,7 +2,7 @@ console.log("Loaded Example.js")
 
 
 // Ok, let's give the component the ability to delete items
-Juniper.registerComponent("comp", function(items) {
+Yeti.registerComponent("comp", function(items) {
   // console.log("Component Updated", items)
   // console.log(this)
 

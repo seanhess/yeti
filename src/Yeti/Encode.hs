@@ -1,6 +1,6 @@
-module Juniper.Encode where
+module Yeti.Encode where
 
-import Juniper.Prelude
+import Yeti.Prelude
 import GHC.Generics hiding (Constructor)
 import Control.Monad (foldM)
 import qualified Data.Aeson as Aeson
@@ -51,7 +51,7 @@ class LiveAction a where
 -- λ> :kind! (Rep Test)
 -- (Rep Test) :: * -> *
 -- = D1
---     ('MetaData "Test" "Juniper.Encode" "main" 'False)
+--     ('MetaData "Test" "Yeti.Encode" "main" 'False)
 --     (C1 ('MetaCons "Test" 'PrefixI 'False) U1)
 -- data Test
 --   = Test
@@ -61,7 +61,7 @@ class LiveAction a where
 -- λ> :kind! (Rep Test1)
 -- (Rep Test1) :: * -> *
 -- = D1
---     ('MetaData "Test1" "Juniper.Encode" "main" 'False)
+--     ('MetaData "Test1" "Yeti.Encode" "main" 'False)
 --     (C1
 --        ('MetaCons "Test1" 'PrefixI 'False)
 --        (S1
@@ -102,7 +102,7 @@ instance LiveAction Action
 -- λ> :kind! (Rep Woot)
 -- (Rep Woot) :: * -> *
 -- = D1
---     ('MetaData "Woot" "Juniper.Encode" "main" 'False)
+--     ('MetaData "Woot" "Yeti.Encode" "main" 'False)
 --     (C1
 --        ('MetaCons "Woot" 'PrefixI 'True)
 --        (S1

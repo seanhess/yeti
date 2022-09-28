@@ -1,13 +1,13 @@
 module Sockets where
 
-import Juniper.Prelude
+import Yeti.Prelude
 import Lucid
 
 import qualified Data.Text as Text
-import qualified Juniper.Runtime as Runtime
-import Juniper.Runtime (Response(..), PageHandler)
-import Juniper hiding (page)
-import Juniper.Encode (Encoded(..), Encoding(..))
+import qualified Yeti.Runtime as Runtime
+import Yeti.Runtime (Response(..), PageHandler)
+import Yeti hiding (page)
+import Yeti.Encode (Encoded(..), Encoding(..))
 import Data.ByteString.Lazy (ByteString)
 import qualified Network.WebSockets as WS
 import Network.WebSockets (WebSocketsData)

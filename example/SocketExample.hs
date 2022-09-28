@@ -3,10 +3,6 @@
 {-# LANGUAGE NoOverloadedLists #-}
 module SocketExample where
 
-import Juniper.Prelude
-import Juniper.Encode as Encode (Encoded(..), Encoding(..))
-import Juniper.Runtime as Runtime (Response(..), runPage, Command, PageHandler)
-import Juniper hiding (page)
 import Control.Concurrent.STM (newTVar, atomically, TVar)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Control.Monad.Base (MonadBase, liftBase)
@@ -15,8 +11,8 @@ import qualified Data.Map as Map
 import Data.Monoid (mappend)
 import Data.Text (Text)
 import Lucid
-import Juniper.Params as Params
-import qualified Juniper.Web as Web
+import Yeti.Params as Params
+import qualified Yeti.Web as Web
 import qualified Page.Counter as Counter
 import qualified Page.Focus as Focus
 import qualified Page.Todo as Todo
@@ -31,6 +27,10 @@ import Network.Wai as Wai
 import Network.HTTP.Types (status200, status404)
 import Sockets
 import Text.Read (readMaybe)
+import Yeti.Prelude
+import Yeti.Encode as Encode (Encoded(..), Encoding(..))
+import Yeti.Runtime as Runtime (Response(..), runPage, Command, PageHandler)
+import Yeti hiding (page)
 
 -- TODO Actually wire up the generalized function
 -- TODO Params
@@ -73,8 +73,8 @@ startWebServer todos = do
   scotty 3031 $ do
 
     -- we can serve this up static
-    -- juniper.js
-    get "/juniper.js" $ do
+    -- yeti.js
+    get "/yeti.js" $ do
       addHeader "Content-Type" "text/javascript"
       file "dist/main.js"
 
@@ -82,7 +82,7 @@ startWebServer todos = do
       addHeader "Content-Type" "text/css"
       file "example/example.css"
 
-    middleware $ juniper cfg run
+    middleware $ yeti cfg run
 
 
   where
@@ -92,8 +92,8 @@ startWebServer todos = do
     run Todos       = Runtime.runPage (Todo.page todos)
 
 -- type Application = Request -> (Response -> IO ResponseReceived) -> IO ResponseReceived
-juniper :: forall page m. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, RoutePage page) => Render -> PageHandler page m -> Middleware
-juniper cfg run = web . sockets
+yeti :: forall page m. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, RoutePage page) => Render -> PageHandler page m -> Middleware
+yeti cfg run = web . sockets
   where
     sockets :: Middleware
     sockets = websocketsOr defaultConnectionOptions (liveApp run)
@@ -118,7 +118,7 @@ toDocument = simpleDocument "Example" $ do
   link_ [type_ "text/css", rel_ "stylesheet", href_ "/example.css"]
 
   -- Custom Javascript should be last
-  script_ [type_ "text/javascript", src_ "/juniper.js"] ("" :: Text)
+  script_ [type_ "text/javascript", src_ "/yeti.js"] ("" :: Text)
 
 
 

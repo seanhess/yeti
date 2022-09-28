@@ -1,6 +1,6 @@
-module Juniper.Component where
+module Yeti.Component where
 
-import Juniper.Prelude
+import Yeti.Prelude
 import Data.Aeson (ToJSON, toJSON, encode)
 import Lucid (Html, div_, class_, Attributes)
 import Lucid.Base (makeAttributes)

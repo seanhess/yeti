@@ -38,8 +38,8 @@ import Text.Read (readMaybe)
 
 import Network.HTTP.Types.URI (renderSimpleQuery)
 
-import Juniper.Router (parsePath)
-import Juniper.Web (page, lucid, static, handle, simpleDocument, Render(..))
+import Yeti.Router (parsePath)
+import Yeti.Web (page, lucid, static, handle, simpleDocument, Render(..))
 
 
 

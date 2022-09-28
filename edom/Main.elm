@@ -301,7 +301,7 @@ parseHtml input =
   case (HParser.run input) of
     Err ld -> Err (FailedParse ld)
     Ok nodes -> Ok <|
-      div [ id "juniper-root-content"] <|
+      div [ id "yeti-root-content"] <|
         List.map toHtml nodes
 
 

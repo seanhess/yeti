@@ -1,8 +1,8 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingStrategies #-}
-module Juniper.Events where
+module Yeti.Events where
 
-import Juniper.Prelude
+import Yeti.Prelude
 
 import Data.Aeson (ToJSON(..), FromJSON(..))
 import qualified Data.Aeson as Aeson
@@ -12,7 +12,7 @@ import Data.String.Conversions (cs)
 import Data.Text as Text (Text, takeWhile, dropWhile, dropWhileEnd, splitOn)
 import Data.Char (isAlphaNum)
 import Data.Default (Default(..))
-import Juniper.Encode
+import Yeti.Encode
 import Lucid.Base (makeAttributes, Attributes)
 import Lucid.Html5 (onchange_)
 

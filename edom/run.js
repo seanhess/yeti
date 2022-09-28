@@ -1,13 +1,13 @@
 const JUNIPER_UPDATE_DOM = "updateDOM"
 
 window.addEventListener("load", function () {
-  var root = document.getElementById('juniper-root-content')
+  var root = document.getElementById('yeti-root-content')
 
   var app = Elm.Main.init({
-    node: document.getElementById('juniper-root-content'),
+    node: document.getElementById('yeti-root-content'),
 
-    // juniperState should be embedded: let juniperState = {}
-    flags: [document.title, root.innerHTML, juniperState]
+    // yetiState should be embedded: let yetiState = {}
+    flags: [document.title, root.innerHTML, yetiState]
   });
 
 
@@ -21,9 +21,9 @@ window.addEventListener("load", function () {
 })
 
 
-const Juniper = {}
+const Yeti = {}
 
-Juniper.registerComponent = function(name, f) {
+Yeti.registerComponent = function(name, f) {
 
   let selector = "." + name
   document.addEventListener("updateDOM", function() {

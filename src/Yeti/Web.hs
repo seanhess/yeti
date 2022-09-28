@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
-module Juniper.Web
+module Yeti.Web
   ( Render(..)
   , respond
   , static
@@ -13,12 +13,12 @@ module Juniper.Web
   , params
   ) where
 
-import Juniper.Prelude
-import Juniper.Runtime as Runtime (Response(..), Page, PageHandler)
-import Juniper.Encode (LiveModel, LiveAction, encodeModel, fromEncoded)
-import qualified Juniper.Runtime as Runtime
-import Juniper.Params as Params (ToParams(..), urlEncode, urlDecode)
-import Juniper.JS as JS
+import Yeti.Prelude
+import Yeti.Runtime as Runtime (Response(..), Page, PageHandler)
+import Yeti.Encode (LiveModel, LiveAction, encodeModel, fromEncoded)
+import qualified Yeti.Runtime as Runtime
+import Yeti.Params as Params (ToParams(..), urlEncode, urlDecode)
+import Yeti.JS as JS
 import Data.ByteString.Lazy (ByteString)
 import Data.Text.Encoding.Base64 (encodeBase64, decodeBase64)
 import Data.Text as Text (intercalate, dropWhile)
@@ -109,10 +109,10 @@ respond (Render embJS toDocument) pg (Response encModel encParams view) respWai 
 
     embedStateScript :: Html ()
     embedStateScript = 
-      script_ [type_ "text/javascript", id_ "juniper-state" ] $ Text.intercalate "\n"
+      script_ [type_ "text/javascript", id_ "yeti-state" ] $ Text.intercalate "\n"
         [ ""
-        , "var juniperState = " <> cs stateJSON
-        , "var juniperPage = " <> cs (Aeson.encode pg)
+        , "var yetiState = " <> cs stateJSON
+        , "var yetiPage = " <> cs (Aeson.encode pg)
         , ""
         ]
 
@@ -122,7 +122,7 @@ respond (Render embJS toDocument) pg (Response encModel encParams view) respWai 
       "\n"
       embedStateScript
       "\n"
-      div_ [id_ "juniper-root-content"] v
+      div_ [id_ "yeti-root-content"] v
       "\n"
       when embJS $ do
         "\n"

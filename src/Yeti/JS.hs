@@ -1,6 +1,6 @@
-module Juniper.JS where
+module Yeti.JS where
 
-import Juniper.Prelude
+import Yeti.Prelude
 import Data.ByteString (ByteString)
 import Data.FileEmbed (embedFile)
 

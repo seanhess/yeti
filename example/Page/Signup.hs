@@ -5,7 +5,7 @@
 module Page.Signup where
 
 import Prelude
-import Juniper
+import Yeti
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.String.Conversions (cs)
