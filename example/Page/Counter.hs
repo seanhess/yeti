@@ -5,6 +5,7 @@
 module Page.Counter where
 
 import Sockets
+import Data.Maybe (fromMaybe)
 import Prelude
 import Yeti
 import Control.Monad.IO.Class (MonadIO)
@@ -15,6 +16,13 @@ data Model = Model
   { count :: Integer
   } deriving (Show, Generic, LiveModel, ToJSON, FromJSON)
 
+data Params = Params
+  { count :: Integer
+  } deriving (Show, Generic, ToParams)
+
+params :: Model -> Params
+params (Model n) = Params n
+
 data Action
   = Increment
   | Decrement
@@ -23,12 +31,13 @@ data Action
 
 -- just run these in your monad
 -- oh, this doesn't want to worry about which monad it is run in
-load :: MonadIO m => Integer -> m Model
-load n = pure $ Model n
+load :: MonadIO m => Integer -> (Maybe Params) -> m Model
+load _ (Just (Params n)) = pure $ Model n
+load n _ = pure $ Model n
 
 update :: MonadIO m => Action -> Model -> m Model
-update Increment m = pure $ m { count = count m + 1 }
-update Decrement m = pure $ m { count = count m - 1 }
+update Increment m = pure $ (m :: Model) { count = m.count + 1 }
+update Decrement m = pure $ (m :: Model) { count = m.count - 1 }
 
 view :: Model -> Html ()
 view m = section_ [ class_ "page" ] $ do
@@ -45,8 +54,8 @@ view m = section_ [ class_ "page" ] $ do
 
 
 
-page :: MonadIO m => Integer -> Page () Model Action m
-page n = simplePage (load n) update view
+page :: MonadIO m => Integer -> Page Params Model Action m
+page n = Page params (load n) update view
 
 
 -- instance MonadIO m => SPage Model m where

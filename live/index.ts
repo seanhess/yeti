@@ -38,16 +38,12 @@ function open() {
 
   // Listen for messages
   socket.addEventListener('message', (event) => {
-      let [newState, html] = event.data.split("\n")
+      let [newState, params, html] = event.data.split("\n")
 
-      // console.log("MESSAGE", html)
-      // // This is stripping tab characters in the data attributes
-      let dom = fromStringToDomNode(html)
-      let vnode = fromDomNodeToVNode(dom)
+      update(newState, params, html)
 
-      // This works, but it REALLY doesn't like the unclosed input tags from lucid
-      rootElement = patch(rootElement, vnode)
-      currentState = newState
+      let url = location.origin + location.pathname + "?" + params
+      history.pushState([currentState, params, html], "", url)
   });
 
   socket.addEventListener('close', (e) => {
@@ -59,6 +55,22 @@ function open() {
     console.log("Error", e)
   });
 }
+
+function update(newState:string, params:string, html:string) {
+  // console.log("MESSAGE", html)
+  // // This is stripping tab characters in the data attributes
+  let dom = fromStringToDomNode(html)
+  let vnode = fromDomNodeToVNode(dom)
+
+  // This works, but it REALLY doesn't like the unclosed input tags from lucid
+  rootElement = patch(rootElement, vnode)
+  currentState = newState
+}
+
+window.addEventListener("popstate", function(e) {
+  let [newState, params, html] = e.state
+  update(newState, params, html)
+})
 
 function socketSend(lines:string[]) {
   socket.send(lines.join("\n"))
@@ -83,10 +95,11 @@ document.addEventListener("click", function(e) {
   let el = e.target as HTMLElement
 
   // Find the nearest source that has a click handler
-  let source = el.closest("[data-on-click]") as HTMLElement
-  console.log("Click", source)
+  var source:HTMLElement = el.closest("[data-on-click]");
 
-  if (source.dataset.onClick) {
+  // console.log("Click", source)
+
+  if (source?.dataset.onClick) {
     socket.send(source.dataset.onClick)
   }
 })

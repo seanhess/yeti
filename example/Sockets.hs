@@ -5,6 +5,7 @@ import Lucid
 
 import qualified Data.Text as Text
 import qualified Yeti.Runtime as Runtime
+import qualified Yeti.Params as Params
 import Yeti.Runtime (Response(..), PageHandler)
 import Yeti hiding (page)
 import Yeti.Encode (Encoded(..), Encoding(..))
@@ -20,6 +21,7 @@ import Control.Monad.Base (MonadBase, liftBase)
 import Data.Aeson as Aeson
 import Data.Aeson.Types
 import Web.Scotty.Trans as Scotty
+import Network.HTTP.Types.URI (queryToQueryText)
 -- import Network.WebSockets.Trans (liftServerApp, runServerAppT, ServerAppT)
 import Network.WebSockets.Connection (defaultConnectionOptions, ConnectionOptions(..))
 
@@ -156,10 +158,10 @@ talk (Identified page encModel) state run conn = do
   -- FORMAT
   -- state
   -- html
-  liftIO $ WS.sendTextData conn $ mconcat
-    [ cs $ fromEncoded $ resModel res
-    , "\n"
-    , Lucid.renderBS (resView res)
+  liftIO $ WS.sendTextData conn $ Text.intercalate "\n"
+    [ fromEncoded $ resModel res
+    , Params.queryToText $ resParams res
+    , cs $ Lucid.renderText (resView res)
     ]
 
   where
@@ -176,7 +178,7 @@ talk (Identified page encModel) state run conn = do
         updateEnc em = do
           let als = Text.splitOn "\n" $ fromMessage msg :: [Text]
           let encActions = map Encoded als :: [Encoded 'Action]
-          res <- run page (Just em) encActions
+          res <- run page (Just em) [] encActions
           pure (resModel res, res)
 
 

@@ -29,7 +29,7 @@ data Response = Response
   } deriving (Show, Generic)
 
 
-type PageHandler page m = page -> Maybe (Encoded 'Model) -> [Encoded 'Action] -> m Response
+type PageHandler page m = page -> Maybe (Encoded 'Model) -> QueryText -> [Encoded 'Action] -> m Response
 
 data Command action
   = Submit
@@ -71,13 +71,15 @@ runPage
   :: forall m model params action. (MonadIO m, LiveAction action, LiveModel model, ToParams params)
   => Page params model action m
   -> Maybe (Encoded 'Model)
+  -> QueryText
   -> [Encoded 'Action]
   -> m Response
-runPage pg Nothing _ = do
-  m <- (load pg) Nothing
+runPage pg Nothing qt _ = do
+  let mps = fromParams qt
+  m <- (load pg) mps
   pure $ response pg m
 
-runPage pg (Just encModel) as = do
+runPage pg (Just encModel) _ as = do
   cmds <- mapM parseCommand as :: m [Command action]
   m <- parseModel encModel
   m' <- runActions pg m cmds

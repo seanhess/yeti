@@ -28,6 +28,7 @@ import Network.Wai.Handler.WebSockets (websocketsOr)
 import Network.WebSockets.Connection (defaultConnectionOptions, ConnectionOptions(..))
 import Network.Wai as Wai
 import Network.HTTP.Types (status200, status404)
+import Network.HTTP.Types.URI (queryToQueryText)
 import Sockets
 import Text.Read (readMaybe)
 import Yeti.Prelude
@@ -76,8 +77,6 @@ instance RoutePage AppPage where
 startWebServer :: TVar [Todo] -> IO ()
 startWebServer todos = do
 
-  let cfg = Render False toDocument
-
   scotty 3031 $ do
 
     -- we can serve this up static
@@ -92,14 +91,14 @@ startWebServer todos = do
 
     get "/" $ do
       html $ cs $ renderBS $ ol_ [] $ do
-        li_ $ a_ [href_ "/counter"] "Counter"
+        li_ $ a_ [href_ "/counter/11"] "Counter 11"
         li_ $ a_ [href_ "/signup"] "Signup"
         li_ $ a_ [href_ "/focus"] "Focus"
         li_ $ a_ [href_ "/todo"] "Todo"
         -- li_ $ a_ [href_ "/app/comp"] "Comp"
         li_ $ a_ [href_ "/article/1"] "Article"
 
-    middleware $ yeti cfg run
+    middleware $ yeti config run
 
 
   where
@@ -110,6 +109,20 @@ startWebServer todos = do
     run Signup      = Runtime.runPage Signup.page
     run (Article i) = Runtime.runPage (Article.page i)
 
+
+    config :: Render
+    config = Render False $ simpleDocument "Example" $ do
+
+      -- add stylesheets, etc
+      link_ [type_ "text/css", rel_ "stylesheet", href_ "/example.css"]
+
+      -- Custom Javascript should be last
+      script_ [type_ "text/javascript", src_ "/yeti.js"] ("" :: Text)
+
+
+
+
+
 -- type Application = Request -> (Response -> IO ResponseReceived) -> IO ResponseReceived
 yeti :: forall page m. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, RoutePage page) => Render -> PageHandler page m -> Middleware
 yeti cfg run = web . sockets
@@ -119,25 +132,13 @@ yeti cfg run = web . sockets
 
     web :: Middleware
     web app req resp =
-      let mp = routePage (pathInfo req) :: Maybe page
+      let mp = routePage (Wai.pathInfo req) :: Maybe page
+          qt = queryToQueryText (Wai.queryString req)
       in case mp of
         Nothing -> app req resp
         (Just p) -> do
-          res <- liftBase $ run p Nothing []
+          res <- liftBase $ run p Nothing qt []
           Web.respond cfg p res resp :: IO ResponseReceived
-
-
-
-toDocument :: Html () -> Html ()
-toDocument = simpleDocument "Example" $ do
-
-  -- add stylesheets, etc
-  link_ [type_ "text/css", rel_ "stylesheet", href_ "/example.css"]
-
-  -- Custom Javascript should be last
-  script_ [type_ "text/javascript", src_ "/yeti.js"] ("" :: Text)
-
-
 
 
 

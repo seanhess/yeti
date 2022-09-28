@@ -206,3 +206,19 @@ instance (GenQuery a, GenQuery b) => GenQuery (a :*: b) where
 
 
 
+
+
+
+queryToText :: QueryText -> Text
+queryToText qt =
+  Text.intercalate "&" $ map segment qt
+  where
+    segment (k, Nothing) = key k
+    segment (k, (Just v)) =
+
+      -- we need to encode everything but special chars
+      -- these are already escaped
+      key k <> "=" <> urlEncode v
+    
+    -- encode the key
+    key t = urlEncode t
