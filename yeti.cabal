@@ -111,10 +111,10 @@ executable yeti-exe
   main-is: Main.hs
   other-modules:
       App
-      Page.About
       Page.Article
       Page.Counter
       Page.Focus
+      Page.Route
       Page.Signup
       Page.Todo
       Paths_yeti

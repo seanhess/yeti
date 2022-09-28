@@ -4,6 +4,9 @@ import Yeti.Prelude
 import Yeti.Encode (Encoded(..), Encoding(Model, Action))
 import Yeti.Params (QueryText)
 import Data.Aeson
+import Data.Text (toLower)
+import Text.Read (readMaybe)
+import GHC.Generics
 import Lucid (Html)
 
 
@@ -42,10 +45,6 @@ staticPage :: Applicative m => Html () -> Page () () () m
 staticPage view = Page (const ()) (\_ -> pure ()) (\_ _ -> pure ()) (const view)
 
 
--- TODO better encoding
--- TODO generalized!
-class (Show page, ToJSON page, FromJSON page) => RoutePage page where
-  routePage :: [Text] -> Maybe page
 
 
 type PageHandler page m = page -> Maybe (Encoded 'Model) -> QueryText -> [Encoded 'Action] -> m Response
@@ -58,3 +57,81 @@ data Response = Response
   , resParams :: QueryText
   , resView :: Html ()
   } deriving (Show, Generic)
+
+
+
+
+-- TODO better encoding
+-- TODO generalized!
+class (Show page, ToJSON page, FromJSON page) => RoutePage page where
+  routePage :: [Text] -> Maybe page
+
+  default routePage :: (Generic page, GenRoute (Rep page)) => [Text] -> Maybe page
+  routePage paths = to <$> genRoutePage paths
+
+class GenRoute f where
+  genRoutePage :: [Text] -> Maybe (f p)
+
+
+-- datatype metadata
+instance (GenRoute f) => GenRoute (M1 D c f) where
+  genRoutePage ps = M1 <$> genRoutePage ps
+
+-- Constructor names / lines
+instance (Constructor c, GenRoute f) => GenRoute (M1 C c f) where
+  genRoutePage (n:ps) = do
+    -- take the first path off the list
+    -- check that it matches the constructor name
+    -- check that the rest matches
+    let name = conName (undefined :: M1 C c f x)
+    guard (n == toLower (cs name))
+    M1 <$> genRoutePage ps
+
+  genRoutePage [] = Nothing
+
+-- Unary constructors
+instance GenRoute U1 where
+  genRoutePage [] = pure U1
+  genRoutePage _ = Nothing
+
+
+-- Selectors
+instance (GenRoute f) => GenRoute (M1 S c f) where
+  genRoutePage ps = do
+    M1 <$> genRoutePage ps
+
+-- Sum types
+instance (GenRoute a, GenRoute b) => GenRoute (a :+: b) where
+  genRoutePage ps = L1 <$> genRoutePage ps <|> R1 <$> genRoutePage ps
+
+
+-- Route Param Types
+instance GenRoute (K1 R Integer) where
+  genRoutePage = genRouteRead
+
+instance GenRoute (K1 R Text) where
+  genRoutePage [t] = pure $ K1 t
+  genRoutePage _ = Nothing
+
+genRouteRead :: Read x => [Text] -> Maybe (K1 R x a)
+genRouteRead [t] = do
+  K1 <$> readMaybe (cs t)
+genRouteRead _ = Nothing
+
+
+
+-- instance GenRoute f => GenRoute (M1 C d f) where
+--   genRoutePage ps = M1 <$> genRoutePage ps
+
+
+-- instance RoutePage AppPage where
+--   routePage ["counter", n] = do
+--     cnt <- readMaybe (unpack n)
+--     pure $ Counter cnt
+--   routePage ["focus"] = pure Focus
+--   routePage ["todos"] = pure Todos
+--   routePage ["signup"] = pure Signup
+--   routePage ["article", id'] = do
+--     pure $ Article id'
+--   routePage ["index"] = pure Index
+--   routePage _ = Nothing

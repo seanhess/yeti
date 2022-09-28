@@ -43,6 +43,7 @@ function open() {
     update(newState, params, html)
 
     // Handle Params
+    // TODO only when the params CHANGED
     let url = location.origin + location.pathname + "?" + params
     history.pushState([currentState, params, html], "", url)
   });

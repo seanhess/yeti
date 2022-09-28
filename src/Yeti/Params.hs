@@ -164,6 +164,7 @@ instance (ToParam c) => GenParam (K1 i c) where
 
 
 
+
 class GenQuery f where
   genEncode :: f p -> QueryText
   genDecode :: QueryText -> Maybe (f p)
