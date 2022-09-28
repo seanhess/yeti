@@ -1,5 +1,12 @@
 {-# LANGUAGE InstanceSigs #-}
-module Yeti.Params where
+module Yeti.Params
+  ( ToParams(..)
+  , ToParam(..)
+  , GenQuery(..)
+  , queryToText
+  , QueryText
+
+  ) where
 
 import Yeti.Prelude
 import Data.List as List (lookup)
@@ -10,8 +17,8 @@ import Data.Time.Format (defaultTimeLocale, formatTime, parseTimeM)
 import Yeti.Encode (Encoding(..), Encoded(..))
 import GHC.Generics
 import Network.HTTP.Types.URI (QueryText)
-import Network.URI (isUnreserved, escapeURIString)
-import Network.URI.Encode (encodeTextWith, decodeText)
+import Network.URI as URI (isUnreserved, escapeURIString)
+import Network.URI.Encode as URI (encodeTextWith, decodeText)
 import Numeric (showFFloat)
 import Text.Read (readMaybe)
 import qualified Data.Text as Text
@@ -104,15 +111,15 @@ instance (ToParam a, ToParam b, ToParam c) => ToParam (a, b, c) where
 
 
 escapeChar :: Char -> Text -> Text
-escapeChar c = cs . escapeURIString (/=c) . cs
+escapeChar c = cs . URI.escapeURIString (/=c) . cs
 
 urlDecode :: Text -> Text
 urlDecode =
-  decodeText
+  URI.decodeText
 
 urlEncode :: Text -> Text
 urlEncode =
-  encodeTextWith skipEscape
+  URI.encodeTextWith skipEscape
 
 -- all the chars we use we want to pass through
 skipEscape :: Char -> Bool

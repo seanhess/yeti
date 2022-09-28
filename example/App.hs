@@ -38,7 +38,6 @@ import Text.Read (readMaybe)
 
 import Network.HTTP.Types.URI (renderSimpleQuery)
 
-import Yeti.Router (parsePath)
 import Yeti.Web (page, lucid, static, handle, simpleDocument, Render(..))
 
 

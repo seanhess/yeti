@@ -25,15 +25,15 @@ source-repository head
 library
   exposed-modules:
       Yeti
-      Yeti.Component
+      Yeti.Embed
       Yeti.Encode
       Yeti.Events
-      Yeti.JS
+      Yeti.Page
       Yeti.Params
       Yeti.Prelude
-      Yeti.Router
       Yeti.Runtime
-      Yeti.Web
+      Yeti.Server
+      Yeti.Sockets
   other-modules:
       Paths_yeti
   hs-source-dirs:
@@ -113,13 +113,11 @@ executable yeti-exe
       App
       Page.About
       Page.Article
-      Page.Comp
       Page.Counter
       Page.Focus
       Page.Signup
       Page.Todo
       SocketExample
-      Sockets
       Paths_yeti
   hs-source-dirs:
       example

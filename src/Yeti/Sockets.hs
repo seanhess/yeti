@@ -1,4 +1,4 @@
-module Sockets where
+module Yeti.Sockets where
 
 import Yeti.Prelude
 import Lucid
@@ -6,8 +6,7 @@ import Lucid
 import qualified Data.Text as Text
 import qualified Yeti.Runtime as Runtime
 import qualified Yeti.Params as Params
-import Yeti.Runtime (Response(..), PageHandler)
-import Yeti hiding (page)
+import Yeti.Page (Response(..), PageHandler)
 import Yeti.Encode (Encoded(..), Encoding(..))
 import Data.ByteString.Lazy (ByteString)
 import qualified Network.WebSockets as WS
@@ -22,18 +21,7 @@ import Data.Aeson as Aeson
 import Data.Aeson.Types
 import Web.Scotty.Trans as Scotty
 import Network.HTTP.Types.URI (queryToQueryText)
--- import Network.WebSockets.Trans (liftServerApp, runServerAppT, ServerAppT)
 import Network.WebSockets.Connection (defaultConnectionOptions, ConnectionOptions(..))
-
--- class SPage model m | model -> m where
---   type Msg model :: *
---   type Params model :: *
-
---   -- this has to work for ALL m
---   load' :: m model
---   params' :: model -> Params model
---   update' :: Msg model -> model -> m model
---   view' :: model -> Html ()
 
 
 
@@ -41,33 +29,12 @@ newtype Message = Message { fromMessage :: Text }
   deriving newtype (Eq, Show, WebSocketsData)
 
 
--- instance Show Message where
---   show (Message m) = "|" <> cs m <> "|"
-
-
-
--- we could just have all of this run in their monad?
-
--- run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
--- (page -> IO (WS.Connection -> IO ()))
-
-
-startLiveView
-  :: forall page m a. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, FromJSON page, Show page)
-  => PageHandler page m
-  -> IO ()
-startLiveView pageResponse = do
-  putStrLn "startLiveView"
-  WS.runServer "127.0.0.1" 9160 (liveApp pageResponse)
-
-
-
-liveApp
+socketApp
   :: forall page m a. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, FromJSON page, Show page)
   => PageHandler page m
   -> WS.PendingConnection
   -> IO ()
-liveApp pageResponse pending = do
+socketApp pageResponse pending = do
   putStrLn "New Connection"
 
   liftIO $ flip catch onSocketError $ do

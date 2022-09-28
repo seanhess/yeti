@@ -1,25 +1,25 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
-module Yeti.Web
+module Yeti.Server
   ( Render(..)
-  , respond
-  , static
+  , respondWai
   , defaultConfig
-  , page
-  -- , pageUrl
   , simpleDocument
-  , lucid
-  , params
   , input'
+  , yeti
   ) where
 
 import Yeti.Prelude
-import Yeti.Runtime as Runtime (Response(..), Page, PageHandler)
 import Yeti.Encode (LiveModel, LiveAction, encodeModel, fromEncoded, Encoded(..), Encoding(Model))
 import Yeti.Embed (liveJS)
+import Yeti.Page (RoutePage(..), Response(..), Page, PageHandler)
 import qualified Yeti.Encode as Encode
 import qualified Yeti.Runtime as Runtime
-import Yeti.Params as Params (ToParams(..), urlEncode, urlDecode)
+import Yeti.Params as Params (ToParams(..))
+import Yeti.Sockets (socketApp)
+
+import Control.Monad.Trans.Control (MonadBaseControl)
+import Control.Monad.Base (MonadBase, liftBase)
 import Data.ByteString.Lazy (ByteString)
 import Data.Text.Encoding.Base64 (encodeBase64, decodeBase64)
 import Data.Text as Text (intercalate, dropWhile)
@@ -30,13 +30,16 @@ import qualified Web.Scotty.Trans as Scotty
 import Lucid (renderBS, Html, toHtml, Term, term)
 import Lucid.Html5
 import Network.Wai (rawPathInfo, Request(queryString, rawQueryString))
+import Network.Wai.Handler.WebSockets (websocketsOr)
+import Network.WebSockets (defaultConnectionOptions)
 import Network.HTTP.Types.URI (queryToQueryText, parseQueryText, renderQueryText, QueryText)
 import Data.Binary.Builder (toLazyByteString, Builder)
 import Network.URI.Encode (encodeTextWith, encodeText)
 import Network.URI (isUnreserved)
 import Data.Default (Default, def)
-import Network.Wai (ResponseReceived)
+import Network.Wai (ResponseReceived, Middleware)
 import qualified Network.Wai as Wai
+
 
 import Network.HTTP.Types (status200)
 
@@ -46,16 +49,6 @@ import Data.Aeson (FromJSON, ToJSON)
 
 import Text.RawString.QQ
 
-
-
-static :: (ScottyError e, Monad m) => Html () -> ActionT e m ()
-static view =
-  lucid view
-
-
--- -- Only accepts base paths, don't use params!
--- page :: (ScottyError e, MonadIO m) => RoutePattern -> ActionT e m () -> ScottyT e m ()
--- page = Scotty.matchAny
 
 data Render = Render
   { embedJS :: Bool
@@ -91,8 +84,8 @@ type DocumentTitle = Text
 
 type ToDocument = Html () -> Html ()
 
-respond :: forall page. ToJSON page => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
-respond (Render embJS toDoc) pg (Response encModel encParams view) respWai = do
+respondWai :: forall page. ToJSON page => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
+respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = do
 
   let yi = YetiInit encModel pg Encode.delimiter
   let content = Lucid.renderBS $ toDoc $ embedContent yi view
@@ -158,38 +151,26 @@ simpleDocument t extra content = do
 
 
 
-params :: (Monad m, ToParams p) => ActionT e m (Maybe p)
-params = Params.fromParams <$> query
-
-
-
-query :: (Monad m) => ActionT e m QueryText
-query = do
-  parseQueryText . rawQueryString <$> Scotty.request
-
-
--- renders a query text
--- but this escapes differently than I want
--- QueryText :: 
--- urlEncode :: Bool -> ByteString -> ByteString
--- type QueryText = [(Text, Maybe Text)]
-
-
--- 
-
-
-
-
-lucid :: ScottyError e => Monad m => Html a -> ActionT e m ()
-lucid h = do
-  Scotty.setHeader "Content-Type" "text/html"
-  Scotty.raw . Lucid.renderBS $ h
-
-
-
-      
-
-
 
 input' :: Term arg result => arg -> result
 input' = term "input"
+
+
+
+-- type Application = Request -> (Response -> IO ResponseReceived) -> IO ResponseReceived
+yeti :: forall page m. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, RoutePage page) => Render -> PageHandler page m -> Middleware
+yeti cfg run = web . sockets
+  where
+    sockets :: Middleware
+    sockets = websocketsOr defaultConnectionOptions (socketApp run)
+
+    web :: Middleware
+    web app req resp =
+      let mp = routePage (Wai.pathInfo req) :: Maybe page
+          qt = queryToQueryText (Wai.queryString req)
+      in case mp of
+        Nothing -> app req resp
+        (Just p) -> do
+          res <- liftBase $ run p Nothing qt []
+          respondWai cfg p res resp :: IO ResponseReceived
+

@@ -7,7 +7,6 @@ module Page.Focus where
 
 import Prelude
 import Yeti
-import Sockets
 
 import Data.String.Conversions (cs)
 import Control.Monad.IO.Class (MonadIO, liftIO)

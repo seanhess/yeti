@@ -4,7 +4,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Page.Counter where
 
-import Sockets
 import Data.Maybe (fromMaybe)
 import Prelude
 import Yeti

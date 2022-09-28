@@ -1,16 +1,13 @@
 module Yeti
  ( Page(Page)
+ , PageHandler
+ , RoutePage(..)
  , LiveModel(encodeModel, decodeModel)
  , LiveAction, encodeAction, encodeAction1, decodeAction, Input(..)
  , simplePage
  , ToParams(..), ToParam(..)
 --  , Value(..)
- , page
- , respond, simpleDocument
- , Render(..), defaultConfig
-
- -- Web
- , input'
+ , Render(..)
 
  -- Events
  , onInput, onClick, onEnter, onSelect, onValue, on
@@ -18,7 +15,8 @@ module Yeti
  , javascript
  , Html
  , FromJSON, ToJSON, Generic
- , module Yeti.Component
+ , run
+ , module Yeti.Server
  ) where
 
 import Data.Aeson (FromJSON, ToJSON)
@@ -27,11 +25,12 @@ import GHC.Generics (Generic)
 import Yeti.Runtime
 import Yeti.Events
 import Yeti.Params
-import Yeti.Web
-import Yeti.Component
+import Yeti.Server
 import Yeti.Embed (javascript)
 import Lucid (Html)
 import Yeti.Encode
+import Yeti.Page
+
 
 
 

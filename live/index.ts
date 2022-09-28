@@ -28,22 +28,23 @@ function open() {
 
   // Connection opened
   socket.addEventListener('open', (event) => {
-      console.log("Open, register: ", yetiInit.state)
+    console.log("Open, register: ", yetiInit.state)
 
-      // 1. send our initial state to register
-      // TODO better page encoding
-      currentState = yetiInit.state
-      socketSend([JSON.stringify(yetiInit.page), currentState]);
+    // 1. send our initial state to register
+    // TODO better page encoding
+    currentState = yetiInit.state
+    socketSend([JSON.stringify(yetiInit.page), currentState]);
   });
 
   // Listen for messages
   socket.addEventListener('message', (event) => {
-      let [newState, params, html] = event.data.split("\n")
+    let [newState, params, html] = event.data.split("\n")
 
-      update(newState, params, html)
+    update(newState, params, html)
 
-      let url = location.origin + location.pathname + "?" + params
-      history.pushState([currentState, params, html], "", url)
+    // Handle Params
+    let url = location.origin + location.pathname + "?" + params
+    history.pushState([currentState, params, html], "", url)
   });
 
   socket.addEventListener('close', (e) => {
@@ -67,14 +68,15 @@ function update(newState:string, params:string, html:string) {
   currentState = newState
 }
 
+function socketSend(lines:string[]) {
+  socket.send(lines.join("\n"))
+}
+
+// History events
 window.addEventListener("popstate", function(e) {
   let [newState, params, html] = e.state
   update(newState, params, html)
 })
-
-function socketSend(lines:string[]) {
-  socket.send(lines.join("\n"))
-}
 
 window.addEventListener("load", function() {
   console.log("docload")
