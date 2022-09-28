@@ -1,9 +1,13 @@
 import { hydrate, patch, render, DOMNode } from 'million';
 import { fromDomNodeToVNode, fromStringToDomNode } from 'million/utils';
-import { SocketAddress } from 'net';
 
-declare var yetiState:string;
-declare var yetiPage:string;
+declare var yetiInit: {
+    state: string;
+    page: string;
+    delimiter: string;
+  }
+
+var currentState:string;
 
 console.log("VERSION 1")
 
@@ -24,23 +28,26 @@ function open() {
 
   // Connection opened
   socket.addEventListener('open', (event) => {
-      console.log("Open, register: ", yetiState)
+      console.log("Open, register: ", yetiInit.state)
 
       // 1. send our initial state to register
-      socketSend([JSON.stringify(yetiPage), yetiState]);
+      // TODO better page encoding
+      currentState = yetiInit.state
+      socketSend([JSON.stringify(yetiInit.page), currentState]);
   });
 
   // Listen for messages
   socket.addEventListener('message', (event) => {
       let [newState, html] = event.data.split("\n")
-      console.log(newState)
 
+      // console.log("MESSAGE", html)
+      // // This is stripping tab characters in the data attributes
       let dom = fromStringToDomNode(html)
       let vnode = fromDomNodeToVNode(dom)
 
       // This works, but it REALLY doesn't like the unclosed input tags from lucid
       rootElement = patch(rootElement, vnode)
-      yetiState = newState
+      currentState = newState
   });
 
   socket.addEventListener('close', (e) => {
@@ -58,7 +65,7 @@ function socketSend(lines:string[]) {
 }
 
 window.addEventListener("load", function() {
-  console.log("State:", yetiState)
+  console.log("docload")
   rootElement = document.getElementById("yeti-root-content")
 
   let firstChild = rootElement.firstChild as DOMNode
@@ -67,18 +74,37 @@ window.addEventListener("load", function() {
 })
 
 
-// Handle Click Events via bubbling, Easy!
+// EVENTS: All via event bubbling up to document
+// then when the DOM is changed, they still work
+
+
+// Handle Click Events via bubbling
 document.addEventListener("click", function(e) {
   let el = e.target as HTMLElement
-  if (el.dataset.onClick) {
-    socket.send(el.dataset.onClick)
+
+  // Find the nearest source that has a click handler
+  let source = el.closest("[data-on-click]") as HTMLElement
+  console.log("Click", source)
+
+  if (source.dataset.onClick) {
+    socket.send(source.dataset.onClick)
   }
 })
 
+
+// These work on inputs, so they don't need to check for 
 document.addEventListener("input", function(e) {
   let el = e.target as HTMLInputElement
   if (el.dataset.onInput) {
     let val = JSON.stringify(el.value)
-    socket.send(el.dataset.onInput + "\t" + val)
+    socket.send([el.dataset.onInput, val].join(yetiInit.delimiter))
+  }
+})
+
+document.addEventListener("keypress", function(e) {
+  let el = e.target as HTMLInputElement
+  if (e.code == "Enter" && el.dataset.onEnter) {
+    console.log("ENTER!", el.dataset.onEnter)
+    socket.send(el.dataset.onEnter)
   }
 })

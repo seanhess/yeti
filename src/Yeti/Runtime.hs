@@ -3,20 +3,21 @@ module Yeti.Runtime where
 
 import Yeti.Prelude
 
-import Yeti.Encode
-import Yeti.Params (ToParams(..))
-import qualified Data.Aeson as Aeson
+import Control.Monad (foldM)
+import Control.Exception (Exception, throw)
 import Data.Aeson (ToJSON, FromJSON, Result(..))
 import Data.ByteString.Lazy (ByteString)
+import Data.List as List (take)
+import Data.Map ((!?))
+import Lucid (Html, renderBS)
+import Network.HTTP.Types.URI (QueryText)
+import Text.Read (readMaybe)
+import qualified Data.Aeson as Aeson
+import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as TL (Text)
-import qualified Data.ByteString.Lazy as BSL
-import Data.List as List (take)
-import Lucid (Html, renderBS)
-import Text.Read (readMaybe)
-import Data.Map ((!?))
-import Control.Monad (foldM)
-import Network.HTTP.Types.URI (QueryText)
+import Yeti.Encode
+import Yeti.Params (ToParams(..))
 
 
 
@@ -67,7 +68,7 @@ runActions (Page params load update view) m cmds = do
 
 
 runPage
-  :: forall m model params action. (MonadFail m, LiveAction action, LiveModel model, ToParams params)
+  :: forall m model params action. (MonadIO m, LiveAction action, LiveModel model, ToParams params)
   => Page params model action m
   -> Maybe (Encoded 'Model)
   -> [Encoded 'Action]
@@ -94,7 +95,7 @@ runCommand update m cmd =
     Update a -> update a m
 
 
-parseBody :: (MonadFail m, LiveAction action, LiveModel model) => ByteString -> m (Maybe model, [Command action])
+parseBody :: (MonadIO m, LiveAction action, LiveModel model) => ByteString -> m (Maybe model, [Command action])
 parseBody body = do
   case BSL.split newline body of
     [] -> pure (Nothing, [])
@@ -109,21 +110,28 @@ parseBody body = do
   where newline = 10 -- fromEnum '\n'
 
 
-parseModel :: (MonadFail m, LiveModel model) => Encoded 'Model -> m model
+parseModel :: (MonadIO m, LiveModel model) => Encoded 'Model -> m model
 parseModel enc = do
   case decodeModel enc of
-    Error e -> fail $ "Could not parse model: " <> cs (fromEncoded enc) <> " " <> e
+    Error e -> throw $ NoParseModel enc
     Success m -> pure m
 
-parseCommand :: (MonadFail m, LiveAction action) => Encoded 'Action -> m (Command action)
-parseCommand "|Submit|" = pure Submit
-parseCommand e =
+parseCommand :: (MonadIO m, LiveAction action) => Encoded 'Action -> m (Command action)
+parseCommand e = do
+
+  let c:vts = pure $ Text.splitOn "\t" (fromEncoded e)
+  print (c, vts)
+
   case decodeAction e of
     Success (a :: action) -> pure $ Update a
-    Error err -> fail $ "Could not parse action: " <> cs (fromEncoded e) <> " " <> err
+    Error err -> throw $ NoParseAction e
 
 
 
+data Error
+  = NoParseModel (Encoded 'Model)
+  | NoParseAction (Encoded 'Action)
+  deriving (Show, Eq, Exception)
 
 
 data Page params model action m = Page

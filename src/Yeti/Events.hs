@@ -62,14 +62,3 @@ onValue :: (LiveAction action, Input val) => Text -> (val -> action) -> Attribut
 onValue name con = makeAttributes ("data-on-" <> name) $ fromEncoded $ encodeAction1 con
 
 
-
-
-data Submit = Submit
-
-instance LiveAction Submit where
-  toConstructor _ = Constructor "|Submit|" []
-
-  fromConstructor (Constructor "|Submit|" []) = pure Submit
-  fromConstructor x = fail $ "Could not parse submit: " <> show x
-
-

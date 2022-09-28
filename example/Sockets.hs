@@ -66,12 +66,11 @@ liveApp
   -> WS.PendingConnection
   -> IO ()
 liveApp pageResponse pending = do
-  putStrLn "Connection!"
+  putStrLn "New Connection"
 
-  liftIO $ flip catch onError $ do
+  liftIO $ flip catch onSocketError $ do
     conn <- liftIO $ WS.acceptRequest pending
     id <- identify conn
-    print (page id)
     run <- pageRun id
     connect run conn
 
@@ -80,16 +79,15 @@ liveApp pageResponse pending = do
     pageRun :: Identified page -> IO (WS.Connection -> IO ())
     pageRun i = do
       var <- newMVar (state i)
-      pure $ \conn -> liftBase $ talk i var pageResponse conn
+      pure $ \conn -> (liftBase $ talk i var pageResponse conn) `catch` onRuntimeError
 
     -- this needs to return page and state
     identify :: WS.Connection -> IO (Identified page)
     identify conn = do
-      putStrLn "Waiting for Identify"
+      putStrLn " - Waiting for Identify"
       msg <- WS.receiveData conn
-      print msg
       id <- parseIdentify $ Text.splitOn "\n" $ fromMessage msg
-      putStrLn "Identified"
+      putStrLn " - Identified"
       pure id
 
     -- Format:
@@ -112,17 +110,20 @@ liveApp pageResponse pending = do
 
     connect :: (WS.Connection -> IO ()) -> WS.Connection -> IO ()
     connect run conn = do
-      putStrLn "CONNECT"
+      putStrLn " - connect"
 
       WS.withPingThread conn 30 (return ()) $ do
         -- finally disconnect $ forever (run conn)
         forever (run conn)
 
 
-    onError :: SocketError -> IO ()
-    onError e = do
-      putStrLn $ "ERROR!"
-      print e
+    onSocketError :: SocketError -> IO ()
+    onSocketError e = do
+      putStrLn $ "SOCKET ERROR! " <> show e
+
+    onRuntimeError :: Runtime.Error -> IO ()
+    onRuntimeError e = do
+      putStrLn $ "RUNTIME ERROR! " <> show e
 
     disconnect :: IO ()
     disconnect = do
@@ -148,6 +149,7 @@ talk
 talk (Identified page encModel) state run conn = do
   putStrLn $ "TALK: " <> (show page)
   msg <- liftIO $ WS.receiveData conn :: m Message
+  putStrLn $ " - " <> cs (fromMessage msg)
 
   res <- updateState state msg
 
@@ -170,8 +172,6 @@ talk (Identified page encModel) state run conn = do
       pure res
 
       where
-        -- no type safety yet
-        -- grr 
         updateEnc :: Encoded 'Model -> m (Encoded 'Model, Response)
         updateEnc em = do
           let als = Text.splitOn "\n" $ fromMessage msg :: [Text]
@@ -180,41 +180,13 @@ talk (Identified page encModel) state run conn = do
           pure (resModel res, res)
 
 
-        -- TODO move to Runtime
-        parseModel :: LiveModel model => Encoded 'Model -> m model
-        parseModel em = do
-          case decodeModel encModel of
-            Error e -> throw $ InvalidModel (show page) em
-            Success m -> pure m
+
 
 
 data SocketError
   = NoIdentify [Text]
   | NoIdentifyPage Text
-  | InvalidModel String (Encoded 'Model)
-  | InvalidAction String Message
   deriving (Show, Exception)
 
 
 
-
-
--- Taken from Control.Concurrent. Returns the modified variable at the end
--- modifyMVar :: MVar a -> (a -> IO a) -> IO a
--- modifyMVar m io =
---   mask $ \restore -> do
---     a  <- takeMVar m
---     a' <- restore (io a) `onException` putMVar m a
---     putMVar m a'
---     pure a'
-
--- Run two actions, forward exceptions to the forked thread
-concurrent :: IO () -> IO () -> IO ()
-concurrent act1 act2 = do
-  t <- (forkIO act1)
-  act2 `catch` (onInterrupt t)
-  where
-    onInterrupt :: ThreadId -> AsyncException -> IO ()
-    onInterrupt t e = do
-      throwTo t e
-      throw e

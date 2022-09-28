@@ -57,7 +57,8 @@ data Todo = Todo
 
 data Action
   = AddTodo
-  | NewTodoInput Int Text
+  | Test
+  | NewTodoInput Text
   | NewTodoCategory Category
   | SetCompleted Text Bool
   | Delete Text
@@ -108,8 +109,11 @@ update todos (SetCompleted ct c) m = do
 update todos (NewTodoCategory c) m = do
   pure $ m { addCategory = c }
 
-update todos (NewTodoInput _ t) m = do
+update todos (NewTodoInput t) m = do
   pure $ m { addContent = t }
+
+update _ Test m = do
+  pure m
 
 update _ (Search s) m = do
   pure $ (m :: Model) { search = s }
@@ -142,13 +146,13 @@ view m = div_ [] $ do
 
     div_ [ id_ "add" ] $ do
       button_ [ onClick AddTodo ] "Add"
-      input_ [ name_ "add", value_ (m.addContent), onInput (NewTodoInput 3), onEnter AddTodo ]
+      input' [ name_ "add", value_ (m.addContent), onInput NewTodoInput, onEnter AddTodo ] ""
       dropdown NewTodoCategory (\v -> (cs $ show v)) (\v -> toHtml (cs $ show v :: Text)) [Errand, Home, Work, Personal]
       span_ (toHtml $ show m.addCategory)
 
     div_ [ id_ "search" ] $ do
-      button_ [ onClick Submit, onEnter Submit ] "Search"
-      input_ [ name_ "search", value_ (m.search), onInput (Search), onEnter Submit ]
+      button_ [ ] "Search"
+      input' [ name_ "search", value_ (m.search), onInput (Search) ] ""
 
 
     let ts = m.todos & filter (isSearch m.search)

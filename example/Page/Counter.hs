@@ -44,11 +44,6 @@ view m = section_ [ class_ "page" ] $ do
 
 
 
--- | @input@ element
-
-input' :: Term arg result => arg -> result
-input' = term "input"
-
 
 page :: MonadIO m => Integer -> Page () Model Action m
 page n = simplePage (load n) update view

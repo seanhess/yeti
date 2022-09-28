@@ -16,11 +16,14 @@ import qualified Yeti.Web as Web
 import qualified Page.Counter as Counter
 import qualified Page.Focus as Focus
 import qualified Page.Todo as Todo
+import qualified Page.Article as Article
+import qualified Page.Signup as Signup
+import qualified Page.Todo as Todo
 import Page.Todo (Todo(..))
 import GHC.Generics
 import Data.Aeson (FromJSON(..))
 import Web.Scotty (scotty, ScottyM)
-import Web.Scotty.Trans as Scotty (addHeader, file, get, middleware, param, ActionT, ScottyT)
+import Web.Scotty.Trans as Scotty (addHeader, file, get, middleware, param, ActionT, ScottyT, html)
 import Network.Wai.Handler.WebSockets (websocketsOr)
 import Network.WebSockets.Connection (defaultConnectionOptions, ConnectionOptions(..))
 import Network.Wai as Wai
@@ -50,6 +53,8 @@ data AppPage
   = Counter Integer
   | Focus
   | Todos
+  | Signup
+  | Article Article.Id
   deriving (Generic, Show, FromJSON, ToJSON)
 
 -- TODO better encoding
@@ -62,6 +67,9 @@ instance RoutePage AppPage where
     pure $ Counter cnt
   routePage ["focus"] = pure Focus
   routePage ["todos"] = pure Todos
+  routePage ["signup"] = pure Signup
+  routePage ["article", id] = do
+    pure $ Article (cs id)
   routePage _ = Nothing
 
 
@@ -82,6 +90,15 @@ startWebServer todos = do
       addHeader "Content-Type" "text/css"
       file "example/example.css"
 
+    get "/" $ do
+      html $ cs $ renderBS $ ol_ [] $ do
+        li_ $ a_ [href_ "/app/counter"] "Counter"
+        li_ $ a_ [href_ "/app/signup"] "Signup"
+        li_ $ a_ [href_ "/app/focus"] "Focus"
+        li_ $ a_ [href_ "/app/todo"] "Todo"
+        -- li_ $ a_ [href_ "/app/comp"] "Comp"
+        li_ $ a_ [href_ "/app/article/1"] "Article"
+
     middleware $ yeti cfg run
 
 
@@ -90,6 +107,8 @@ startWebServer todos = do
     run Focus       = Runtime.runPage Focus.page
     run (Counter n) = Runtime.runPage (Counter.page n)
     run Todos       = Runtime.runPage (Todo.page todos)
+    run Signup      = Runtime.runPage Signup.page
+    run (Article i) = Runtime.runPage (Article.page i)
 
 -- type Application = Request -> (Response -> IO ResponseReceived) -> IO ResponseReceived
 yeti :: forall page m. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, RoutePage page) => Render -> PageHandler page m -> Middleware
@@ -109,8 +128,6 @@ yeti cfg run = web . sockets
 
 
 
-
--- Do I embed them?
 toDocument :: Html () -> Html ()
 toDocument = simpleDocument "Example" $ do
 

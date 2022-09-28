@@ -78,7 +78,7 @@ view m = section_ [ class_ "page" ] $ do
         div_ $ toHtml c
 
     div_ [ class_ "section" ] $ do
-      input_ [ value_ m.comment, onInput Comment ] -- onInput Comment, 
+      input' [ value_ m.comment, onInput Comment ] "" -- onInput Comment, 
       button_ [ onClick SubmitComment ] "Submit"
 
 

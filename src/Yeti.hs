@@ -3,13 +3,18 @@ module Yeti
  , LiveModel(encodeModel, decodeModel)
  , LiveAction, encodeAction, encodeAction1, decodeAction, Input(..)
  , simplePage
- , Submit(..)
  , ToParams(..), ToParam(..)
 --  , Value(..)
  , page
  , respond, simpleDocument
  , Render(..)
+
+ -- Web
+ , input'
+
+ -- Events
  , onInput, onClick, onEnter, onSelect, onValue, on
+
  , scripts
  , Html
  , FromJSON, ToJSON, Generic

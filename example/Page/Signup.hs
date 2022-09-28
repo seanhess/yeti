@@ -131,18 +131,18 @@ workingView m v = do
   div_ [ class_ $ if (validUser v) then "section" else "section error" ] $ do
     div_ $ label_ [ for_ "username" ] "Username"
     div_ $ do
-      input_ [ name_ "username", type_ "text", value_ (m.username), onInput (EditUsername) ]
+      input' [ name_ "username", type_ "text", value_ (m.username), onInput (EditUsername) ] ""
       mapM_ (span_ [ class_ "message" ] . toHtml) (userErrorMessages v)
 
   div_ [ class_ $ if (validPass v) then "section" else "section error" ] $ do
     div_ $ label_ [ for_ "password1" ] "Password"
     div_ $ do
-      input_ [ name_ "password1", type_ "password", value_ (m.pass1), onInput (EditPass1) ]
+      input' [ name_ "password1", type_ "password", value_ (m.pass1), onInput (EditPass1) ] ""
       mapM_ (span_ [ class_ "message" ] . toHtml) (passErrorMessages v)
 
   div_ [ class_ $ if (validPass v) then "section" else "section error" ] $ do
     div_ $ label_ [ for_ "password2" ] "Re-type Password"
-    div_ $ input_ [ name_ "password2", type_ "password", value_ (m.pass2), onInput (EditPass2) ]
+    div_ $ input' [ name_ "password2", type_ "password", value_ (m.pass2), onInput (EditPass2) ] ""
 
   div_ [ class_ "row" ] $
     button_ [ onClick SignUp ] "Sign Up"

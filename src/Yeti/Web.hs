@@ -11,11 +11,13 @@ module Yeti.Web
   , lucid
   , queryToText
   , params
+  , input'
   ) where
 
 import Yeti.Prelude
 import Yeti.Runtime as Runtime (Response(..), Page, PageHandler)
-import Yeti.Encode (LiveModel, LiveAction, encodeModel, fromEncoded)
+import Yeti.Encode (LiveModel, LiveAction, encodeModel, fromEncoded, Encoded(..), Encoding(Model))
+import qualified Yeti.Encode as Encode
 import qualified Yeti.Runtime as Runtime
 import Yeti.Params as Params (ToParams(..), urlEncode, urlDecode)
 import Yeti.JS as JS
@@ -26,7 +28,7 @@ import Data.List as List (lookup)
 import Web.Scotty (RoutePattern)
 import Web.Scotty.Trans (ActionT, ScottyT, ScottyError)
 import qualified Web.Scotty.Trans as Scotty
-import Lucid (renderBS, Html, toHtml)
+import Lucid (renderBS, Html, toHtml, Term, term)
 import Lucid.Html5
 import Network.Wai (rawPathInfo, Request(queryString, rawQueryString))
 import Network.HTTP.Types.URI (queryToQueryText, parseQueryText, renderQueryText, QueryText)
@@ -52,9 +54,9 @@ static view =
   lucid view
 
 
--- Only accepts base paths, don't use params!
-page :: (ScottyError e, MonadIO m) => RoutePattern -> ActionT e m () -> ScottyT e m ()
-page = Scotty.matchAny
+-- -- Only accepts base paths, don't use params!
+-- page :: (ScottyError e, MonadIO m) => RoutePattern -> ActionT e m () -> ScottyT e m ()
+-- page = Scotty.matchAny
 
 data Render = Render
   { embedJS :: Bool
@@ -81,6 +83,12 @@ instance Default Render where
 
 
 
+data YetiInit page = YetiInit
+  { state :: Encoded 'Model
+  , page :: page
+  , delimiter :: Text
+  } deriving (Generic, ToJSON)
+
 
 -- this should be for the page to make sure they match!
 pageUrl :: ToParams params => String -> params -> Text
@@ -91,10 +99,11 @@ pageUrl path ps =
 
 
 
-respond :: (ToJSON page) => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
+respond :: forall page. ToJSON page => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
 respond (Render embJS toDocument) pg (Response encModel encParams view) respWai = do
 
-  let content = Lucid.renderBS $ toDocument $ embedContent view
+  let yi = YetiInit encModel pg Encode.delimiter
+  let content = Lucid.renderBS $ toDocument $ embedContent yi view
 
   respWai $ Wai.responseLBS status200 headers content
 
@@ -107,20 +116,19 @@ respond (Render embJS toDocument) pg (Response encModel encParams view) respWai 
     stateJSON :: ByteString
     stateJSON = Aeson.encode $ fromEncoded encModel
 
-    embedStateScript :: Html ()
-    embedStateScript = 
+    embedStateScript :: YetiInit page -> Html ()
+    embedStateScript yi = 
       script_ [type_ "text/javascript", id_ "yeti-state" ] $ Text.intercalate "\n"
         [ ""
-        , "var yetiState = " <> cs stateJSON
-        , "var yetiPage = " <> cs (Aeson.encode pg)
+        , "var yetiInit = " <> cs (Aeson.encode yi)
         , ""
         ]
 
     -- render the root node and embed the javascript
-    embedContent :: Html () -> Html ()
-    embedContent v = do
+    embedContent :: YetiInit page -> Html () -> Html ()
+    embedContent yi v = do
       "\n"
-      embedStateScript
+      embedStateScript yi
       "\n"
       div_ [id_ "yeti-root-content"] v
       "\n"
@@ -206,3 +214,6 @@ lucid h = do
       
 
 
+
+input' :: Term arg result => arg -> result
+input' = term "input"

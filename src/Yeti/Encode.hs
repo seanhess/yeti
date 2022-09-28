@@ -138,7 +138,7 @@ instance Input Bool where
 
 
 newtype Encoded a = Encoded { fromEncoded :: Text }
-  deriving newtype (Show, IsString, Eq)
+  deriving newtype (Show, IsString, Eq, ToJSON)
 
 
 -- A newtype for Value that only allows constructor serialization
@@ -189,14 +189,18 @@ resultMaybe :: Result a -> Maybe a
 resultMaybe (Error e) = Nothing
 resultMaybe (Success a) = Just a
 
+
+delimiter :: Text
+delimiter = "___"
+
 serialize :: Constructor -> Encoded 'Action
 serialize (Constructor c vs) =
-  Encoded $ intercalate "\t"
+  Encoded $ intercalate delimiter
     (c : map (cs . Aeson.encode) vs)
 
 deserialize :: Encoded 'Action -> Maybe Constructor
 deserialize (Encoded e) = do
-  c:vts <- pure $ splitOn "\t" e
+  c:vts <- pure $ splitOn delimiter e
   vs <- mapM (Aeson.decode . cs) vts
   pure $ Constructor c vs
 

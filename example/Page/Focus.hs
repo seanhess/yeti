@@ -51,7 +51,4 @@ view m = section_ [ class_ "page" ] $ do
     div_ $ toHtml $ m.one <> " " <> m.two
 
 
-input' :: Term arg result => arg -> result
-input' = term "input"
-
 
