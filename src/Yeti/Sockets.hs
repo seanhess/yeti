@@ -3,25 +3,19 @@ module Yeti.Sockets where
 import Yeti.Prelude
 import Lucid
 
-import qualified Data.Text as Text
-import qualified Yeti.Runtime as Runtime
-import qualified Yeti.Params as Params
-import Yeti.Page (Response(..), PageHandler)
-import Yeti.Encode (Encoded(..), Encoding(..))
-import Data.ByteString.Lazy (ByteString)
-import qualified Network.WebSockets as WS
-import Network.WebSockets (WebSocketsData)
-import Control.Exception.Lifted (finally, Exception, throw, mask, onException, catch, AsyncException)
-import Control.Concurrent (forkIO, ThreadId, throwTo)
 import Control.Concurrent.MVar.Lifted (MVar, newMVar, modifyMVar)
-import Control.Monad (forever, forM_)
-import Control.Monad.Trans.Control (MonadBaseControl)
+import Control.Exception.Lifted (Exception, throw, catch)
+import Control.Monad (forever)
 import Control.Monad.Base (MonadBase, liftBase)
+import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Aeson as Aeson
-import Data.Aeson.Types
-import Web.Scotty.Trans as Scotty
-import Network.HTTP.Types.URI (queryToQueryText)
-import Network.WebSockets.Connection (defaultConnectionOptions, ConnectionOptions(..))
+import Network.WebSockets (WebSocketsData)
+import Yeti.Encode (Encoded(..), Encoding(..))
+import Yeti.Page (Response(..), PageHandler)
+import qualified Data.Text as Text
+import qualified Network.WebSockets as WS
+import qualified Yeti.Params as Params
+import qualified Yeti.Runtime as Runtime
 
 
 

@@ -4,18 +4,16 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Page.Todo where
 
-import Data.Aeson (ToJSON)
 import Yeti
-import Yeti.Prelude
-import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM, modifyTVar)
+import Prelude
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad (forM_)
-import Data.Default (Default(..))
-import Data.Map as Map (lookup, (!?))
 import Data.Maybe (fromMaybe)
+import Data.String.Conversions (cs)
+import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM)
 import Data.Text as Text (Text, isInfixOf, toLower)
 import Data.Function ((&))
-import Lucid (Html, toHtml, toHtmlRaw, renderBS)
+import Lucid (toHtml)
 import Lucid.Html5
 
 

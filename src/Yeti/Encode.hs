@@ -2,14 +2,11 @@ module Yeti.Encode where
 
 import Yeti.Prelude
 import GHC.Generics hiding (Constructor)
-import Control.Monad (foldM)
 import qualified Data.Aeson as Aeson
 import Data.Aeson (ToJSON, FromJSON(parseJSON), Value(..), Result(..), fromJSON, toJSON, GToJSON', GFromJSON, Zero, Options(..), defaultOptions, genericToJSON, SumEncoding(..), genericParseJSON)
-import Data.Aeson.Types (Parser)
-import qualified Data.Aeson as Aeson
 import qualified Data.Aeson.Types as Aeson
 import qualified Data.Vector as Vector
-import Data.Text (pack, intercalate, splitOn)
+import Data.Text (intercalate, splitOn)
 import Data.String (IsString)
 
 
@@ -31,6 +28,10 @@ class LiveModel a where
       Nothing -> fail $ "Invalid JSON: " <> cs t
       Just val ->
         Aeson.parse (genericParseJSON defaultOptions) val
+
+
+instance LiveModel ()
+
 
 class LiveAction a where
   toConstructor :: a -> Constructor
@@ -90,10 +91,13 @@ class LiveAction a where
 --   def = Info ""
 
 
-data Action = DoNothing
-  deriving (Generic, Show)
--- instance ToJSON Action
-instance LiveAction Action
+-- data Action = DoNothing
+--   deriving (Generic, Show)
+-- -- instance ToJSON Action
+-- instance LiveAction Action
+
+
+instance LiveAction ()
 
 
 

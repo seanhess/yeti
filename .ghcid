@@ -1,1 +1,1 @@
---test SocketExample.mainLive -o ghcid.txt
+--test App.start -o ghcid.txt

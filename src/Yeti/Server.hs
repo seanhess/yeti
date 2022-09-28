@@ -9,45 +9,27 @@ module Yeti.Server
   , yeti
   ) where
 
-import Yeti.Prelude
-import Yeti.Encode (LiveModel, LiveAction, encodeModel, fromEncoded, Encoded(..), Encoding(Model))
-import Yeti.Embed (liveJS)
-import Yeti.Page (RoutePage(..), Response(..), Page, PageHandler)
-import qualified Yeti.Encode as Encode
-import qualified Yeti.Runtime as Runtime
-import Yeti.Params as Params (ToParams(..))
-import Yeti.Sockets (socketApp)
-
-import Control.Monad.Trans.Control (MonadBaseControl)
 import Control.Monad.Base (MonadBase, liftBase)
+import Control.Monad.Trans.Control (MonadBaseControl)
+import Data.Aeson (ToJSON)
 import Data.ByteString.Lazy (ByteString)
-import Data.Text.Encoding.Base64 (encodeBase64, decodeBase64)
-import Data.Text as Text (intercalate, dropWhile)
-import Data.List as List (lookup)
-import Web.Scotty (RoutePattern)
-import Web.Scotty.Trans (ActionT, ScottyT, ScottyError)
-import qualified Web.Scotty.Trans as Scotty
+import Data.Default (Default, def)
 import Lucid (renderBS, Html, toHtml, Term, term)
 import Lucid.Html5
-import Network.Wai (rawPathInfo, Request(queryString, rawQueryString))
+import Network.HTTP.Types (status200)
+import Network.HTTP.Types.URI (queryToQueryText)
+import Network.Wai (ResponseReceived, Middleware)
 import Network.Wai.Handler.WebSockets (websocketsOr)
 import Network.WebSockets (defaultConnectionOptions)
-import Network.HTTP.Types.URI (queryToQueryText, parseQueryText, renderQueryText, QueryText)
-import Data.Binary.Builder (toLazyByteString, Builder)
-import Network.URI.Encode (encodeTextWith, encodeText)
-import Network.URI (isUnreserved)
-import Data.Default (Default, def)
-import Network.Wai (ResponseReceived, Middleware)
-import qualified Network.Wai as Wai
-
-
-import Network.HTTP.Types (status200)
-
-import qualified Data.HashMap.Strict as HM
+import Yeti.Embed (liveJS)
+import Yeti.Encode (Encoded(..), Encoding(Model))
+import Yeti.Page (RoutePage(..), Response(..), PageHandler)
+import Yeti.Prelude
+import Yeti.Sockets (socketApp)
 import qualified Data.Aeson as Aeson
-import Data.Aeson (FromJSON, ToJSON)
-
-import Text.RawString.QQ
+import qualified Data.Text as Text
+import qualified Network.Wai as Wai
+import qualified Yeti.Encode as Encode
 
 
 data Render = Render

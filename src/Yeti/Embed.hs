@@ -1,6 +1,6 @@
 module Yeti.Embed where
 
-import Yeti.Prelude
+-- import Yeti.Prelude
 import Data.ByteString (ByteString)
 import Data.FileEmbed (embedFile)
 

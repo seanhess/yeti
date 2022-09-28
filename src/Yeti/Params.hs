@@ -10,11 +10,9 @@ module Yeti.Params
 
 import Yeti.Prelude
 import Data.List as List (lookup)
-import Data.Proxy (Proxy(..))
 import Data.Tagged (Tagged(..))
 import Data.Time.Calendar (Day)
 import Data.Time.Format (defaultTimeLocale, formatTime, parseTimeM)
-import Yeti.Encode (Encoding(..), Encoded(..))
 import GHC.Generics
 import Network.HTTP.Types.URI (QueryText)
 import Network.URI as URI (isUnreserved, escapeURIString)

@@ -1,10 +1,10 @@
 module Yeti
- ( Page(Page)
+ ( Page(Page), StaticPage, SimplePage
  , PageHandler
  , RoutePage(..)
  , LiveModel(encodeModel, decodeModel)
  , LiveAction, encodeAction, encodeAction1, decodeAction, Input(..)
- , simplePage
+ , simplePage, staticPage
  , ToParams(..), ToParam(..)
 --  , Value(..)
  , Render(..)
@@ -20,7 +20,6 @@ module Yeti
  ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.Default (def)
 import GHC.Generics (Generic)
 import Yeti.Runtime
 import Yeti.Events

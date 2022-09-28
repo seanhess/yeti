@@ -67,7 +67,7 @@ library
       TypeSynonymInstances
       UndecidableInstances
       PolyKinds
-  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes
+  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -Wunused-imports
   build-depends:
       aeson
     , async
@@ -117,7 +117,6 @@ executable yeti-exe
       Page.Focus
       Page.Signup
       Page.Todo
-      SocketExample
       Paths_yeti
   hs-source-dirs:
       example
@@ -150,7 +149,7 @@ executable yeti-exe
       TypeSynonymInstances
       UndecidableInstances
       PolyKinds
-  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -Wunused-imports -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , async
@@ -229,7 +228,7 @@ test-suite yeti-test
       TypeSynonymInstances
       UndecidableInstances
       PolyKinds
-  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -Wunused-imports -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , async

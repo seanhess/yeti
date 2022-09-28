@@ -4,11 +4,10 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Page.Counter where
 
-import Data.Maybe (fromMaybe)
 import Prelude
 import Yeti
 import Control.Monad.IO.Class (MonadIO)
-import Lucid (Html, toHtml, Term, term)
+import Lucid (toHtml)
 import Lucid.Html5
 
 data Model = Model

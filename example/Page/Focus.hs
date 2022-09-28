@@ -8,13 +8,8 @@ module Page.Focus where
 import Prelude
 import Yeti
 
-import Data.String.Conversions (cs)
-import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text (Text)
-import Data.Maybe (fromMaybe)
-import Control.Lens (Lens', lens, (+=), (-=), (.=), (^.), makeLenses)
-import Lucid (Html, toHtml, toHtmlRaw, renderBS, Term, term)
+import Lucid (toHtml)
 import Lucid.Html5
 
 
@@ -29,14 +24,14 @@ data Action
   deriving (Show, Generic, LiveAction)
 
 
-page :: MonadIO m => Page () Model Action m
+page :: Applicative m => Page () Model Action m
 page = simplePage load update view
 
-load :: MonadIO m => m Model
+load :: Applicative m => m Model
 load = do
   pure $ Model "a" "b"
 
-update :: MonadIO m => Action -> Model -> m Model
+update :: Applicative m => Action -> Model -> m Model
 update (One t) m = pure $ m { one = t }
 update (Two t) m = pure $ m { two = t }
 

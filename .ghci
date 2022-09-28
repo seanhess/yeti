@@ -1,4 +1,4 @@
 :set prompt      "\ESC[0;34mλ> \ESC[m"
 :set prompt-cont "\ESC[0;34mλ| \ESC[m"
 :set -XOverloadedStrings
-:load SocketExample
+:load App

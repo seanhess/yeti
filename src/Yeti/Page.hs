@@ -4,7 +4,6 @@ import Yeti.Prelude
 import Yeti.Encode (Encoded(..), Encoding(Model, Action))
 import Yeti.Params (QueryText)
 import Data.Aeson
-import Text.Read (readMaybe)
 import Lucid (Html)
 
 
@@ -25,6 +24,9 @@ type Params params model   = model -> params
 type Update action model m = action -> model -> m model
 type View          model   = model -> Html ()
 
+type StaticPage m = Page () () () m
+type SimplePage model action m = Page () model action m
+
 
 -- a page without params
 simplePage
@@ -36,7 +38,12 @@ simplePage
 simplePage int up vw = Page (const ()) (const int) up vw
 
 
+staticPage :: Applicative m => Html () -> Page () () () m
+staticPage view = Page (const ()) (\_ -> pure ()) (\_ _ -> pure ()) (const view)
+
+
 -- TODO better encoding
+-- TODO generalized!
 class (Show page, ToJSON page, FromJSON page) => RoutePage page where
   routePage :: [Text] -> Maybe page
 

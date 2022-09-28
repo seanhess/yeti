@@ -8,9 +8,8 @@ module Page.Article where
 import Prelude
 import Yeti
 import Data.Text (Text)
-import Control.Monad.IO.Class (MonadIO)
 import Control.Monad (forM_)
-import Lucid (Html, toHtml)
+import Lucid (toHtml)
 import Lucid.Html5
 import qualified Data.List as List
 

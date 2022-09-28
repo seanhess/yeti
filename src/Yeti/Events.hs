@@ -2,19 +2,11 @@
 {-# LANGUAGE DerivingStrategies #-}
 module Yeti.Events where
 
-import Yeti.Prelude
 
-import Data.Aeson (ToJSON(..), FromJSON(..))
-import qualified Data.Aeson as Aeson
-import Data.List as List
-import Data.Map as Map (Map, null, empty)
-import Data.String.Conversions (cs)
-import Data.Text as Text (Text, takeWhile, dropWhile, dropWhileEnd, splitOn)
-import Data.Char (isAlphaNum)
-import Data.Default (Default(..))
+import Data.Map as Map (null, empty)
+import Yeti.Prelude
 import Yeti.Encode
 import Lucid.Base (makeAttributes, Attributes)
-import Lucid.Html5 (onchange_)
 
 
 type Name = Text

@@ -7,14 +7,12 @@ module Page.Signup where
 import Prelude
 import Yeti
 
-import Data.Aeson (FromJSON, ToJSON)
-import Data.String.Conversions (cs)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text as Text (Text, length, any)
 import Data.Char (isDigit, isAlpha, isPunctuation, isUpper, isLower)
-import Data.Maybe (fromMaybe, catMaybes)
-import Lucid (Html, toHtml, toHtmlRaw, renderBS)
+import Data.Maybe (catMaybes)
+import Lucid (toHtml)
 import Lucid.Html5 hiding (onclick_)
 
 
