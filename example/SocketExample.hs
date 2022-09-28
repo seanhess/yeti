@@ -92,12 +92,12 @@ startWebServer todos = do
 
     get "/" $ do
       html $ cs $ renderBS $ ol_ [] $ do
-        li_ $ a_ [href_ "/app/counter"] "Counter"
-        li_ $ a_ [href_ "/app/signup"] "Signup"
-        li_ $ a_ [href_ "/app/focus"] "Focus"
-        li_ $ a_ [href_ "/app/todo"] "Todo"
+        li_ $ a_ [href_ "/counter"] "Counter"
+        li_ $ a_ [href_ "/signup"] "Signup"
+        li_ $ a_ [href_ "/focus"] "Focus"
+        li_ $ a_ [href_ "/todo"] "Todo"
         -- li_ $ a_ [href_ "/app/comp"] "Comp"
-        li_ $ a_ [href_ "/app/article/1"] "Article"
+        li_ $ a_ [href_ "/article/1"] "Article"
 
     middleware $ yeti cfg run
 
