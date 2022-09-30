@@ -1,9 +1,9 @@
 export type Page = {
-  tag: string
+  fromPage: string
 }
 
 export type State = {
-  fromState: string
+  fromState: Object
 }
 
 export type Delimiter = {
@@ -31,15 +31,13 @@ export function fromAction(act:Action):string {
   return act.constructor + " " + JSON.stringify(act.args)
 }
 
-declare var yetiInit: {
-  state: string;
-  page: { tag: string };
-}
+declare var yetiPage: string;
+declare var yetiState: Object;
 
 export type Init = {
   state: State
   page: Page
 }
 
-export const INIT_PAGE:Page = yetiInit.page
-export const INIT_STATE:State = { fromState: yetiInit.state }
+export const INIT_PAGE:Page = { fromPage: yetiPage }
+export const INIT_STATE:State = { fromState: yetiState }

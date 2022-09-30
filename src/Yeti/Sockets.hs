@@ -8,10 +8,9 @@ import Control.Exception.Lifted (Exception, throw, catch)
 import Control.Monad (forever)
 import Control.Monad.Base (MonadBase, liftBase)
 import Control.Monad.Trans.Control (MonadBaseControl)
-import Data.Aeson as Aeson
 import Network.WebSockets (WebSocketsData)
 import Yeti.Encode (Encoded(..), Encoding(..))
-import Yeti.Page (Response(..), PageHandler)
+import Yeti.Page (Response(..), PageHandler, RoutePage(..), pathSegments)
 import qualified Data.Text as Text
 import qualified Network.WebSockets as WS
 import qualified Yeti.Params as Params
@@ -24,7 +23,7 @@ newtype Message = Message { fromMessage :: Text }
 
 
 socketApp
-  :: forall page m a. (MonadBase m IO, MonadIO m, MonadBaseControl IO m, FromJSON page, Show page)
+  :: forall page m a. (RoutePage page, MonadBase m IO, MonadIO m, MonadBaseControl IO m)
   => PageHandler page m
   -> WS.PendingConnection
   -> IO ()
@@ -65,7 +64,7 @@ socketApp pageResponse pending = do
 
     parsePage :: Text -> IO page
     parsePage p =
-      case Aeson.decode (cs p) of
+      case routePage (pathSegments p) of
         Nothing -> do
           throw $ NoIdentifyPage p
         Just pg -> do
@@ -103,14 +102,14 @@ data Identified page = Identified
 -- It's all right here, except for the connection
 -- run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
 talk
-  :: forall page m. (Show page, MonadIO m, MonadBase IO m, MonadBase m IO, MonadBaseControl IO m)
+  :: forall page m. (MonadIO m, MonadBase IO m, MonadBase m IO, MonadBaseControl IO m)
   => Identified page
   -> MVar (Encoded 'Model)
   -> PageHandler page m
   -> WS.Connection ->
   m ()
 talk (Identified page encModel) state run conn = do
-  putStrLn $ "TALK: " <> (show page)
+  -- putStrLn $ "TALK: " <> (show page)
   msg <- liftIO $ WS.receiveData conn :: m Message
   putStrLn $ " - " <> cs (fromMessage msg)
 

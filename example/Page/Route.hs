@@ -13,7 +13,7 @@ data AppPage
   | Signup
   | Index
   | Article Article.Id
-  deriving (Generic, Show, FromJSON, ToJSON, RoutePage)
+  deriving (Generic, Show, RoutePage)
 
 
 mainView :: Html ()
@@ -25,7 +25,7 @@ mainView = do
     page Todos
     page (Article "1")
   where
-    page :: RoutePage p => p -> Html ()
+    page :: AppPage -> Html ()
     page p = 
       li_ $ a_ [href_ $ pageUrlPath p] (toHtml $ show p)
 

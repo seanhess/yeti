@@ -3,8 +3,7 @@ module Yeti.Page where
 import Yeti.Prelude
 import Yeti.Encode (Encoded(..), Encoding(Model, Action))
 import Yeti.Params (QueryText)
-import Data.Aeson
-import Data.Text as Text (toLower, intercalate)
+import Data.Text as Text (toLower, intercalate, dropWhile, splitOn)
 import Text.Read (readMaybe)
 import GHC.Generics
 import Lucid (Html)
@@ -63,10 +62,13 @@ data Response = Response
 pageUrlPath :: (RoutePage page) => page -> Text
 pageUrlPath p = "/" <> intercalate "/" (pageRoute p)
 
+pathSegments :: Text -> [Text] 
+pathSegments path = Text.splitOn "/" $ Text.dropWhile (== '/') path
+
 
 -- TODO better encoding
 -- TODO generalized!
-class (Show page, ToJSON page, FromJSON page) => RoutePage page where
+class RoutePage page where
   routePage :: [Text] -> Maybe page
   pageRoute :: page -> [Text]
 
@@ -75,6 +77,7 @@ class (Show page, ToJSON page, FromJSON page) => RoutePage page where
 
   default pageRoute :: (Generic page, GenRoute (Rep page)) => page -> [Text]
   pageRoute p = genPageRoute $ from p
+
 
 class GenRoute f where
   genRoutePage :: [Text] -> Maybe (f p)

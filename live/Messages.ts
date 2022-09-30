@@ -66,7 +66,7 @@ export class Messages {
   }
 
   register(page:Page, state:State) {
-    this.send([JSON.stringify(page), state.fromState])
+    this.send([page.fromPage, JSON.stringify(state.fromState)])
   }
 
   // don't actually send. Keep track of callbacks!

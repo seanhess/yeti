@@ -11,7 +11,6 @@ module Yeti.Server
 
 import Control.Monad.Base (MonadBase, liftBase)
 import Control.Monad.Trans.Control (MonadBaseControl)
-import Data.Aeson (ToJSON)
 import Data.ByteString.Lazy (ByteString)
 import Data.Default (Default, def)
 import Lucid (renderBS, Html, toHtml, Term, term)
@@ -22,8 +21,8 @@ import Network.Wai (ResponseReceived, Middleware)
 import Network.Wai.Handler.WebSockets (websocketsOr)
 import Network.WebSockets (defaultConnectionOptions)
 import Yeti.Embed (liveJS)
-import Yeti.Encode (Encoded(..), Encoding(Model))
-import Yeti.Page (RoutePage(..), Response(..), PageHandler)
+import Yeti.Encode (Encoded(..))
+import Yeti.Page (RoutePage(..), Response(..), PageHandler, pageUrlPath)
 import Yeti.Prelude
 import Yeti.Sockets (socketApp)
 import qualified Data.Aeson as Aeson
@@ -45,12 +44,6 @@ defaultConfig = Render True (simpleDocument "Yeti" "")
 
 
 
-data YetiInit page = YetiInit
-  { state :: Encoded 'Model
-  , page :: page
-  } deriving (Generic, ToJSON)
-
-
 -- -- this should be for the page to make sure they match!
 -- pageUrl :: ToParams params => String -> params -> Text
 -- pageUrl path ps =
@@ -64,11 +57,10 @@ type DocumentTitle = Text
 
 type ToDocument = Html () -> Html ()
 
-respondWai :: forall page. ToJSON page => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
+respondWai :: forall page. RoutePage page => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
 respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = do
 
-  let yi = YetiInit encModel pg
-  let content = Lucid.renderBS $ toDoc $ embedContent yi view
+  let content = Lucid.renderBS $ toDoc $ embedContent view
 
   respWai $ Wai.responseLBS status200 headers content
 
@@ -82,19 +74,20 @@ respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = 
     stateJSON :: ByteString
     stateJSON = Aeson.encode $ fromEncoded encModel
 
-    embedStateScript :: YetiInit page -> Html ()
-    embedStateScript yi = 
+    embedStateScript :: Html ()
+    embedStateScript = 
       script_ [type_ "text/javascript", id_ "yeti-state" ] $ Text.intercalate "\n"
         [ ""
-        , "var yetiInit = " <> cs (Aeson.encode yi)
+        , "var yetiPage = " <> (cs $ Aeson.encode $ pageUrlPath pg)
+        , "var yetiState = " <> fromEncoded encModel
         , ""
         ]
 
     -- render the root node and embed the javascript
-    embedContent :: YetiInit page -> Html () -> Html ()
-    embedContent yi v = do
+    embedContent :: Html () -> Html ()
+    embedContent v = do
       "\n"
-      embedStateScript yi
+      embedStateScript
       "\n"
       div_ [id_ "yeti-root-content"] v
       "\n"
