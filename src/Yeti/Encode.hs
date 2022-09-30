@@ -25,7 +25,7 @@ class LiveModel a where
   default decodeModel :: (Generic a, GFromJSON Zero (Rep a)) => Encoded 'Model -> Result a
   decodeModel (Encoded t) =
     case Aeson.decode $ cs t of
-      Nothing -> fail $ "Invalid JSON: " <> cs t
+      Nothing -> Error $ "Invalid JSON Value: " <> cs t
       Just val ->
         Aeson.parse (genericParseJSON defaultOptions) val
 
@@ -171,7 +171,6 @@ instance FromJSON Constructor where
       -- One Argument
       [String c, v1] ->
         pure $ Constructor c [v1]
-
 
       val -> fail $ "Expected [constructor, values...] but got: " <> show val
 

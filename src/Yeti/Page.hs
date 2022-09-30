@@ -66,8 +66,6 @@ pathSegments :: Text -> [Text]
 pathSegments path = Text.splitOn "/" $ Text.dropWhile (== '/') path
 
 
--- TODO better encoding
--- TODO generalized!
 class RoutePage page where
   routePage :: [Text] -> Maybe page
   pageRoute :: page -> [Text]

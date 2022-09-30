@@ -18,8 +18,6 @@ import qualified Page.Focus as Focus
 import qualified Page.Signup as Signup
 import qualified Page.Todo as Todo
 
--- TODO make root page be an actual static page. Add "staticPage" to wherver page is defined to make it easy?
-
 start :: IO ()
 start = do
   todos <- atomically $ newTVar [Todo "Test Item" Todo.Errand False]
@@ -55,6 +53,7 @@ startServer todos = do
     go Signup      = run Signup.page
     go Index       = run mainPage
     go (Article i) = run (Article.page i)
+
 
 
     config :: Render

@@ -7,8 +7,10 @@ module Page.Article where
 
 import Prelude
 import Yeti
-import Data.Text (Text)
+import Error (PageError(..))
+import Data.Text (Text, unpack)
 import Control.Monad (forM_)
+import Control.Exception (throw)
 import Lucid (toHtml)
 import Lucid.Html5
 import qualified Data.List as List
@@ -35,7 +37,6 @@ data Article = Article
   , articleText :: Text
   } deriving (Generic, ToJSON, FromJSON)
 
-
 data Action
   = Comment Text
   | SubmitComment
@@ -43,16 +44,11 @@ data Action
   | Woot Text
   deriving (Show, Generic, LiveAction)
 
--- TODO this should be a 404 if the post is missing!
--- could I return a maybe model instead? A nothing?
--- there could be a list of cool things
--- Model myModel
--- Missing message
--- etc...
+-- TODO this page should be able to throw a 404 and hit the handler if it wants
 load :: (MonadFail m) => Id -> m Model
 load i = do
   case List.lookup i fakeDatabase of
-    Nothing -> fail "Could not find article!"
+    Nothing -> throw $ NotFound $ "Article " <> unpack i
     Just a -> pure $ Model a "" []
 
 update :: Monad m => Action -> Model -> m Model
