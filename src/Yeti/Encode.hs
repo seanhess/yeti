@@ -6,7 +6,7 @@ import qualified Data.Aeson as Aeson
 import Data.Aeson (ToJSON, FromJSON(parseJSON), Value(..), Result(..), fromJSON, toJSON, GToJSON', GFromJSON, Zero, Options(..), defaultOptions, genericToJSON, SumEncoding(..), genericParseJSON)
 import qualified Data.Aeson.Types as Aeson
 import qualified Data.Vector as Vector
-import Data.Text (intercalate, splitOn)
+import qualified Data.Text as Text
 import Data.String (IsString)
 
 
@@ -194,19 +194,21 @@ resultMaybe (Error e) = Nothing
 resultMaybe (Success a) = Just a
 
 
-delimiter :: Text
-delimiter = "___"
-
 serialize :: Constructor -> Encoded 'Action
+serialize (Constructor c []) =
+  Encoded c
 serialize (Constructor c vs) =
-  Encoded $ intercalate delimiter
-    (c : map (cs . Aeson.encode) vs)
+  Encoded $ c <> " " <> (cs $ Aeson.encode vs)
 
 deserialize :: Encoded 'Action -> Maybe Constructor
-deserialize (Encoded e) = do
-  c:vts <- pure $ splitOn delimiter e
-  vs <- mapM (Aeson.decode . cs) vts
-  pure $ Constructor c vs
+deserialize (Encoded t) = do
+  let (con, rest) = Text.breakOn " " t
+  let vse = Text.stripStart rest
+  vs <- decodeArgs vse
+  pure $ Constructor con vs
+  where
+    decodeArgs "" = pure []
+    decodeArgs x = Aeson.decode (cs x)
 
 
 
@@ -247,3 +249,7 @@ decodeAction e =
 
 
 
+
+
+-- encoding: 
+-- constructorName<SPACE>[Aeson Params]

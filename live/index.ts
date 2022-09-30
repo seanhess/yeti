@@ -2,7 +2,7 @@ import { hydrate, patch, render, DOMNode } from 'million';
 import { fromDomNodeToVNode, fromStringToDomNode } from 'million/utils';
 import { listenEvents } from './events';
 import { WEBSOCKET_ADDRESS, Messages } from './Messages'
-import { DELIMITER, INIT_PAGE, INIT_STATE, State } from './types';
+import { INIT_PAGE, INIT_STATE, State } from './types';
 
 
 
@@ -11,7 +11,7 @@ console.log("VERSION 1", INIT_PAGE, INIT_STATE)
 var currentState:State = INIT_STATE
 var rootElement:DOMNode
 
-const messages = new Messages(DELIMITER)
+const messages = new Messages()
 messages.onUpdate(update)
 messages.onClose(() => {
   // reconnect on close
@@ -60,7 +60,4 @@ window.addEventListener("load", function() {
   let initContent = fromDomNodeToVNode(firstChild)
   rootElement = patch(rootElement, initContent)
 })
-
-// EVENTS: All via event bubbling up to document
-// then when the DOM is changed, they still work
 

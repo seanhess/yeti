@@ -29,7 +29,6 @@ import Yeti.Sockets (socketApp)
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
 import qualified Network.Wai as Wai
-import qualified Yeti.Encode as Encode
 
 
 data Render = Render
@@ -49,7 +48,6 @@ defaultConfig = Render True (simpleDocument "Yeti" "")
 data YetiInit page = YetiInit
   { state :: Encoded 'Model
   , page :: page
-  , delimiter :: Text
   } deriving (Generic, ToJSON)
 
 
@@ -69,7 +67,7 @@ type ToDocument = Html () -> Html ()
 respondWai :: forall page. ToJSON page => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
 respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = do
 
-  let yi = YetiInit encModel pg Encode.delimiter
+  let yi = YetiInit encModel pg
   let content = Lucid.renderBS $ toDoc $ embedContent yi view
 
   respWai $ Wai.responseLBS status200 headers content

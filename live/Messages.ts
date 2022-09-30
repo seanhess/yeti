@@ -1,5 +1,5 @@
-import {Page, State} from "./types"
-import { Delimiter } from "./types";
+import {fromAction, Page, State} from "./types"
+import { Action } from "./types";
 
 export const WEBSOCKET_ADDRESS = "ws://" + location.host
 
@@ -16,13 +16,11 @@ export class Messages {
 
   queue:string[]
   isOpen:boolean
-  delimiter:string
   page:Page
 
-  constructor(delimiter:Delimiter) {
+  constructor() {
     this.isOpen = false
     this.queue = []
-    this.delimiter = delimiter.fromDelimiter
   }
 
   onUpdate(up:Update) {
@@ -90,8 +88,9 @@ export class Messages {
     this.send([action])
   }
 
-  sendActionVal(action:string, val:string) {
-    this.send([[action, val].join(this.delimiter)])
+  sendActionVal(action:Action, val:string) {
+    action.args.push(val)
+    this.send([fromAction(action)])
   }
 
   sendQueue() {

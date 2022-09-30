@@ -1,5 +1,8 @@
 import { Messages } from "./Messages";
+import { toAction } from "./types"
 
+// EVENTS: All via event bubbling up to document
+// then when the DOM is changed, they still work
 
 export function listenEvents(messages:Messages) {
 
@@ -10,8 +13,6 @@ export function listenEvents(messages:Messages) {
     // Find the nearest source that has a click handler
     var source:HTMLElement = el.closest("[data-on-click]");
 
-    // console.log("Click", source)
-
     if (source?.dataset.onClick) {
       messages.sendAction(source.dataset.onClick)
     }
@@ -21,8 +22,8 @@ export function listenEvents(messages:Messages) {
   document.addEventListener("input", function(e) {
     let el = e.target as HTMLInputElement
     if (el.dataset.onInput) {
-      let val = JSON.stringify(el.value)
-      messages.sendActionVal(el.dataset.onInput, val)
+      let act = el.dataset.onInput
+      messages.sendActionVal(toAction(act), el.value)
     }
   })
 
