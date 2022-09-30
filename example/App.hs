@@ -58,12 +58,19 @@ startServer todos = do
 
 
     config :: Render
-    config = Render False $ simpleDocument "Example" $ do
+    config = Render False $ \content -> do
+      html_ $ do
+        head_ $ do
 
-      -- add stylesheets, etc
-      link_ [type_ "text/css", rel_ "stylesheet", href_ "/example.css"]
+          -- TODO title should be set based on the page
+          title_ "Example"
+          meta_ [charset_ "UTF-8"]
+          meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
+          meta_ [name_ "viewport", content_ "width=device-width, initial-scale=1.0" ]
 
-      -- Custom Javascript should be last
-      script_ [type_ "text/javascript", src_ "/yeti.js"] ("" :: Text)
+          link_ [type_ "text/css", rel_ "stylesheet", href_ "/example.css"]
 
+        body_ $ do
+          content
+          script_ [type_ "text/javascript", src_ "/yeti.js"] ("" :: Text)
 

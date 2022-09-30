@@ -20,6 +20,7 @@ import Lucid.Html5
 data Model = Model
   { todos :: [Todo]
   , search :: Text
+  , searchCurrent :: Text
   , addContent :: Text
   , addCategory :: Category
   } deriving (Show, Generic, LiveModel, FromJSON)
@@ -60,7 +61,8 @@ data Action
   | NewTodoCategory Category
   | SetCompleted Text Bool
   | Delete Text
-  | Search Text
+  | SearchFilter Text
+  | SearchSave
   deriving (Show, Generic, LiveAction)
 
 
@@ -70,11 +72,13 @@ data Action
 -- you have to load even if no params were specified
 load :: MonadIO m => TVar [Todo] -> Maybe Params -> m Model
 load savedTodos mps = do
+  -- if params search is set, set ours
   let (Params src) = fromMaybe (Params "") $ mps
   ts <- liftIO $ atomically $ readTVar savedTodos
   pure $ Model
     { todos = ts
     , search = src
+    , searchCurrent = src
     , addContent = ""
     , addCategory = Errand
     }
@@ -113,8 +117,11 @@ update todos (NewTodoInput t) m = do
 update _ Test m = do
   pure m
 
-update _ (Search s) m = do
-  pure $ (m :: Model) { search = s }
+update _ (SearchFilter s) m = do
+  pure $ (m :: Model) { searchCurrent = s }
+
+update _ (SearchSave) m = do
+  pure $ (m :: Model) { search = m.searchCurrent }
 
 
 
@@ -149,11 +156,11 @@ view m = div_ [] $ do
       span_ (toHtml $ show m.addCategory)
 
     div_ [ id_ "search" ] $ do
-      button_ [ ] "Search"
-      input' [ name_ "search", value_ (m.search), onInput (Search) ] ""
+      button_ [ onClick SearchSave ] "Search"
+      input' [ name_ "search", value_ (m.search), onInput SearchFilter, onEnter SearchSave ] ""
 
 
-    let ts = m.todos & filter (isSearch m.search)
+    let ts = m.todos & filter (isSearch m.searchCurrent)
 
     div_ [ class_ "col g8"] $ do
       forM_ ts $ \todo ->

@@ -31,7 +31,7 @@ type StaticPage m = Page () () () m
 type SimplePage model action m = Page () model action m
 
 
--- a page without params
+-- | Page without params
 simplePage
   :: forall action model m. Applicative m
   => m model
@@ -41,17 +41,17 @@ simplePage
 simplePage int up vw = Page (const ()) (const int) up vw
 
 
+-- | Page with only a view and no model
 staticPage :: Applicative m => Html () -> Page () () () m
 staticPage view = Page (const ()) (\_ -> pure ()) (\_ _ -> pure ()) (const view)
 
 
 
 
+-- | Map your page type to your pages via `run`. See examples
 type PageHandler page m = page -> Maybe (Encoded 'Model) -> QueryText -> [Encoded 'Action] -> m Response
 
 
-
--- This needs to be encoded already
 data Response = Response
   { resModel :: Encoded 'Model
   , resParams :: QueryText
