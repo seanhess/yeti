@@ -3,6 +3,7 @@ module Page.Route where
 import Prelude
 import Yeti
 import Lucid.Html5
+import Lucid (toHtml)
 import qualified Page.Article as Article
 
 data AppPage
@@ -18,11 +19,15 @@ data AppPage
 mainView :: Html ()
 mainView = do
   ol_ [] $ do
-    li_ $ a_ [href_ "/counter/11"] "Counter 11"
-    li_ $ a_ [href_ "/signup"] "Signup"
-    li_ $ a_ [href_ "/focus"] "Focus"
-    li_ $ a_ [href_ "/todos"] "Todo"
-    li_ $ a_ [href_ "/article/1"] "Article"
+    page (Counter 11)
+    page Signup
+    page Focus
+    page Todos
+    page (Article "1")
+  where
+    page :: RoutePage p => p -> Html ()
+    page p = 
+      li_ $ a_ [href_ $ pageUrlPath p] (toHtml $ show p)
 
 -- Example of how to do a completely static page
 mainPage :: Applicative m => StaticPage m

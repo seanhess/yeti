@@ -1,7 +1,7 @@
 module Yeti
  ( Page(Page), StaticPage, SimplePage
  , PageHandler
- , RoutePage(..)
+ , RoutePage(..), pageUrlPath
  , LiveModel(encodeModel, decodeModel)
  , LiveAction, encodeAction, encodeAction1, decodeAction, Input(..)
  , simplePage, staticPage
