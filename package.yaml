@@ -21,6 +21,7 @@ description:         Please see the README on GitHub at <https://github.com/sean
 dependencies:
 - base >= 4.7 && < 5
 - aeson
+- aeson-pretty
 - async
 - base64
 - binary
