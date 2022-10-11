@@ -1,1 +1,1 @@
---test Yeti.VDOM.test -o ghcid.txt
+--test Yeti.View.test -o ghcid.txt

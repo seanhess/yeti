@@ -34,7 +34,9 @@ library
       Yeti.Runtime
       Yeti.Server
       Yeti.Sockets
-      Yeti.VDOM
+      Yeti.View
+      Yeti.View.Tag
+      Yeti.View.Types
   other-modules:
       Paths_yeti
   hs-source-dirs:
