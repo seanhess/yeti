@@ -35,10 +35,10 @@ test = do
 
     green = addClass ["green-text"]
 
-    body = do
+    body = col (p S0) $ do
       txt (myAtt "value") "hello world"
 
-      el (border B2) $ do
+      col (border B2) $ do
         -- we would never want to put multiple text nodes as siblings. Or at least very rarely
         -- we may want to span them, but whatever
 

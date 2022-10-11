@@ -3,8 +3,10 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 module Yeti.View.UI where
 
+import Yeti.Prelude
 import qualified Yeti.View.Tailwind as Tailwind
 import Yeti.View.Types
+import Yeti.View.Tailwind.Values (Direction(Row, Col))
 -- import Web.UI.Types
 -- import Tailwind.Classes
 -- import Tailwind.Values
@@ -66,3 +68,13 @@ placeholder = setAttribute "placeholder"
 
 absolute' = addClass (Tailwind.absolute)
 relative' = addClass (Tailwind.relative)
+
+
+row :: Att a -> View b () -> View Content ()
+row f cnt = el (flex Row . flex () . f) cnt
+
+col :: Att a -> View b () -> View Content ()
+col f cnt = el (flex Col . flex () . f) cnt
+
+space :: View Content ()
+space = el (grow) $ pure ()
