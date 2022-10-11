@@ -35,8 +35,14 @@ library
       Yeti.Server
       Yeti.Sockets
       Yeti.View
-      Yeti.View.Tag
+      Yeti.View.Tailwind
+      Yeti.View.Tailwind.Classes
+      Yeti.View.Tailwind.Options
+      Yeti.View.Tailwind.Prefix
+      Yeti.View.Tailwind.Types
+      Yeti.View.Tailwind.Values
       Yeti.View.Types
+      Yeti.View.UI
   other-modules:
       Paths_yeti
   hs-source-dirs:
@@ -73,12 +79,12 @@ library
   ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -Wunused-imports
   build-depends:
       aeson
-    , aeson-pretty
     , async
     , base >=4.7 && <5
     , base64
     , binary
     , bytestring
+    , casing
     , containers
     , data-default
     , file-embed
@@ -156,12 +162,12 @@ executable yeti-exe
   ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -Wunused-imports -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
-    , aeson-pretty
     , async
     , base >=4.7 && <5
     , base64
     , binary
     , bytestring
+    , casing
     , containers
     , data-default
     , file-embed
@@ -236,12 +242,12 @@ test-suite yeti-test
   ghc-options: -Wincomplete-patterns -Wdodgy-exports -Wdodgy-imports -Wincomplete-record-updates -Wname-shadowing -fdefer-typed-holes -Wunused-imports -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
-    , aeson-pretty
     , async
     , base >=4.7 && <5
     , base64
     , binary
     , bytestring
+    , casing
     , containers
     , data-default
     , file-embed

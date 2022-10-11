@@ -6,6 +6,10 @@ module Yeti.View
 
 import Yeti.Prelude
 import Yeti.View.Types
+
+-- need to re-export tailwind stuff somewhere
+import Yeti.View.UI
+import Yeti.View.Tailwind.Values
 import Data.Aeson
 
 
@@ -13,37 +17,35 @@ test :: IO ()
 test = do
   putStrLn "TEST"
   print doc
-  print content
+  print body
 
   -- -- woot!
-  let out = encode $ vdom $ content
+  let out = encode $ vdom body
   putStrLn $ cs out
   -- print (decode out :: Maybe VDOM)
 
   where
-    doc = document "my title" content
+    doc = document "my title" body
 
     hello = 
-      text (border) "Hello World"
+      txt (border B1) "Hello World"
       -- tag "div" [attribute "key" "value"] $ text "hello world"
 
     myAtt = setAttribute "my-attribute"
 
     green = addClass ["green-text"]
 
-    content = do
-      text (myAtt "value") "hello world"
+    body = do
+      txt (myAtt "value") "hello world"
 
-      node (border) $ do
+      el (border B2) $ do
         -- we would never want to put multiple text nodes as siblings. Or at least very rarely
         -- we may want to span them, but whatever
 
         -- do we want this instead of text, row, col, etc?
-        node (green) ("one" :: View Content ()) 
-        text (addClass ["check", "asdf"] . addClass ["woot woot"]) "two"
-        text (green) "three"
+        el (green) ("one" :: View Content ()) 
+        txt (addClass ["check", "asdf"] . addClass ["woot woot"]) "two"
+        txt (green) "three"
 
 
-border :: Att a
-border = addClass ["border-1"]
 

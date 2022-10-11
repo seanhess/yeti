@@ -4,6 +4,7 @@
 module Yeti.View.Types where
 
 import Yeti.Prelude
+import Yeti.View.Tailwind.Types (Class(..))
 import Data.Aeson (ToJSON(..), FromJSON(..))
 import Control.Monad.Writer.Lazy (Writer, execWriter, tell, MonadWriter)
 import qualified Data.Map as Map
@@ -19,8 +20,6 @@ type Attributes = Map Name AttValue
 
 type Att a = Attributes -> Attributes
 
-newtype Class = Class { fromClass :: Text }
-  deriving newtype IsString
 
 
 -- | Add a class attribute. If it exists, combine with spaces
@@ -106,12 +105,12 @@ tag nm as ctu = tell
   [ Node $ Tag nm as (execViewContent ctu) ]
 
 -- | A generic node with style, attributes, and content 
-node :: Att a -> View a () -> View Content ()
-node f ct = tag "div" (f []) ct
+el :: Att a -> View a () -> View Content ()
+el f ct = tag "div" (f []) ct
 
 -- | A styled inline text node
-text :: Att a -> Text -> View Content ()
-text f ct = tag "span" (f []) (fromText ct)
+txt :: Att a -> Text -> View Content ()
+txt f ct = tag "span" (f []) (fromText ct)
 
 -- | Convert from text directly to view. You should not have to use this. Use `text` instead
 fromText :: Text -> View a ()
