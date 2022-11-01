@@ -9,6 +9,7 @@ import Control.Monad.Writer.Lazy (Writer, execWriter, tell, MonadWriter)
 import qualified Data.Map as Map
 import qualified Data.Text as Text
 import Data.String (IsString(..))
+import qualified Data.Text.Lazy as Lazy
 
 
 type Name = Text
@@ -114,12 +115,12 @@ instance IsString (View Content ()) where
 execViewContent :: View a x -> [Content]
 execViewContent (View wts) = execWriter wts
 
-tag :: Text -> Attributes -> View a () -> View Content ()
+tag :: Text -> Attributes -> View Content () -> View Content ()
 tag nm as ctu = tell
   [ Node $ Tag nm as (execViewContent ctu) ]
 
 -- | A generic node with style, attributes, and content 
-el :: Att a -> View a () -> View Content ()
+el :: Att a -> View Content () -> View Content ()
 el f ct = tag "div" (f []) ct
 
 -- | A styled inline text node
@@ -153,7 +154,8 @@ document title body = View $ runView $
     content = att "content"
     name = att "name"
 
-
+extra :: View Content () -> View Content () -> View Content ()
+extra a b = a >> b
 
 
 
@@ -166,6 +168,9 @@ document title body = View $ runView $
 
 toHtmlText :: View Document () -> Text
 toHtmlText = htmlDocument
+
+toHtmlLazyText :: View Document () -> Lazy.Text
+toHtmlLazyText = cs . htmlDocument
 
 htmlDocument :: View Document () -> Text
 htmlDocument u = 
@@ -201,7 +206,7 @@ htmlTag i (Tag name atts cnt) =
 
   where
     open = "<" <> name
-    close = "<" <> name <> ">"
+    close = "</" <> name <> ">"
 
     htmlContent :: Content -> [Text]
     htmlContent (Node t) = htmlTag i t

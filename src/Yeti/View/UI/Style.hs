@@ -2,7 +2,6 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 module Yeti.View.UI.Style where
 
-import Yeti.Prelude
 import qualified Yeti.View.Tailwind as Tailwind
 import Yeti.View.Types
 

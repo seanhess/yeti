@@ -3,29 +3,33 @@
 {-# LANGUAGE NoOverloadedLists #-}
 module App where
 
-import Control.Concurrent.STM (newTVar, atomically, TVar)
+-- import Control.Concurrent.STM (newTVar, atomically, TVar)
 import Control.Monad.IO.Class (MonadIO)
-import Data.Text (Text)
-import Lucid
-import Page.Route (AppPage(..), mainPage, mainView)
-import Page.Todo (Todo(..))
+-- import Data.Text (Text)
+import Page.Route (AppPage(..), mainView)
+-- import Page.Todo (Todo(..))
 import Prelude
 import Web.Scotty
 import Yeti
-import qualified Page.Article as Article
+import Yeti.View.UI
+-- import qualified Page.Article as Article
 import qualified Page.Counter as Counter
-import qualified Page.Focus as Focus
-import qualified Page.Signup as Signup
-import qualified Page.Todo as Todo
+-- import qualified Page.Focus as Focus
+-- import qualified Page.Signup as Signup
+-- import qualified Page.Todo as Todo
 
 start :: IO ()
 start = do
-  todos <- atomically $ newTVar [Todo "Test Item" Todo.Errand False]
-  startServer todos
+  -- todos <- atomically $ newTVar [Todo "Test Item" Todo.Errand False]
+  -- startServer todos
+  startServer
 
 
-startServer :: TVar [Todo] -> IO ()
-startServer todos = do
+-- startServer :: TVar [Todo] -> IO ()
+-- startServer todos = do
+
+startServer :: IO ()
+startServer = do
 
   scotty 3031 $ do
 
@@ -40,36 +44,26 @@ startServer todos = do
       file "example/example.css"
 
     get "/" $ do
-      html $ Lucid.renderText $ mainView
+      html $ toHtmlLazyText $ document "Example" mainView
 
     middleware $ yeti config go
 
 
   where
     go :: (MonadFail m, MonadIO m) => PageHandler AppPage m
-    go Focus       = run Focus.page
+    -- go Focus       = run Focus.page
     go (Counter n) = run (Counter.page n)
-    go Todos       = run (Todo.page todos)
-    go Signup      = run Signup.page
-    go Index       = run mainPage
-    go (Article i) = run (Article.page i)
+    -- go Todos       = run (Todo.page todos)
+    -- go Signup      = run Signup.page
+    -- go Index       = run mainPage
+    -- go (Article i) = run (Article.page i)
 
 
 
     config :: Render
-    config = Render False $ \content -> do
-      html_ $ do
-        head_ $ do
-
-          -- TODO title should be set based on the page
-          title_ "Example"
-          meta_ [charset_ "UTF-8"]
-          meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
-          meta_ [name_ "viewport", content_ "width=device-width, initial-scale=1.0" ]
-
-          link_ [type_ "text/css", rel_ "stylesheet", href_ "/example.css"]
-
-        body_ $ do
-          content
-          script_ [type_ "text/javascript", src_ "/yeti.js"] ("" :: Text)
+    config = Render False $ \cnt ->
+      document "Example" $ do
+        cnt
+        script' "/yeti.js"
+          
 

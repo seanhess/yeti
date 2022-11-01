@@ -151,13 +151,13 @@ view m = div_ [] $ do
 
     div_ [ id_ "add" ] $ do
       button_ [ onClick AddTodo ] "Add"
-      input' [ name_ "add", value_ (m.addContent), onInput NewTodoInput, onEnter AddTodo ] ""
+      input_ [ name_ "add", value_ (m.addContent), onInput NewTodoInput, onEnter AddTodo ]
       dropdown NewTodoCategory (\v -> (cs $ show v)) (\v -> toHtml (cs $ show v :: Text)) [Errand, Home, Work, Personal]
       span_ (toHtml $ show m.addCategory)
 
     div_ [ id_ "search" ] $ do
       button_ [ onClick SearchSave ] "Search"
-      input' [ name_ "search", value_ (m.search), onInput SearchFilter, onEnter SearchSave ] ""
+      input_ [ name_ "search", value_ (m.search), onInput SearchFilter, onEnter SearchSave ]
 
 
     let ts = m.todos & filter (isSearch m.searchCurrent)

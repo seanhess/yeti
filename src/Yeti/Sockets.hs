@@ -1,7 +1,6 @@
 module Yeti.Sockets where
 
 import Yeti.Prelude
-import Lucid
 
 import Control.Concurrent.MVar.Lifted (MVar, newMVar, modifyMVar)
 import Control.Exception.Lifted (Exception, throw, catch)
@@ -34,8 +33,8 @@ socketApp pageResponse pending = do
 
   liftIO $ flip catch onSocketError $ do
     conn <- liftIO $ WS.acceptRequest pending
-    id <- identify conn
-    run <- pageRun id
+    cid <- identify conn
+    run <- pageRun cid
     connect run conn
 
   where
@@ -50,9 +49,9 @@ socketApp pageResponse pending = do
     identify conn = do
       putStrLn " - Waiting for Identify"
       msg <- WS.receiveData conn
-      id <- parseIdentify $ Text.splitOn "\n" $ fromMessage msg
+      cid <- parseIdentify $ Text.splitOn "\n" $ fromMessage msg
       putStrLn " - Identified"
-      pure id
+      pure cid
 
     -- Format:
     -- <Page>

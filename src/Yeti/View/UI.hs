@@ -29,10 +29,10 @@ import Yeti.View.UI.Html
 
 
 
-row :: Att a -> View b () -> View Content ()
+row :: Att a -> View Content () -> View Content ()
 row f cnt = el (flex Row . flex () . f) cnt
 
-col :: Att a -> View b () -> View Content ()
+col :: Att a -> View Content () -> View Content ()
 col f cnt = el (flex Col . flex () . f) cnt
 
 space :: View Content ()
