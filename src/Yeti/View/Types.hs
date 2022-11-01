@@ -54,7 +54,17 @@ data Tag = Tag
   { name :: Name
   , attributes :: Attributes
   , children :: [Content]
-  } deriving (Generic, ToJSON, FromJSON)
+  } deriving (Show)
+-- encode as 3 element array
+
+instance ToJSON Tag where
+  toJSON (Tag n a c) =
+    toJSON (n, a, c)
+
+instance FromJSON Tag where
+  parseJSON val = do
+    (n, a, c) <- parseJSON val
+    pure $ Tag n a c
 
 data Content
   = Node Tag

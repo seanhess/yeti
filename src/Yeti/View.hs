@@ -17,11 +17,13 @@ test :: IO ()
 test = do
   putStrLn "TEST"
   print doc
-  print body
+  print (body :: View Content ())
 
   -- -- woot!
   let out = encode $ vdom body
   putStrLn $ cs out
+  let back = decode out :: Maybe VDOM
+  print back
   -- print (decode out :: Maybe VDOM)
 
   where
