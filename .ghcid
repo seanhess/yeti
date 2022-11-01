@@ -1,1 +1,1 @@
---test Yeti.View.test -o ghcid.txt
+--test App.start -o ghcid.txt

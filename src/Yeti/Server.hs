@@ -4,8 +4,6 @@ module Yeti.Server
   ( Render(..)
   , respondWai
   , defaultConfig
-  , simpleDocument
-  , input'
   , yeti
   ) where
 
@@ -13,8 +11,6 @@ import Control.Monad.Base (MonadBase, liftBase)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.ByteString.Lazy (ByteString)
 import Data.Default (Default, def)
-import Lucid (renderBS, Html, toHtml, Term, term)
-import Lucid.Html5
 import Network.HTTP.Types (status200)
 import Network.HTTP.Types.URI (queryToQueryText)
 import Network.Wai (ResponseReceived, Middleware)
@@ -24,6 +20,7 @@ import Yeti.Embed (liveJS)
 import Yeti.Encode (Encoded(..))
 import Yeti.Page (RoutePage(..), Response(..), PageHandler, pageUrlPath)
 import Yeti.Prelude
+import Yeti.View.UI hiding (p)
 import Yeti.Sockets (socketApp)
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
@@ -32,14 +29,14 @@ import qualified Network.Wai as Wai
 
 data Render = Render
   { embedJS :: Bool
-  , toDoc :: Html () -> Html ()
+  , toDoc :: View Content () -> View Document ()
   }
 
 instance Default Render where
   def = defaultConfig
 
 defaultConfig :: Render
-defaultConfig = Render True (simpleDocument "Yeti" "")
+defaultConfig = Render True (document "Yeti")
 
 
 
@@ -53,16 +50,13 @@ defaultConfig = Render True (simpleDocument "Yeti" "")
 
 
 type EmbedJS = Bool
-type DocumentTitle = Text
-
-type ToDocument = Html () -> Html ()
 
 respondWai :: forall page. RoutePage page => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
 respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = do
 
-  let content = Lucid.renderBS $ toDoc $ embedContent view
+  let htmlContent = htmlDocument $ toDoc $ embedContent view
 
-  respWai $ Wai.responseLBS status200 headers content
+  respWai $ Wai.responseLBS status200 headers (cs htmlContent)
 
   where
     headers =
@@ -74,9 +68,9 @@ respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = 
     stateJSON :: ByteString
     stateJSON = Aeson.encode $ fromEncoded encModel
 
-    embedStateScript :: Html ()
+    embedStateScript :: View Content ()
     embedStateScript = 
-      script_ [type_ "text/javascript", id_ "yeti-state" ] $ Text.intercalate "\n"
+      script (att "id" "yeti-state" ) $ fromText $ Text.intercalate "\n"
         [ ""
         , "var yetiPage = " <> (cs $ Aeson.encode $ pageUrlPath pg)
         , "var yetiState = " <> fromEncoded encModel
@@ -84,14 +78,14 @@ respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = 
         ]
 
     -- render the root node and embed the javascript
-    embedContent :: Html () -> Html ()
+    embedContent :: View Content () -> View Content ()
     embedContent v = do
-      "\n"
+      fromText "\n"
       embedStateScript
-      "\n"
-      div_ [id_ "yeti-root-content"] v
-      "\n"
-      when embJS $ script_ [type_ "text/javascript"] liveJS
+      fromText "\n"
+      el (att "id" "yeti-root-content") v
+      fromText "\n"
+      when embJS $ script id $ fromText $ cs liveJS
 
       -- DEBUGGING MODE
       -- script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)
@@ -105,28 +99,6 @@ respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = 
 
 
 
-
--- | Convenience toDocument function to pass to render. Allows you to add stylesheets and javascript easily
-simpleDocument :: DocumentTitle -> Html () -> (Html () -> Html ())
-simpleDocument t extra content = do
-  html_ $ do
-    head_ $ do
-      title_ (toHtml t)
-      meta_ [charset_ "UTF-8"]
-      meta_ [httpEquiv_ "Content-Type", content_ "text/html", charset_ "UTF-8"]
-      meta_ [name_ "viewport", content_ "width=device-width, initial-scale=1.0" ]
-      "\n"
-      extra
-
-    "\n"
-    body_ $ do
-      content
-
-
-
-
-input' :: Term arg result => arg -> result
-input' = term "input"
 
 
 

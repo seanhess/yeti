@@ -17,12 +17,14 @@ module Yeti
  , FromJSON, ToJSON, Generic
  , run
  , module Yeti.Server
+ , module Yeti.View
  ) where
 
 import Data.Aeson (FromJSON, ToJSON)
 import GHC.Generics (Generic)
 import Yeti.Runtime
 import Yeti.Events
+import Yeti.View
 import Yeti.Params
 import Yeti.Server
 import Yeti.Embed (javascript)

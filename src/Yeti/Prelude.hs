@@ -32,7 +32,7 @@ module Yeti.Prelude
   , Identity
   ) where
 
-import Prelude hiding (id, head, print, putStrLn, readFile, writeFile, Real, putStr, (!!), last, reverse)
+import Prelude hiding (head, print, putStrLn, readFile, writeFile, Real, putStr, (!!), last, reverse)
 import qualified Prelude
 import Data.Text (Text)
 import Data.Map (Map)

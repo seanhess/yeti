@@ -34,6 +34,7 @@ library
       Yeti.Runtime
       Yeti.Server
       Yeti.Sockets
+      Yeti.UI
       Yeti.View
       Yeti.View.Tailwind
       Yeti.View.Tailwind.Classes
@@ -43,6 +44,7 @@ library
       Yeti.View.Tailwind.Values
       Yeti.View.Types
       Yeti.View.UI
+      Yeti.View.UI.Style
   other-modules:
       Paths_yeti
   hs-source-dirs:

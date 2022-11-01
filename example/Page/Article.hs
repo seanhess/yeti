@@ -7,13 +7,17 @@ module Page.Article where
 
 import Prelude
 import Yeti
-import Error (PageError(..))
+-- import Error (PageError(..))
 import Data.Text (Text, unpack)
 import Control.Monad (forM_)
-import Control.Exception (throw)
+import Control.Exception (throw, Exception)
 import Lucid (toHtml)
 import Lucid.Html5
 import qualified Data.List as List
+
+
+data PageError = NotFound String
+  deriving (Show, Exception)
 
 
 data Model = Model
@@ -73,7 +77,7 @@ view m = section_ [ class_ "page" ] $ do
         div_ $ toHtml c
 
     div_ [ class_ "section" ] $ do
-      input' [ value_ m.comment, onInput Comment, onEnter SubmitComment ] ""
+      input_ [ value_ m.comment, onInput Comment, onEnter SubmitComment ]
       button_ [ onClick SubmitComment ] "Submit"
 
 

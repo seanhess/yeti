@@ -5,10 +5,12 @@
 module Page.Counter where
 
 import Prelude
+import Data.Text (pack)
 import Yeti
+import Yeti.View.UI
 import Control.Monad.IO.Class (MonadIO)
-import Lucid (toHtml)
-import Lucid.Html5
+-- import Lucid (toHtml)
+-- import Lucid.Html5
 
 data Model = Model
   { count :: Integer
@@ -37,17 +39,19 @@ update :: MonadIO m => Action -> Model -> m Model
 update Increment m = pure $ (m :: Model) { count = m.count + 1 }
 update Decrement m = pure $ (m :: Model) { count = m.count - 1 }
 
-view :: Model -> Html ()
-view m = section_ [ class_ "page" ] $ do
+view :: Model -> View Content ()
+view m = col (p S1) $ do
 
-    div_ [ class_ "section" ] $ do
-      button_ [ onClick Decrement] "Decrement"
-      button_ [ onClick Increment] "Increment"
+    row (p S1) $ do
+      -- button_ [ onClick Decrement] "Decrement"
+      -- button_ [ onClick Increment] "Increment"
+      tag "button" [] "Decrement"
+      tag "button" [] "Increment"
 
-    div_ $ do
-      input' [type_ "text"] ""
+    row (p S1) $ do
+      tag "input" [] ""
 
-    div_ $ toHtml $ show m.count
+    txt (p S1) $ pack $ show m.count
 
 
 

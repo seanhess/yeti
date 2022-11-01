@@ -4,8 +4,18 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DefaultSignatures #-}
-module Yeti.View.Tailwind.Types where
+module Yeti.View.Tailwind.Types
+  ( Class(..)
+  , Segment(..)
+  , Option(..)
+  , Seg(..)
+  , segHyphens
+  , segPrefix
+  , (-)
+  , cls
+  ) where
 
+import Yeti.View.Types (Class(..))
 import Data.String (IsString(..))
 import Data.Text (Text, pack)
 import Data.Char (isLower, isUpper)
@@ -34,6 +44,10 @@ class Option k a where
 segHyphens :: Show a => a -> Seg b
 segHyphens a = Seg $ hyphenate $ show a
 
+-- drop until second cap
+segPrefix :: Show a => a -> Seg b
+segPrefix a = Seg $ hyphenate $ dropPrefix $ show a
+
 hyphenate :: String -> Text
 hyphenate = Text.toLower . pack . Casing.kebab
 
@@ -41,18 +55,11 @@ hyphenate = Text.toLower . pack . Casing.kebab
 dropPrefix :: String -> String
 dropPrefix = dropWhile isLower . dropWhile isUpper
 
--- drop until second cap
-segPrefix :: Show a => a -> Seg b
-segPrefix a = Seg $ hyphenate $ dropPrefix $ show a
 
 
 (-) :: Seg a -> Seg b -> Seg a
 a - "" = a
 (Seg a) - (Seg b) = Seg $ a <> "-" <> b
-
-newtype Class = Class { fromClass :: Text }
-  deriving newtype (IsString)
-  deriving (Show, Eq)
 
 
 -- * Utilties

@@ -8,9 +8,11 @@ import Control.Exception.Lifted (Exception, throw, catch)
 import Control.Monad (forever)
 import Control.Monad.Base (MonadBase, liftBase)
 import Control.Monad.Trans.Control (MonadBaseControl)
+import qualified Data.Aeson as Aeson
 import Network.WebSockets (WebSocketsData)
 import Yeti.Encode (Encoded(..), Encoding(..))
 import Yeti.Page (Response(..), PageHandler, RoutePage(..), pathSegments)
+import Yeti.View.Types (vdom)
 import qualified Data.Text as Text
 import qualified Network.WebSockets as WS
 import qualified Yeti.Params as Params
@@ -121,7 +123,7 @@ talk (Identified page encModel) state run conn = do
   liftIO $ WS.sendTextData conn $ Text.intercalate "\n"
     [ fromEncoded $ resModel res
     , Params.queryToText $ resParams res
-    , cs $ Lucid.renderText (resView res)
+    , cs $ Aeson.encode $ vdom (resView res)
     ]
 
   where

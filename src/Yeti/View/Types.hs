@@ -4,7 +4,6 @@
 module Yeti.View.Types where
 
 import Yeti.Prelude
-import Yeti.View.Tailwind.Types (Class(..))
 import Data.Aeson (ToJSON(..), FromJSON(..))
 import Control.Monad.Writer.Lazy (Writer, execWriter, tell, MonadWriter)
 import qualified Data.Map as Map
@@ -20,18 +19,23 @@ type Attributes = Map Name AttValue
 
 type Att a = Attributes -> Attributes
 
+newtype Class = Class { fromClass :: Text }
+  deriving newtype (IsString)
+  deriving (Show, Eq)
+
 
 
 -- | Add a class attribute. If it exists, combine with spaces
-addClass :: [Class] -> Attributes -> Attributes
-addClass cls as = Map.insertWith combine "class" (classes cls) as
+cls :: [Class] -> Attributes -> Attributes
+cls cx as = Map.insertWith combine "class" (classes cx) as
   where
     combine new old = new <> " " <> old
     classes = Text.intercalate " " . fmap (fromClass)
 
 -- | Set an attribute, replacing existing value
-setAttribute :: Name -> AttValue -> Att a
-setAttribute k v = Map.insert k v
+att :: Name -> AttValue -> Att a
+att k v = Map.insert k v
+
 
 
 -- -- TODO make sure purging works!
@@ -127,12 +131,28 @@ fromText :: Text -> View a ()
 fromText t = tell
   [ Text t ]
 
-document :: Text -> View Content () -> View Document ()
+type DocumentTitle = Text
+
+document :: DocumentTitle -> View Content () -> View Document ()
 document title body = View $ runView $
-  tag "html" [] $ do
-    tag "head" [] $ do
-      tag "title" [] $ fromText title
+  html' $ do
+    head' $ do
+      title' $ fromText title
+      meta (charset "UTF-8")
+      meta (httpEquiv "Content-Type" . content "text/html" . charset "UTF-8")
+      meta (name "viewport" . content "width=device-width, initial-scale=1.0")
     tag "body" [] body
+  where
+    meta f = tag "meta" (f []) (fromText "")
+    title' = tag "title" []
+    head' = tag "head" []
+    html' = tag "html" []
+    body' = tag "body" []
+    charset = att "charset"
+    httpEquiv = att "httpEquiv"
+    content = att "content"
+    name = att "name"
+
 
 
 
