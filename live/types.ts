@@ -1,3 +1,4 @@
+
 export type Page = {
   fromPage: string
 }
@@ -41,3 +42,6 @@ export type Init = {
 
 export const INIT_PAGE:Page = { fromPage: yetiPage }
 export const INIT_STATE:State = { fromState: yetiState }
+
+
+

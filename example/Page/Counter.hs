@@ -1,5 +1,5 @@
-{-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 module Page.Counter where
@@ -17,7 +17,7 @@ data Model = Model
   } deriving (Show, Generic, LiveModel, ToJSON, FromJSON)
 
 data Params = Params
-  { count :: Integer
+  { _count :: Integer
   } deriving (Show, Generic, ToParams)
 
 params :: Model -> Params
@@ -36,20 +36,18 @@ load _ (Just (Params n)) = pure $ Model n
 load n _ = pure $ Model n
 
 update :: MonadIO m => Action -> Model -> m Model
-update Increment m = pure $ (m :: Model) { count = m.count + 1 }
-update Decrement m = pure $ (m :: Model) { count = m.count - 1 }
+update Increment m = pure $ m { count = m.count + 1 }
+update Decrement m = pure $ m { count = m.count - 1 }
 
 view :: Model -> View Content ()
 view m = col (p S1) $ do
 
     row (p S1) $ do
-      -- button_ [ onClick Decrement] "Decrement"
-      -- button_ [ onClick Increment] "Increment"
-      tag "button" [] "Decrement"
-      tag "button" [] "Increment"
+      button Decrement id "Decrement"
+      button Increment id "Increment"
 
     row (p S1) $ do
-      tag "input" [] ""
+      tag "input" id ""
 
     txt (p S1) $ pack $ show m.count
 

@@ -18,6 +18,8 @@ type AttValue = Text
 type Attribute = (Name, AttValue)
 type Attributes = Map Name AttValue
 
+-- Allows you to only specify attributes of a given type
+-- TODO but this won't work very well, because the same attribute could be used for two different things
 type Att a = Attributes -> Attributes
 
 newtype Class = Class { fromClass :: Text }
@@ -28,14 +30,14 @@ newtype Class = Class { fromClass :: Text }
 
 -- | Add a class attribute. If it exists, combine with spaces
 cls :: [Class] -> Attributes -> Attributes
-cls cx as = Map.insertWith combine "class" (classes cx) as
+cls cx = Map.insertWith combine "class" (classes cx)
   where
     combine new old = new <> " " <> old
-    classes = Text.intercalate " " . fmap (fromClass)
+    classes = Text.intercalate " " . fmap fromClass
 
 -- | Set an attribute, replacing existing value
 att :: Name -> AttValue -> Att a
-att k v = Map.insert k v
+att = Map.insert
 
 
 
@@ -77,7 +79,7 @@ data Content
   deriving (Generic)
 
 instance Show Content where
-  show (Node t) = cs $ Text.intercalate "\n" $ htmlTag 0 t
+  show (Node t) = cs $ Text.intercalate "\n" $ htmlTag indent 0 t
   show (Text t) = cs t
 
 instance ToJSON Content where
@@ -115,17 +117,17 @@ instance IsString (View Content ()) where
 execViewContent :: View a x -> [Content]
 execViewContent (View wts) = execWriter wts
 
-tag :: Text -> Attributes -> View Content () -> View Content ()
-tag nm as ctu = tell
-  [ Node $ Tag nm as (execViewContent ctu) ]
+tag :: Text -> Att a -> View Content () -> View Content ()
+tag nm f ctu = tell
+  [ Node $ Tag nm (f []) (execViewContent ctu) ]
 
 -- | A generic node with style, attributes, and content 
 el :: Att a -> View Content () -> View Content ()
-el f ct = tag "div" (f []) ct
+el = tag "div"
 
 -- | A styled inline text node
 txt :: Att a -> Text -> View Content ()
-txt f ct = tag "span" (f []) (fromText ct)
+txt f ct = tag "span" f (fromText ct)
 
 -- | Convert from text directly to view. You should not have to use this. Use `text` instead
 fromText :: Text -> View a ()
@@ -142,13 +144,13 @@ document title body = View $ runView $
       meta (charset "UTF-8")
       meta (httpEquiv "Content-Type" . content "text/html" . charset "UTF-8")
       meta (name "viewport" . content "width=device-width, initial-scale=1.0")
-    tag "body" [] body
+    body' body
   where
-    meta f = tag "meta" (f []) (fromText "")
-    title' = tag "title" []
-    head' = tag "head" []
-    html' = tag "html" []
-    body' = tag "body" []
+    meta f = tag "meta" f (fromText "")
+    title' = tag "title" id
+    head' = tag "head" id
+    html' = tag "html" id
+    body' = tag "body" id
     charset = att "charset"
     httpEquiv = att "httpEquiv"
     content = att "content"
@@ -176,21 +178,21 @@ htmlDocument :: View Document () -> Text
 htmlDocument u = 
   let ts = execViewContent u
   in case ts of
-    [Node d] -> Text.unlines $ htmlTag 0 d
-    cts -> error $ "Should not be possible to create document with multiple tags"
+    [Node d] -> mconcat $ htmlTag noIndent 0 d
+    cts -> error "Should not be possible to create document with multiple tags"
 
 showView :: View a () -> Text
-showView v = Text.unlines $ mconcat $ fmap showContent $ execViewContent v
+showView v = Text.unlines $ mconcat $ map showContent $ execViewContent v
 
 showContent :: Content -> [Text]
-showContent (Node t) = htmlTag 0 t
+showContent (Node t) = htmlTag indent 0 t
 showContent (Text t) = [t]
 
 
 type Indent = Int
 
-htmlTag :: Indent -> Tag -> [Text]
-htmlTag i (Tag name atts cnt) =
+htmlTag :: (Indent -> [Text] -> [Text]) -> Indent -> Tag -> [Text]
+htmlTag indent' i (Tag name atts cnt) =
   case cnt of
 
     [] -> [ open <> htmlAtts atts <> "/>" ]
@@ -200,7 +202,7 @@ htmlTag i (Tag name atts cnt) =
 
     _  -> mconcat
       [ [ open <> htmlAtts atts <> ">" ]
-      , indent (i+1) $ htmlChildren cnt
+      , indent' (i+1) $ htmlChildren cnt
       , [ close ]
       ]
 
@@ -209,7 +211,7 @@ htmlTag i (Tag name atts cnt) =
     close = "</" <> name <> ">"
 
     htmlContent :: Content -> [Text]
-    htmlContent (Node t) = htmlTag i t
+    htmlContent (Node t) = htmlTag indent' i t
     htmlContent (Text t) = [t]
 
     htmlChildren :: [Content] -> [Text]
@@ -219,12 +221,15 @@ htmlTag i (Tag name atts cnt) =
     htmlAtts :: Attributes -> Text
     htmlAtts [] = ""
     htmlAtts as = " " <> 
-      (Text.intercalate " " $ fmap htmlAtt $ Map.toList as)
-      where htmlAtt ((k, v)) =
+      Text.intercalate " " (map htmlAtt $ Map.toList as)
+      where htmlAtt (k, v) =
               k <> "=" <> "'" <> v <> "'"
 
-    indent :: Indent -> [Text] -> [Text]
-    indent i' = fmap ind
-      where
-        ind :: Text -> Text
-        ind t = Text.replicate (2*i') " " <> t
+indent :: Indent -> [Text] -> [Text]
+indent i' = fmap ind
+  where
+    ind :: Text -> Text
+    ind t = Text.replicate (2*i') " " <> t
+
+noIndent :: Indent -> [Text] -> [Text]
+noIndent _ ts = ts

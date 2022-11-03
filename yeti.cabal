@@ -1,11 +1,11 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.0.
 --
 -- see: https://github.com/sol/hpack
 
 name:           yeti
-version:        0.3.0
+version:        0.3.1
 description:    Please see the README on GitHub at <https://github.com/seanhess/yeti#readme>
 homepage:       https://github.com/seanhess/yeti#readme
 bug-reports:    https://github.com/seanhess/yeti/issues
@@ -68,6 +68,7 @@ library
       NoImplicitPrelude
       OverloadedLists
       OverloadedStrings
+      OverloadedRecordDot
       QuasiQuotes
       RecordWildCards
       ScopedTypeVariables
@@ -151,6 +152,7 @@ executable yeti-exe
       NoImplicitPrelude
       OverloadedLists
       OverloadedStrings
+      OverloadedRecordDot
       QuasiQuotes
       RecordWildCards
       ScopedTypeVariables
@@ -184,8 +186,6 @@ executable yeti-exe
     , network
     , network-uri
     , raw-strings-qq
-    , record-dot-preprocessor
-    , record-hasfield
     , scotty
     , stm
     , string-conversions
@@ -231,6 +231,7 @@ test-suite yeti-test
       NoImplicitPrelude
       OverloadedLists
       OverloadedStrings
+      OverloadedRecordDot
       QuasiQuotes
       RecordWildCards
       ScopedTypeVariables

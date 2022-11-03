@@ -1,5 +1,5 @@
 name:                yeti
-version:             0.3.0
+version:             0.3.1
 github:              "seanhess/yeti"
 license:             BSD3
 author:              "Sean Hess"
@@ -85,6 +85,7 @@ default-extensions:
   - NoImplicitPrelude
   - OverloadedLists
   - OverloadedStrings
+  - OverloadedRecordDot
   - QuasiQuotes
   - RecordWildCards
   - ScopedTypeVariables
@@ -109,8 +110,6 @@ executables:
     - -with-rtsopts=-N
     # - -Wall
     dependencies:
-    - record-dot-preprocessor
-    - record-hasfield
     - yeti
 
 tests:

@@ -21,7 +21,6 @@ Yeti is an implementation of Elm running on a Haskell server. State is maintaine
 ### Sample Application
 
 ```haskell
-{-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveAnyClass #-}
 module Page.Counter where

@@ -7,14 +7,14 @@ import Yeti.View.UI
 -- import qualified Page.Article as Article
 
 data AppPage
-  -- = Focus
   = Counter Integer
-  -- | Todos
-  -- | Signup
-  -- | Index
-  -- | Article Article.Id
+  | Index
   deriving (Generic, Show, RoutePage)
 
+  -- -- = Focus
+  -- -- | Todos
+  -- -- | Signup
+  -- -- | Article Article.Id
 
 mainView :: View Content ()
 mainView = do

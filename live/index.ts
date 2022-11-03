@@ -1,12 +1,14 @@
-import { hydrate, patch, render, DOMNode } from 'million';
+import { hydrate, patch, render, DOMNode, m, VNode, Flags } from 'million';
 import { fromDomNodeToVNode, fromStringToDomNode } from 'million/utils';
 import { listenEvents } from './events';
 import { WEBSOCKET_ADDRESS, Messages } from './Messages'
 import { INIT_PAGE, INIT_STATE, State } from './types';
+import { fromVDOM, VDOM } from './vdom'
 
 
+const CONTENT_ID = "yeti-root-content"
 
-console.log("VERSION 1", INIT_PAGE, INIT_STATE)
+console.log("VERSION 2", INIT_PAGE, INIT_STATE)
 
 var currentState:State = INIT_STATE
 var rootElement:DOMNode
@@ -22,27 +24,27 @@ messages.connect(INIT_PAGE, currentState)
 listenEvents(messages)
 
 
-function update(newState:State, params:string, html:string) {
+function update(newState:State, params:string, vdom:VDOM) {
 
   // This is stripping tab characters in the data attributes, can't use tab as a delimiter
-  let dom = fromStringToDomNode(html)
-  let vnode = fromDomNodeToVNode(dom)
+  // let dom = fromStringToDomNode(html)
+  // let vnode = fromDomNodeToVNode(dom)
+  // rootElement = patch(rootElement, vnode)
+  let newRoot = m("div", {"id": CONTENT_ID}, fromVDOM(vdom))
+  rootElement = patch(rootElement, newRoot)
 
-  // TODO replace million.js with new version.
-  // This works, but it REALLY doesn't like the unclosed input tags from lucid
-  rootElement = patch(rootElement, vnode)
   currentState = newState
 
   // wait, is this pushing in a circle?
-  updateHistory(newState, params, html)
+  updateHistory(newState, params, vdom)
 }
 
 
-function updateHistory(newState:State, params:string, html:string) {
+function updateHistory(newState:State, params:string, vdom:VDOM) {
   if (("?" + params) != location.search) {
     console.log("New History", params, location.search)
     let url = location.origin + location.pathname + "?" + params
-    history.pushState([newState, params, html], "", url)
+    history.pushState([newState, params, vdom], "", url)
   }
 }
 
@@ -56,8 +58,11 @@ window.addEventListener("load", function() {
   console.log("docload")
   rootElement = document.getElementById("yeti-root-content")
 
-  let firstChild = rootElement.firstChild as DOMNode
-  let initContent = fromDomNodeToVNode(firstChild)
+  // hydreate the content
+  let initContent = fromDomNodeToVNode(rootElement)
+  console.log('INIT', initContent)
   rootElement = patch(rootElement, initContent)
 })
+
+
 

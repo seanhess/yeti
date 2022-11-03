@@ -1,11 +1,13 @@
 import {fromAction, Page, State} from "./types"
 import { Action } from "./types";
+import { VDOM } from "./VDOM"
 
 export const WEBSOCKET_ADDRESS = "ws://" + location.host
 
 
 // does this keep track of the state for you?
 // hmm, I'd rather it doesn't
+
 
 export class Messages {
 
@@ -47,10 +49,12 @@ export class Messages {
     // We need a better protocol!
     // Different message types might occur
     this.socket.addEventListener('message', (event) => {
-      let [newState, params, html]:string[] = event.data.split("\n")
+      let [newState, params, vdoms]:string[] = event.data.split("\n")
+
+      let vdom = JSON.parse(vdoms)
 
       if (this._update)
-        this._update({fromState: newState}, params, html)
+        this._update({fromState: newState}, params, vdom)
     })
 
     this.socket.addEventListener('error', (event) => {
@@ -103,4 +107,4 @@ export class Messages {
   }
 }
 
-type Update = (state:State, params:string, html:string) => void;
+type Update = (state:State, params:string, vdom:VDOM) => void;
