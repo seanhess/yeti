@@ -39,12 +39,12 @@ startServer = do
       addHeader "Content-Type" "text/javascript"
       file "dist/main.js"
 
-    get "/example.css" $ do
+    get "/app.css" $ do
       addHeader "Content-Type" "text/css"
-      file "example/example.css"
+      file "example/app.css"
 
     get "/" $ do
-      html $ toHtmlLazyText $ document "Example" mainView
+      html $ toHtmlLazyText $ document "Example" (pure ()) mainView
 
     middleware $ yeti config go
 
@@ -60,10 +60,9 @@ startServer = do
 
 
 
-    config :: Render
-    config = Render False $ \cnt ->
-      document "Example" $ do
-        cnt
-        script' "/yeti.js"
+-- render expects: content -> document
+config :: Render
+config = document "Example" $ do
+  script' "/yeti.js"
           
 

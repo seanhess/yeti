@@ -117,7 +117,7 @@ instance IsString (View Content ()) where
 execViewContent :: View a x -> [Content]
 execViewContent (View wts) = execWriter wts
 
-tag :: Text -> Att a -> View Content () -> View Content ()
+tag :: Text -> Att a -> View a () -> View b ()
 tag nm f ctu = tell
   [ Node $ Tag nm (f []) (execViewContent ctu) ]
 
@@ -134,30 +134,6 @@ fromText :: Text -> View a ()
 fromText t = tell
   [ Text t ]
 
-type DocumentTitle = Text
-
-document :: DocumentTitle -> View Content () -> View Document ()
-document title body = View $ runView $
-  html' $ do
-    head' $ do
-      title' $ fromText title
-      meta (charset "UTF-8")
-      meta (httpEquiv "Content-Type" . content "text/html" . charset "UTF-8")
-      meta (name "viewport" . content "width=device-width, initial-scale=1.0")
-    body' body
-  where
-    meta f = tag "meta" f (fromText "")
-    title' = tag "title" id
-    head' = tag "head" id
-    html' = tag "html" id
-    body' = tag "body" id
-    charset = att "charset"
-    httpEquiv = att "httpEquiv"
-    content = att "content"
-    name = att "name"
-
-extra :: View Content () -> View Content () -> View Content ()
-extra a b = a >> b
 
 
 

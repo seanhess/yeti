@@ -1,9 +1,10 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes #-}
 module Yeti.Server
-  ( Render(..)
+  ( Render
+  , def
+  , document
   , respondWai
-  , defaultConfig
   , yeti
   ) where
 
@@ -20,23 +21,47 @@ import Yeti.Embed (liveJS)
 import Yeti.Encode (Encoded(..))
 import Yeti.Page (RoutePage(..), Response(..), PageHandler, pageUrlPath)
 import Yeti.Prelude
-import Yeti.View.UI hiding (p)
+import Yeti.View.UI hiding (p, content)
 import Yeti.Sockets (socketApp)
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
 import qualified Network.Wai as Wai
 
 
-data Render = Render
-  { embedJS :: Bool
-  , toDoc :: View Content () -> View Document ()
-  }
+type Render = View Content () -> View Document ()
 
 instance Default Render where
-  def = defaultConfig
+  def = document "Yeti" embedLiveJS
 
-defaultConfig :: Render
-defaultConfig = Render True (document "Yeti")
+type DocumentTitle = Text
+
+embedLiveJS :: View Scripts ()
+embedLiveJS = 
+  script' $ cs liveJS
+
+document :: DocumentTitle -> View Scripts () -> View Content () -> View Document ()
+document title scripts body = View $ runView $
+  html' $ do
+    head' $ do
+      title' $ fromText title
+      meta (charset "UTF-8")
+      meta (httpEquiv "Content-Type" . content "text/html" . charset "UTF-8")
+      meta (name "viewport" . content "width=device-width, initial-scale=1.0")
+      scripts
+    body' body
+  where
+    meta f = tag "meta" f (fromText "")
+    title' = tag "title" id
+    head' = tag "head" id
+    html' = tag "html" id
+    body' = tag "body" id
+    charset = att "charset"
+    httpEquiv = att "httpEquiv"
+    content = att "content"
+    name = att "name"
+
+extra :: View Content () -> View Content () -> View Content ()
+extra a b = a >> b
 
 
 
@@ -49,12 +74,11 @@ defaultConfig = Render True (document "Yeti")
 --   cs path <> "?" <> queryToText (Params.toParams ps)
 
 
-type EmbedJS = Bool
 
 respondWai :: forall page. RoutePage page => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
-respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = do
+respondWai render pg (Response encModel encParams view) respWai = do
 
-  let htmlContent = htmlDocument $ toDoc $ embedContent view
+  let htmlContent = htmlDocument $ render $ embedContent view
 
   respWai $ Wai.responseLBS status200 headers (cs htmlContent)
 
@@ -68,9 +92,9 @@ respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = 
     stateJSON :: ByteString
     stateJSON = Aeson.encode $ fromEncoded encModel
 
-    embedStateScript :: View Content ()
+    embedStateScript :: View a ()
     embedStateScript = 
-      script (att "id" "yeti-state" ) $ fromText $ Text.intercalate "\n"
+      script' $ Text.intercalate "\n"
         [ ""
         , "var yetiPage = " <> (cs $ Aeson.encode $ pageUrlPath pg)
         , "var yetiState = " <> fromEncoded encModel
@@ -84,8 +108,6 @@ respondWai (Render embJS toDoc) pg (Response encModel encParams view) respWai = 
       embedStateScript
       fromText "\n"
       el (att "id" "yeti-root-content") v
-      fromText "\n"
-      when embJS $ script id $ fromText $ cs liveJS
 
       -- DEBUGGING MODE
       -- script_ [type_ "text/javascript", src_ "/edom/build.js"] ("" :: Text)

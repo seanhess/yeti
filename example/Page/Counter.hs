@@ -42,12 +42,12 @@ update Decrement m = pure $ m { count = m.count - 1 }
 view :: Model -> View Content ()
 view m = col (p S1) $ do
 
-    row (p S1) $ do
+    row (p S1 . gap S1) $ do
       button Decrement id "Decrement"
       button Increment id "Increment"
 
     row (p S1) $ do
-      tag "input" id ""
+      tag "input" id none
 
     txt (p S1) $ pack $ show m.count
 

@@ -7,7 +7,6 @@ module Yeti
  , simplePage, staticPage
  , ToParams(..), ToParam(..)
 --  , Value(..)
- , Render(..)
 
  -- Events
  , onInput, onClick, onEnter, onSelect, onValue, on

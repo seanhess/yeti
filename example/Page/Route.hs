@@ -8,7 +8,7 @@ import Yeti.View.UI
 
 data AppPage
   = Counter Integer
-  | Index
+  -- | Index
   deriving (Generic, Show, RoutePage)
 
   -- -- = Focus
