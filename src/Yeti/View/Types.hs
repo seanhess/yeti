@@ -6,10 +6,12 @@ module Yeti.View.Types where
 import Yeti.Prelude
 import Data.Aeson (ToJSON(..), FromJSON(..))
 import Control.Monad.Writer.Lazy (Writer, execWriter, tell, MonadWriter)
+import Control.Monad.State.Strict (State, withState, execState, modify, put, get, MonadState)
 import qualified Data.Map as Map
 import qualified Data.Text as Text
 import Data.String (IsString(..))
 import qualified Data.Text.Lazy as Lazy
+import Debug.Trace (traceM)
 
 
 type Name = Text
@@ -103,36 +105,90 @@ vdom :: View a () -> VDOM
 vdom = VDOM . execViewContent
 
 
+
+test :: View a ()
+test = do
+  col & att' "key" "value" $ do
+
+    row & gap8 . pad4 $ do
+      fromText "one"
+      text & gap4 $ "two"
+
+    row $ text "three"
+
+  where
+    row :: View a () -> View b ()
+    row = tag "div" id
+
+    col :: View a () -> View b ()
+    col = tag "div" id
+
+    gap8 = cls' [Class "gap-8"]
+    pad4 = cls' [Class "pad-4"]
+    gap4 = cls' [Class "gap-4"]
+
+    text :: Text -> View b ()
+    text = tag "span" id . fromText
+
+    -- well, we don't want to add it to the *content*
+    att' :: Name -> AttValue -> (a -> View b ()) -> a -> View b ()
+    att' n v addContent =
+      mapTag (modifyAtt (Map.insert n v)) . addContent
+
+    cls' :: [Class] -> (a -> View b ()) -> a -> View b ()
+    cls' cx addContent =
+      mapTag (modifyAtt (cls cx)) . addContent
+
+    modifyAtt :: (Attributes -> Attributes) -> Tag -> Tag
+    modifyAtt f t = t { attributes = f t.attributes }
+
+    -- applies a transformation only to tag nodes
+    mapTag :: (Tag -> Tag) -> View a () -> View a ()
+    mapTag f = do
+      mapViewContents (map (mapTagContent f))
+
+    mapViewContents :: ([Content] -> [Content]) -> View a () -> View a ()
+    mapViewContents f (View st) = modify $ f . execState st
+
+    -- needs to map each of them
+    mapTagContent :: (Tag -> Tag) -> Content -> Content
+    mapTagContent f (Node t) = Node $ f t
+    mapTagContent _ (Text t) = Text t
+
+
+
 newtype View a x = View
-  { runView :: Writer [Content] x
-  } deriving newtype (Functor, Applicative, Monad, MonadWriter [Content])
+  { runView :: State [Content] x
+  } deriving newtype (Functor, Applicative, Monad, MonadState [Content])
+
 
 instance Show (View a x) where
   show u = unlines $ fmap show (execViewContent u)
 
 instance IsString (View Content ()) where
-  fromString s = tell [ Text (cs s) ]
+  fromString s = do
+    modify $ \cts -> cts <> [ Text (cs s)]
 
 
 execViewContent :: View a x -> [Content]
-execViewContent (View wts) = execWriter wts
+execViewContent (View wts) = execState wts []
 
 tag :: Text -> Att a -> View a () -> View b ()
-tag nm f ctu = tell
-  [ Node $ Tag nm (f []) (execViewContent ctu) ]
+tag nm f ctu = modify $ \cts ->
+  cts <> [ Node $ Tag nm (f []) (execViewContent ctu) ]
 
 -- | A generic node with style, attributes, and content 
 el :: Att a -> View Content () -> View Content ()
 el = tag "div"
 
 -- | A styled inline text node
-txt :: Att a -> Text -> View Content ()
-txt f ct = tag "span" f (fromText ct)
+-- text :: Text -> View Content ()
+-- text ct = tag "span" id (fromText ct)
 
 -- | Convert from text directly to view. You should not have to use this. Use `text` instead
 fromText :: Text -> View a ()
-fromText t = tell
-  [ Text t ]
+fromText t = modify $ \cts ->
+  cts <> [ Text t ]
 
 
 
