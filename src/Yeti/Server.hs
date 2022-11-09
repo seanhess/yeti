@@ -21,7 +21,7 @@ import Yeti.Embed (liveJS)
 import Yeti.Encode (Encoded(..))
 import Yeti.Page (RoutePage(..), Response(..), PageHandler, pageUrlPath)
 import Yeti.Prelude
-import Yeti.View.UI hiding (p, content)
+import Yeti.View
 import Yeti.Sockets (socketApp)
 import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
@@ -31,30 +31,27 @@ import qualified Network.Wai as Wai
 type Render = View Content () -> View Document ()
 
 instance Default Render where
+  def :: Render
   def = document "Yeti" embedLiveJS
 
 type DocumentTitle = Text
 
-embedLiveJS :: View Scripts ()
+embedLiveJS :: View Script ()
 embedLiveJS = 
-  script' $ cs liveJS
+  script $ Code $ cs liveJS
 
-document :: DocumentTitle -> View Scripts () -> View Content () -> View Document ()
+document :: DocumentTitle -> View Script () -> View Content () -> View Document ()
 document title scripts body = View $ runView $
-  html' $ do
-    head' $ do
-      title' $ fromText title
+  html_ $ do
+    head_ $ do
+      title_ $ fromText title
       meta (charset "UTF-8")
       meta (httpEquiv "Content-Type" . content "text/html" . charset "UTF-8")
       meta (name "viewport" . content "width=device-width, initial-scale=1.0")
       scripts
-    body' body
+    body_ body
+
   where
-    meta f = tag "meta" f (fromText "")
-    title' = tag "title" id
-    head' = tag "head" id
-    html' = tag "html" id
-    body' = tag "body" id
     charset = att "charset"
     httpEquiv = att "httpEquiv"
     content = att "content"
@@ -94,10 +91,10 @@ respondWai render pg (Response encModel encParams view) respWai = do
 
     embedStateScript :: View a ()
     embedStateScript = 
-      script' $ Text.intercalate "\n"
+      script $ Code $ Text.intercalate "\n"
         [ ""
-        , "var yetiPage = " <> (cs $ Aeson.encode $ pageUrlPath pg)
-        , "var yetiState = " <> fromEncoded encModel
+        , "var YETI_PAGE = " <> (cs $ Aeson.encode $ pageUrlPath pg)
+        , "var YETI_STATE = " <> fromEncoded encModel
         , ""
         ]
 

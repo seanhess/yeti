@@ -11,7 +11,6 @@ import Page.Route (AppPage(..), mainView)
 import Prelude
 import Web.Scotty
 import Yeti
-import Yeti.View.UI
 -- import qualified Page.Article as Article
 import qualified Page.Counter as Counter
 -- import qualified Page.Focus as Focus
@@ -60,9 +59,12 @@ startServer = do
 
 
 
--- render expects: content -> document
 config :: Render
-config = document "Example" $ do
-  script' "/yeti.js"
+config content =
+  document "Example" (pure ()) $ do
+    content
+
+    -- yeti source needs to be last
+    script (Url "/yeti.js")
           
 

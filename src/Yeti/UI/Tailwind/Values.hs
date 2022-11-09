@@ -1,10 +1,10 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Yeti.View.Tailwind.Values where
+module Yeti.UI.Tailwind.Values where
 
 import Prelude hiding ((-))
 import Data.Text as Text (Text, replace, pack, intercalate)
-import Yeti.View.Tailwind.Types
+import Yeti.UI.Tailwind.Types
 
 
 generateValueMap :: [(String, Text)]
@@ -236,6 +236,11 @@ instance Segment Color where
 --   | Cw800
 --   | Cw900
 --   deriving (Show, Eq, Segment)
+
+
+-- Is there any easier way to reuse things? 
+-- if these were all different types, it would be easier to read the documentation, that's for sure
+
 
 data FontWeight
   = Thin

@@ -34,17 +34,18 @@ library
       Yeti.Runtime
       Yeti.Server
       Yeti.Sockets
+      Yeti.UI
+      Yeti.UI.Element
+      Yeti.UI.Style
+      Yeti.UI.Tailwind
+      Yeti.UI.Tailwind.Classes
+      Yeti.UI.Tailwind.Options
+      Yeti.UI.Tailwind.Prefix
+      Yeti.UI.Tailwind.Types
+      Yeti.UI.Tailwind.Values
       Yeti.View
-      Yeti.View.Tailwind
-      Yeti.View.Tailwind.Classes
-      Yeti.View.Tailwind.Options
-      Yeti.View.Tailwind.Prefix
-      Yeti.View.Tailwind.Types
-      Yeti.View.Tailwind.Values
+      Yeti.View.Tag
       Yeti.View.Types
-      Yeti.View.UI
-      Yeti.View.UI.Html
-      Yeti.View.UI.Style
   other-modules:
       Paths_yeti
   hs-source-dirs:

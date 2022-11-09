@@ -1,9 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-module Yeti.View.UI.Style where
+module Yeti.UI.Style where
 
-import qualified Yeti.View.Tailwind as Tailwind
-import Yeti.View.Types
+import qualified Yeti.UI.Tailwind as Tailwind
+import Yeti.View
 
 
 flex o = cls (Tailwind.flex o)
@@ -22,6 +22,7 @@ gap o = cls (Tailwind.gap o)
 p  o = cls (Tailwind.p o)
 px o = cls (Tailwind.px o)
 py o = cls (Tailwind.py o)
+pl :: Tailwind.Option Tailwind.Padding o => o -> AttMod
 pl o = cls (Tailwind.pl o)
 pr o = cls (Tailwind.pr o)
 pt o = cls (Tailwind.pt o)
@@ -31,7 +32,7 @@ bg o = cls (Tailwind.bg o)
 
 border o = cls (Tailwind.border o)
 
-text o = cls (Tailwind.text o)
+text' o = cls (Tailwind.text o)
 font o = cls (Tailwind.font o)
 
 grow   = cls Tailwind.grow
@@ -60,3 +61,5 @@ placeholder = att "placeholder"
 absolute = cls (Tailwind.absolute)
 relative = cls (Tailwind.relative)
 
+
+rounded = cls [Class "rounded"]

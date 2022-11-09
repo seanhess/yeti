@@ -1,8 +1,9 @@
-{-# LANGUAGE OverloadedLists #-}
 module Yeti.View
   ( module Yeti.View.Types
+  , module Yeti.View.Tag
   ) where
 
--- import Yeti.Prelude
-import Yeti.View.Types
+import Yeti.View.Types hiding (Tag(..))
+import Yeti.View.Types (Tag)
+import Yeti.View.Tag
 

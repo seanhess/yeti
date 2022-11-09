@@ -10,8 +10,7 @@ import Yeti
 import Data.Text (Text, unpack)
 import Control.Monad (forM_)
 import Control.Exception (throw, Exception)
-import Lucid (toHtml)
-import Lucid.Html5
+import Yeti.UI
 import qualified Data.List as List
 
 
@@ -64,8 +63,8 @@ update TestEnter m =
 update (Woot t) m =
   pure $ m { comments = m.comments <> ["Woot"] }
 
-view :: Model -> Html ()
-view m = section_ [ class_ "page" ] $ do
+view :: Model -> View Content ()
+view m = col $ do
     h1_ $ toHtml $ "Article: " <> m.article.articleId
 
     div_ [ class_ "section" ] $ do

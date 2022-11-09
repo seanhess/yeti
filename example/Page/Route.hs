@@ -3,7 +3,7 @@ module Page.Route where
 import Prelude
 import Data.Text (pack)
 import Yeti
-import Yeti.View.UI
+import Yeti.UI
 -- import qualified Page.Article as Article
 
 data AppPage

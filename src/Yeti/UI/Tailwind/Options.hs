@@ -1,9 +1,9 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
-module Yeti.View.Tailwind.Options where
+module Yeti.UI.Tailwind.Options where
 
-import Yeti.View.Tailwind.Values
-import Yeti.View.Tailwind.Types
+import Yeti.UI.Tailwind.Values
+import Yeti.UI.Tailwind.Types
 
 data Background
 instance Option Background BgSize

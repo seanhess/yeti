@@ -6,7 +6,7 @@ module Yeti.Events where
 import Data.Map as Map (null, empty)
 import Yeti.Prelude
 import Yeti.Encode
-import Yeti.View.Types (Att, att)
+import Yeti.View (AttMod, att)
 
 
 type Name = Text
@@ -32,25 +32,25 @@ instance Read FormData where
 
 
 
-onClick :: (LiveAction action) => action -> Att a
+onClick :: (LiveAction action) => action -> AttMod
 onClick = on "click"
 
-onInput :: (LiveAction action) => (Text -> action) -> Att a
+onInput :: (LiveAction action) => (Text -> action) -> AttMod
 onInput = onValue "input"
 
 -- | capture the input event and commit immediately. Should not be used for text inputs
-onSelect :: (LiveAction action, Input val) => (val -> action) -> Att a
+onSelect :: (LiveAction action, Input val) => (val -> action) -> AttMod
 onSelect = onValue "input"
 
-onEnter :: (LiveAction action) => action -> Att a
+onEnter :: (LiveAction action) => action -> AttMod
 onEnter = on "enter"
 
 
 
-on :: (LiveAction action) => Text -> (action) -> Att a
+on :: (LiveAction action) => Text -> (action) -> AttMod
 on name act = att ("data-on-" <> name) $ fromEncoded $ encodeAction act
 
-onValue :: (LiveAction action, Input val) => Text -> (val -> action) -> Att a
+onValue :: (LiveAction action, Input val) => Text -> (val -> action) -> AttMod
 onValue name con = att ("data-on-" <> name) $ fromEncoded $ encodeAction1 con
 
 

@@ -6,6 +6,7 @@ module Page.Focus where
 
 import Prelude
 import Yeti
+import Yeti.UI
 
 import Data.Text (Text)
 import Lucid (toHtml)
@@ -34,7 +35,7 @@ update :: Applicative m => Action -> Model -> m Model
 update (One t) m = pure $ m { one = t }
 update (Two t) m = pure $ m { two = t }
 
-view :: Model -> Html ()
+view :: Model -> View Content ()
 view m = section_ [ class_ "page" ] $ do
   "FOCUS: !"
   div_ [ class_ "section" ] $ do

@@ -4,12 +4,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Yeti.View.Tailwind.Classes where
+module Yeti.UI.Tailwind.Classes where
 
 import Prelude hiding ((-))
-import Yeti.View.Tailwind.Types
-import Yeti.View.Tailwind.Values
-import Yeti.View.Tailwind.Options
+import Yeti.UI.Tailwind.Types
+import Yeti.UI.Tailwind.Values
+import Yeti.UI.Tailwind.Options
 
 bg :: Option Background o => o -> [Class]
 bg o = cls $ "bg" - (option o :: Seg Background)

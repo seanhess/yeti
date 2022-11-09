@@ -1,9 +1,9 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Yeti.View.Tailwind.Prefix where
+module Yeti.UI.Tailwind.Prefix where
 
 import Prelude
-import Yeti.View.Tailwind.Types
+import Yeti.UI.Tailwind.Types
 import Data.Text as Text (Text)
 import Data.String (IsString)
 

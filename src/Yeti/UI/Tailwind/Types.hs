@@ -4,7 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DefaultSignatures #-}
-module Yeti.View.Tailwind.Types
+module Yeti.UI.Tailwind.Types
   ( Class(..)
   , Segment(..)
   , Option(..)

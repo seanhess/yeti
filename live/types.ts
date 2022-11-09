@@ -32,16 +32,16 @@ export function fromAction(act:Action):string {
   return act.constructor + " " + JSON.stringify(act.args)
 }
 
-declare var yetiPage: string;
-declare var yetiState: Object;
+declare var YETI_PAGE: string;
+declare var YETI_STATE: Object;
 
 export type Init = {
   state: State
   page: Page
 }
 
-export const INIT_PAGE:Page = { fromPage: yetiPage }
-export const INIT_STATE:State = { fromState: yetiState }
+export const INIT_PAGE:Page = { fromPage: YETI_PAGE }
+export const INIT_STATE:State = { fromState: YETI_STATE }
 
 
 

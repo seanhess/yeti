@@ -4,6 +4,7 @@
 module Page.Todo where
 
 import Yeti
+import Yeti.UI hiding (content)
 import Prelude
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad (forM_)
@@ -12,8 +13,6 @@ import Data.String.Conversions (cs)
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM)
 import Data.Text as Text (Text, isInfixOf, toLower)
 import Data.Function ((&))
-import Lucid (toHtml)
-import Lucid.Html5
 
 
 data Model = Model
@@ -142,7 +141,7 @@ updateTodos saved up = do
 
 
 
-view :: Model -> Html ()
+view :: Model -> View Content ()
 view m = div_ [] $ do
   h3_ "Todos"
 

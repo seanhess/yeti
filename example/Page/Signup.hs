@@ -5,14 +5,13 @@ module Page.Signup where
 
 import Prelude
 import Yeti
+import Yeti.UI
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
 import Data.Text as Text (Text, length, any)
 import Data.Char (isDigit, isAlpha, isPunctuation, isUpper, isLower)
 import Data.Maybe (catMaybes)
-import Lucid (toHtml)
-import Lucid.Html5 hiding (onclick_)
 
 
 -- data Params = Params

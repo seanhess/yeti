@@ -20,27 +20,11 @@ type AttValue = Text
 type Attribute = (Name, AttValue)
 type Attributes = Map Name AttValue
 
--- Allows you to only specify attributes of a given type
--- TODO but this won't work very well, because the same attribute could be used for two different things
-type Att a = Attributes -> Attributes
+type AttMod = Attributes -> Attributes
 
 newtype Class = Class { fromClass :: Text }
   deriving newtype (IsString)
   deriving (Show, Eq)
-
-
-
--- | Add a class attribute. If it exists, combine with spaces
-cls :: [Class] -> Attributes -> Attributes
-cls cx = Map.insertWith combine "class" (classes cx)
-  where
-    combine new old = new <> " " <> old
-    classes = Text.intercalate " " . fmap fromClass
-
--- | Set an attribute, replacing existing value
-att :: Name -> AttValue -> Att a
-att = Map.insert
-
 
 
 -- -- TODO make sure purging works!
@@ -50,10 +34,6 @@ att = Map.insert
 --     mapFirstClass f_ (Opt as (cs:css)) = Opt as (f_ cs:css)
 --     mapFirstClass f_ o' = o'
 -- infixr 9 |:
-
-
-
-
 
 
 attribute :: Name -> AttValue -> Attribute
@@ -94,6 +74,9 @@ instance FromJSON Content where
 
 data Document
 data Body
+data Script
+  = Url Text
+  | Code Text
 
 newtype VDOM = VDOM { fromVDOM :: [Content] }
   deriving newtype (Generic, ToJSON, FromJSON)
@@ -102,58 +85,7 @@ instance Show VDOM where
   show (VDOM cts) = unlines $ fmap show cts
 
 vdom :: View a () -> VDOM
-vdom = VDOM . execViewContent
-
-
-
-test :: View a ()
-test = do
-  col & att' "key" "value" $ do
-
-    row & gap8 . pad4 $ do
-      fromText "one"
-      text & gap4 $ "two"
-
-    row $ text "three"
-
-  where
-    row :: View a () -> View b ()
-    row = tag "div" id
-
-    col :: View a () -> View b ()
-    col = tag "div" id
-
-    gap8 = cls' [Class "gap-8"]
-    pad4 = cls' [Class "pad-4"]
-    gap4 = cls' [Class "gap-4"]
-
-    text :: Text -> View b ()
-    text = tag "span" id . fromText
-
-    -- well, we don't want to add it to the *content*
-    att' :: Name -> AttValue -> (a -> View b ()) -> a -> View b ()
-    att' n v addContent =
-      mapTag (modifyAtt (Map.insert n v)) . addContent
-
-    cls' :: [Class] -> (a -> View b ()) -> a -> View b ()
-    cls' cx addContent =
-      mapTag (modifyAtt (cls cx)) . addContent
-
-    modifyAtt :: (Attributes -> Attributes) -> Tag -> Tag
-    modifyAtt f t = t { attributes = f t.attributes }
-
-    -- applies a transformation only to tag nodes
-    mapTag :: (Tag -> Tag) -> View a () -> View a ()
-    mapTag f = do
-      mapViewContents (map (mapTagContent f))
-
-    mapViewContents :: ([Content] -> [Content]) -> View a () -> View a ()
-    mapViewContents f (View st) = modify $ f . execState st
-
-    -- needs to map each of them
-    mapTagContent :: (Tag -> Tag) -> Content -> Content
-    mapTagContent f (Node t) = Node $ f t
-    mapTagContent _ (Text t) = Text t
+vdom = VDOM . viewContents
 
 
 
@@ -161,39 +93,18 @@ newtype View a x = View
   { runView :: State [Content] x
   } deriving newtype (Functor, Applicative, Monad, MonadState [Content])
 
-
 instance Show (View a x) where
-  show u = unlines $ fmap show (execViewContent u)
+  show u = unlines $ fmap show (viewContents u)
 
 instance IsString (View Content ()) where
   fromString s = do
     modify $ \cts -> cts <> [ Text (cs s)]
 
+viewContents :: View a x -> [Content]
+viewContents (View wts) = execState wts []
 
-execViewContent :: View a x -> [Content]
-execViewContent (View wts) = execState wts []
-
-tag :: Text -> Att a -> View a () -> View b ()
-tag nm f ctu = modify $ \cts ->
-  cts <> [ Node $ Tag nm (f []) (execViewContent ctu) ]
-
--- | A generic node with style, attributes, and content 
-el :: Att a -> View Content () -> View Content ()
-el = tag "div"
-
--- | A styled inline text node
--- text :: Text -> View Content ()
--- text ct = tag "span" id (fromText ct)
-
--- | Convert from text directly to view. You should not have to use this. Use `text` instead
-fromText :: Text -> View a ()
-fromText t = modify $ \cts ->
-  cts <> [ Text t ]
-
-
-
-
-
+addContent :: Content -> View a ()
+addContent c = modify $ \cts -> cts <> [ c ]
 
 
 
@@ -208,13 +119,14 @@ toHtmlLazyText = cs . htmlDocument
 
 htmlDocument :: View Document () -> Text
 htmlDocument u = 
-  let ts = execViewContent u
+  let ts = viewContents u
+
   in case ts of
     [Node d] -> mconcat $ htmlTag noIndent 0 d
-    cts -> error "Should not be possible to create document with multiple tags"
+    cts -> error "Should not be possible to create document with multiple tags. Use document function."
 
 showView :: View a () -> Text
-showView v = Text.unlines $ mconcat $ map showContent $ execViewContent v
+showView v = Text.unlines $ mconcat $ map showContent $ viewContents v
 
 showContent :: Content -> [Text]
 showContent (Node t) = htmlTag indent 0 t
