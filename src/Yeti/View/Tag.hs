@@ -8,39 +8,37 @@ import qualified Data.Text as Text
 
 
 -- | Add a class attribute. If it exists, combine with spaces
-cls :: [Class] -> AttMod
-cls cx = Map.insertWith combine "class" (classes cx)
-  where
-    combine new old = new <> " " <> old
-    classes = Text.intercalate " " . fmap fromClass
+cls :: [Class] -> TagMod
+cls cx t =
+  t { classes = t.classes <> cx }
 
 -- | Set an attribute, replacing existing value
-att :: Name -> AttValue -> AttMod
-att = Map.insert
+att :: Name -> AttValue -> TagMod
+att n v t = t { attributes = Map.insert n v t.attributes }
 
 
 
 
 
-tag :: Text -> AttMod -> View a () -> View b ()
+tag :: Text -> TagMod -> View a () -> View b ()
 tag nm f ctu = addContent $
-  Node $ Tag nm (f []) (viewContents ctu)
+  Node $ f $ Tag nm [] [] (viewContents ctu)
 
 
-type TagF = AttMod -> View Content () -> View Content ()
-(#) :: TagF -> View Content () -> View Content ()
-f # ct = f id ct
-infixr 8 #
+-- type TagF = TagMod -> View Content () -> View Content ()
+-- (#) :: TagF -> View Content () -> View Content ()
+-- f # ct = f id ct
+-- infixr 8 #
 
 -- | A generic node with style, attributes, and content 
-el :: AttMod -> View Content () -> View Content ()
+el :: TagMod -> View Content () -> View Content ()
 el = tag "div"
 
 el_ :: View Content () -> View Content ()
 el_ = tag "div" id
 
 -- | A styled inline text node
-text :: AttMod -> Text -> View Content ()
+text :: TagMod -> Text -> View Content ()
 text f ct = tag "span" f (fromText ct)
 
 text_ :: Text -> View Content ()
@@ -55,6 +53,9 @@ script :: Script -> View b ()
 script (Url src) = tag "script" (att "type" "text/javascript" . att "src" src) none
 script (Code code) = tag "script" (att "type" "text/javascript") $ fromText code
 
+stylesheet :: Text -> View b ()
+stylesheet href = tag "link" (att "rel" "stylesheet" . att "href" href) none
+
 none :: View Content ()
 none = ""
 
@@ -67,7 +68,7 @@ none = ""
 
 
 
-meta :: AttMod -> View a ()
+meta :: TagMod -> View a ()
 meta f = tag "meta" f (fromText "")
 
 title_ = tag "title" id

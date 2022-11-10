@@ -11,6 +11,7 @@ import Page.Route (AppPage(..), mainView)
 import Prelude
 import Web.Scotty
 import Yeti
+import qualified Yeti.UI as UI
 -- import qualified Page.Article as Article
 import qualified Page.Counter as Counter
 -- import qualified Page.Focus as Focus
@@ -32,15 +33,14 @@ startServer = do
 
   scotty 3031 $ do
 
-    -- we can serve this up static
-    -- yeti.js
+    -- Example serves it statically for ease of development. Recommended to embed
     get "/yeti.js" $ do
       addHeader "Content-Type" "text/javascript"
       file "dist/main.js"
 
-    get "/app.css" $ do
-      addHeader "Content-Type" "text/css"
-      file "example/app.css"
+    -- get "/ui.css" $ do
+    --   addHeader "Content-Type" "text/css"
+    --   raw $ UI.stylesheet
 
     get "/" $ do
       html $ toHtmlLazyText $ document "Example" (pure ()) mainView
@@ -61,7 +61,7 @@ startServer = do
 
 config :: Render
 config content =
-  document "Example" (pure ()) $ do
+  document "Example" (stylesheet "/ui.css") $ do
     content
 
     -- yeti source needs to be last

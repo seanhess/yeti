@@ -20,11 +20,31 @@ type AttValue = Text
 type Attribute = (Name, AttValue)
 type Attributes = Map Name AttValue
 
-type AttMod = Attributes -> Attributes
+type TagMod = Tag -> Tag
 
-newtype Class = Class { fromClass :: Text }
-  deriving newtype (IsString)
-  deriving (Show, Eq)
+
+
+data Class = Class
+  { className :: ClassName
+  , classProperties :: Map Text ClassValue
+  } deriving (Show)
+
+
+type ClassName = String
+data ClassValue = ClassValue
+  { value :: String
+  , units :: Units
+  } deriving (Show)
+
+instance IsString ClassValue where
+  fromString s = ClassValue s None
+
+
+data Units
+  = None
+  | Px
+  | Rem
+  deriving (Show)
 
 
 -- -- TODO make sure purging works!
@@ -41,19 +61,27 @@ attribute n v = (n, v)
 
 data Tag = Tag
   { name :: Name
+  , classes :: [Class]
   , attributes :: Attributes
   , children :: [Content]
   } deriving (Show)
--- encode as 3 element array
 
 instance ToJSON Tag where
-  toJSON (Tag n a c) =
-    toJSON (n, a, c)
+  -- encode as 3 element array, so the footprint is smaller
+  toJSON t =
+    toJSON (t.name, tagAttributes t, t.children)
 
-instance FromJSON Tag where
-  parseJSON val = do
-    (n, a, c) <- parseJSON val
-    pure $ Tag n a c
+tagAttributes :: Tag -> Attributes
+tagAttributes t =
+  addClass t.classes t.attributes
+
+  where
+    addClass [] atts = atts
+    addClass cx atts = Map.insert "class" (classAttValue cx) atts
+
+    classAttValue cx =
+      Text.intercalate " " $ map (cs . (.className)) cx
+
 
 data Content
   = Node Tag
@@ -68,9 +96,9 @@ instance ToJSON Content where
   toJSON (Node t) = toJSON t
   toJSON (Text t) = toJSON t
 
-instance FromJSON Content where
-  parseJSON v =
-    Node <$> parseJSON v <|> Text <$> parseJSON v
+-- instance FromJSON Content where
+--   parseJSON v =
+--     Node <$> parseJSON v <|> Text <$> parseJSON v
 
 data Document
 data Body
@@ -79,7 +107,7 @@ data Script
   | Code Text
 
 newtype VDOM = VDOM { fromVDOM :: [Content] }
-  deriving newtype (Generic, ToJSON, FromJSON)
+  deriving newtype (Generic, ToJSON)
 
 instance Show VDOM where
   show (VDOM cts) = unlines $ fmap show cts
@@ -106,8 +134,8 @@ viewContents (View wts) = execState wts []
 addContent :: Content -> View a ()
 addContent c = modify $ \cts -> cts <> [ c ]
 
-
-
+-- classAttribute :: [Class] -> Attribute
+-- classAttribute cls = ("class", Text.intercalate " " $ map (cs . (.className)) cls)
 
 -- Render HTML
 
@@ -136,23 +164,23 @@ showContent (Text t) = [t]
 type Indent = Int
 
 htmlTag :: (Indent -> [Text] -> [Text]) -> Indent -> Tag -> [Text]
-htmlTag indent' i (Tag name atts cnt) =
-  case cnt of
+htmlTag indent' i tag =
+  case tag.children of
 
-    [] -> [ open <> htmlAtts atts <> "/>" ]
+    [] -> [ open <> htmlAtts (tagAttributes tag) <> "/>" ]
 
     [Text t] ->
-      [ open <> htmlAtts atts <> ">" <> t <> close ]
+      [ open <> htmlAtts (tagAttributes tag) <> ">" <> t <> close ]
 
     _  -> mconcat
-      [ [ open <> htmlAtts atts <> ">" ]
-      , indent' (i+1) $ htmlChildren cnt
+      [ [ open <> htmlAtts (tagAttributes tag) <> ">" ]
+      , indent' (i+1) $ htmlChildren tag.children
       , [ close ]
       ]
 
   where
-    open = "<" <> name
-    close = "</" <> name <> ">"
+    open = "<" <> tag.name
+    close = "</" <> tag.name <> ">"
 
     htmlContent :: Content -> [Text]
     htmlContent (Node t) = htmlTag indent' i t
@@ -166,8 +194,9 @@ htmlTag indent' i (Tag name atts cnt) =
     htmlAtts [] = ""
     htmlAtts as = " " <> 
       Text.intercalate " " (map htmlAtt $ Map.toList as)
-      where htmlAtt (k, v) =
-              k <> "=" <> "'" <> v <> "'"
+      where
+        htmlAtt (k, v) =
+          k <> "=" <> "'" <> v <> "'"
 
 indent :: Indent -> [Text] -> [Text]
 indent i' = fmap ind

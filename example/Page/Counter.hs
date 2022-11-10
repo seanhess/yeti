@@ -42,7 +42,7 @@ update Decrement m = pure $ m { count = m.count - 1 }
 update _ m = pure m
 
 view :: Model -> View Content ()
-view m = col (p S1) $ do
+view m = col (pad 1) $ do
 
     row_ $ do
       btn Decrement "Decrement"
@@ -52,12 +52,13 @@ view m = col (p S1) $ do
       --   Sign Up
       -- </button>
 
-    row (p S1) $ do
+    row (pad 1 . gap 6) $ do
       input Noop id
 
     text_ $ pack $ show m.count
   where
-    btn act = button act (px S4 . py S2 . rounded)
+    -- btn act = button act (px S4 . py S2 rounded)
+    btn act = button act id
 
 
 

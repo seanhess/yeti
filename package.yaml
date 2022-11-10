@@ -64,7 +64,7 @@ ghc-options:
   - -Wincomplete-record-updates
   - -Wname-shadowing
   - -fdefer-typed-holes
-  - -Wunused-imports
+  # - -Wunused-imports
 
 default-extensions:
   - ApplicativeDo

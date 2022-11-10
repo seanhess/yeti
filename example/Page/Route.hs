@@ -18,7 +18,7 @@ data AppPage
 
 mainView :: View Content ()
 mainView = do
-  row (p S1) $ do
+  row (pad 1) $ do
     page (Counter 11)
     -- page Signup
     -- page Focus
@@ -27,7 +27,7 @@ mainView = do
   where
     page :: AppPage -> View Content ()
     page p' = 
-      el id $ link (pageUrlPath p') (fromText $ pack $ show p')
+      el_ $ hlink (pageUrlPath p') (fromText $ pack $ show p')
 
 -- Example of how to do a completely static page
 mainPage :: Applicative m => StaticPage m
