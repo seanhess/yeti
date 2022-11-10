@@ -1,3 +1,4 @@
+import { VDOM } from "./vdom"
 
 export type Page = {
   fromPage: string
@@ -45,3 +46,7 @@ export const INIT_STATE:State = { fromState: YETI_STATE }
 
 
 
+
+export type Update = (state:State, params:string, vdom:VDOM, classes:Object) => void;
+
+export type Classes = [name: [prop: string]]

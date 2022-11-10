@@ -4,7 +4,7 @@
 module Yeti.View.Types where
 
 import Yeti.Prelude
-import Data.Aeson (ToJSON(..), FromJSON(..))
+import Data.Aeson (ToJSON(..), FromJSON(..), Value(String))
 import Control.Monad.Writer.Lazy (Writer, execWriter, tell, MonadWriter)
 import Control.Monad.State.Strict (State, withState, execState, modify, put, get, MonadState)
 import qualified Data.Map as Map
@@ -26,8 +26,10 @@ type TagMod = Tag -> Tag
 
 data Class = Class
   { className :: ClassName
-  , classProperties :: Map Text ClassValue
+  , classProperties :: ClassProps
   } deriving (Show)
+
+type ClassProps = Map Text ClassValue
 
 
 type ClassName = String
@@ -39,12 +41,20 @@ data ClassValue = ClassValue
 instance IsString ClassValue where
   fromString s = ClassValue s None
 
+instance ToJSON ClassValue where
+  toJSON (ClassValue v u) =
+    String $ cs $ v <> show u
+
 
 data Units
   = None
   | Px
   | Rem
-  deriving (Show)
+
+instance Show Units where
+  show None = ""
+  show Px = "px"
+  show Rem = "rem"
 
 
 -- -- TODO make sure purging works!
@@ -69,6 +79,7 @@ data Tag = Tag
 instance ToJSON Tag where
   -- encode as 3 element array, so the footprint is smaller
   toJSON t =
+    -- then it needs to serialize all the classes
     toJSON (t.name, tagAttributes t, t.children)
 
 tagAttributes :: Tag -> Attributes
@@ -115,7 +126,21 @@ instance Show VDOM where
 vdom :: View a () -> VDOM
 vdom = VDOM . viewContents
 
+-- viewClasses :: View a x -> 
+nestedClasses :: View a () -> Map ClassName ClassProps
+nestedClasses vw =
+  -- classes
+  foldr addCntDefs [] $ viewContents vw
 
+  where
+    addCntDefs :: Content -> Map ClassName ClassProps -> Map ClassName ClassProps
+    addCntDefs (Text _) m = m
+    addCntDefs (Node t) m =
+      let m' = foldr addClsDef m t.classes
+      in foldr addCntDefs m' t.children
+
+    addClsDef :: Class -> Map ClassName ClassProps -> Map ClassName ClassProps
+    addClsDef c = Map.insert c.className c.classProperties
 
 newtype View a x = View
   { runView :: State [Content] x

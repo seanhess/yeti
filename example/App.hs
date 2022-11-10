@@ -61,7 +61,7 @@ startServer = do
 
 config :: Render
 config content =
-  document "Example" (stylesheet "/ui.css") $ do
+  document "Example" (pure ()) $ do
     content
 
     -- yeti source needs to be last

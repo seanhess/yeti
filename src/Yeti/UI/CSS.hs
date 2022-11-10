@@ -30,7 +30,7 @@ row' :: Class
 row' = Class "row" [("display", "flex"), ("flex-direction", "row")]
 
 col' :: Class
-col' = Class "col" [("display", "flex"), ("flex-direction", "col")]
+col' = Class "col" [("display", "flex"), ("flex-direction", "column")]
 
 pxRem :: PxRem -> ClassValue
 pxRem 0 = ClassValue "0" Px
