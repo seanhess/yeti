@@ -46,7 +46,6 @@ export const INIT_STATE:State = { fromState: YETI_STATE }
 
 
 
+export type Update = (state:State, params:string, vdom:VDOM, classes:Class[]) => void;
 
-export type Update = (state:State, params:string, vdom:VDOM, classes:Object) => void;
-
-export type Classes = [name: [prop: string]]
+export type Class = {selectorText:string, cssText:string}

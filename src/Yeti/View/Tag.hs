@@ -56,6 +56,9 @@ script (Code code) = tag "script" (att "type" "text/javascript") $ fromText code
 stylesheet :: Text -> View b ()
 stylesheet href = tag "link" (att "rel" "stylesheet" . att "href" href) none
 
+style :: Text -> View b ()
+style ct = tag "style" (att "type" "text/css") $ fromText ct
+
 none :: View Content ()
 none = ""
 

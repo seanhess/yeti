@@ -1,18 +1,18 @@
-import { hydrate, patch, render, DOMNode, m, VNode, Flags } from 'million';
+import { hydrate, patch, render, DOMNode, m, VNode, Flags, style } from 'million';
 import { fromDomNodeToVNode, fromStringToDomNode } from 'million/utils';
 import { listenEvents } from './events';
 import { WEBSOCKET_ADDRESS, Messages } from './Messages'
-import { INIT_PAGE, INIT_STATE, State, Classes } from './types';
+import { INIT_PAGE, INIT_STATE, State, Class } from './types';
 import { fromVDOM, VDOM } from './vdom'
 
 
 const CONTENT_ID = "yeti-root-content"
 
 console.log("VERSION 2", INIT_PAGE, INIT_STATE)
-console.log("stylesheets", document.styleSheets)
 
 var currentState:State = INIT_STATE
 var rootElement:DOMNode
+var stylesheet:CSSStyleSheet
 
 const messages = new Messages()
 messages.onUpdate(update)
@@ -24,8 +24,20 @@ messages.connect(INIT_PAGE, currentState)
 
 listenEvents(messages)
 
+window.addEventListener("load", function() {
+  console.log("docload")
+  rootElement = document.getElementById("yeti-root-content")
 
-function update(newState:State, params:string, vdom:VDOM, classes:Classes) {
+  let styleNode = document.getElementById("yeti-stylesheet") as any
+  stylesheet = styleNode.sheet
+
+  // hydreate the content
+  let initContent = fromDomNodeToVNode(rootElement)
+  console.log('INIT', initContent)
+  rootElement = patch(rootElement, initContent)
+})
+
+function update(newState:State, params:string, vdom:VDOM, classes:Class[]) {
 
   // This is stripping tab characters in the data attributes, can't use tab as a delimiter
   // let dom = fromStringToDomNode(html)
@@ -37,9 +49,14 @@ function update(newState:State, params:string, vdom:VDOM, classes:Classes) {
   currentState = newState
 
   // Update stylesheet
-  let defs = classDefinitions(classes).join("\n")
-  console.log("DEFS", defs)
-  styleSheet.replaceSync(defs)
+  // let defs = classDefinitions(classes)
+
+  // hmm, only if it doesn't exist in the sheet
+  classes
+    .filter((c) => !hasRule(stylesheet.cssRules, c))
+    .forEach((c) => stylesheet.insertRule(c.cssText))
+
+  console.log(stylesheet.cssRules)
 
   // wait, is this pushing in a circle?
   updateHistory(newState, params, vdom)
@@ -61,44 +78,34 @@ window.addEventListener("popstate", function(e) {
   update(newState, params, html, stylesheet)
 })
 
-window.addEventListener("load", function() {
-  console.log("docload")
-  rootElement = document.getElementById("yeti-root-content")
-
-  // hydreate the content
-  let initContent = fromDomNodeToVNode(rootElement)
-  console.log('INIT', initContent)
-  rootElement = patch(rootElement, initContent)
-})
-
-
-
 
 // DYNAMIC STYLES ////////////////////
 
 
-const styleSheet = new CSSStyleSheet();
-
-styleSheet.replaceSync('body { background: red; }');
+// const styleSheet = new CSSStyleSheet();
+// styleSheet.replaceSync('body { background: red; }');
 
 // sheet.insertRule("* { color: blue; }");
 
 // Apply the stylesheet to a document
-document.adoptedStyleSheets = [styleSheet];
+// document.adoptedStyleSheets = [styleSheet];
 
 
-function classDefinitions(classes:Classes):string[] {
-  var defs = []
-  for (var name in classes ) {
-    defs.push(classDefinition(name, classes[name]))
+// function classDefinitions(classes:Classes):string[] {
+//   var defs = []
+//   for (var name in classes ) {
+//     defs.push(classDefinition(name, classes[name]))
+//   }
+//   return defs
+// }
+
+
+
+function hasRule(cssRules:CSSRuleList, cls:Class):boolean {
+  for (var i in cssRules) {
+    let rule = cssRules[i] as CSSStyleRule
+    if (rule.selectorText == cls.selectorText)
+      return true
   }
-  return defs
-}
-
-function classDefinition(name:string, properties:[prop:string]):string {
-  var props = []
-  for (var propName in properties) {
-    props.push(propName + ":" + properties[propName])
-  }
-  return "." + name + " " + "{" + props.join("; ") + "}"
+  return false
 }

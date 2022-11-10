@@ -42,8 +42,7 @@ instance IsString ClassValue where
   fromString s = ClassValue s None
 
 instance ToJSON ClassValue where
-  toJSON (ClassValue v u) =
-    String $ cs $ v <> show u
+  toJSON = String . renderClassValue
 
 
 data Units
@@ -141,6 +140,23 @@ nestedClasses vw =
 
     addClsDef :: Class -> Map ClassName ClassProps -> Map ClassName ClassProps
     addClsDef c = Map.insert c.className c.classProperties
+
+renderCSS :: Map ClassName ClassProps -> [Text]
+renderCSS m = map renderClass $ toClasses m
+  where
+    toClasses = map toClass . Map.toList
+    toClass (n, p) = Class n p
+
+    renderClass :: Class -> Text
+    renderClass (Class n p) =
+      "." <> (cs n) <> " " <> "{" <> (Text.intercalate "; " $ map renderProp $ Map.toList p) <> "}"
+
+    renderProp :: (Text, ClassValue) -> Text
+    renderProp (p, cv) = p <> ":" <> renderClassValue cv
+
+renderClassValue :: ClassValue -> Text
+renderClassValue (ClassValue v u) = cs $ v <> show u
+
 
 newtype View a x = View
   { runView :: State [Content] x

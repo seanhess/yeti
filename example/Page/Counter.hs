@@ -42,7 +42,7 @@ update Decrement m = pure $ m { count = m.count - 1 }
 update _ m = pure m
 
 view :: Model -> View Content ()
-view m = col (gap 10) $ do
+view m = col (gap (fromIntegral m.count)) $ do
 
     row (gap 10) $ do
       btn Decrement "Decrement"

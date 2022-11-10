@@ -1,5 +1,5 @@
 import {fromAction, Page, State} from "./types"
-import { Action, Update } from "./types";
+import { Action, Update, Class } from "./types";
 import { VDOM } from "./VDOM"
 
 export const WEBSOCKET_ADDRESS = "ws://" + location.host
@@ -52,7 +52,7 @@ export class Messages {
       let [newState, params, vdoms, cls]:string[] = event.data.split("\n")
 
       let vdom = JSON.parse(vdoms)
-      let classes = JSON.parse(cls)
+      let classes = parseClasses(JSON.parse(cls))
 
       if (this._update)
         this._update({fromState: newState}, params, vdom, classes)
@@ -108,3 +108,21 @@ export class Messages {
   }
 }
 
+
+
+function parseClasses(map:[name: [prop: string]]):Class[] {
+  var classes = []
+  for (var cls in map) {
+    let props = map[cls]
+    classes.push({selectorText: "." + cls, cssText:classDefinition(cls, props)})
+  }
+  return classes
+}
+
+function classDefinition(name:string, properties:[prop:string]):string {
+  var props = []
+  for (var propName in properties) {
+    props.push(propName + ":" + properties[propName])
+  }
+  return `.${name} { ${props.join("; ")} }`
+}

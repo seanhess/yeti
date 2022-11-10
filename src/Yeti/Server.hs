@@ -98,11 +98,20 @@ respondWai render pg (Response encModel encParams view) respWai = do
         , ""
         ]
 
+    embedStyleSheet :: View Content () -> View Content ()
+    embedStyleSheet v = do
+      let cx = nestedClasses v
+      tag "style" (att "type" "text/css" . att "id" "yeti-stylesheet") $
+        (fromText $ Text.intercalate "\n" $ renderCSS cx)
+
+
     -- render the root node and embed the javascript
     embedContent :: View Content () -> View Content ()
     embedContent v = do
       fromText "\n"
       embedStateScript
+      fromText "\n"
+      embedStyleSheet v
       fromText "\n"
       el (att "id" "yeti-root-content") v
 
