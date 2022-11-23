@@ -11,7 +11,7 @@ module Yeti.UI
 
 
 import Yeti.UI.Element
-import Yeti.UI.CSS
+import Yeti.UI.CSS hiding ((-))
 
 
 

@@ -69,7 +69,7 @@ view m = col (gap 8) $ do
     text_ $ pack $ show m.count
   where
     -- btn act = button act (px S4 . py S2 rounded)
-    btn act = button act (shadow . padX 8 . padY 4 . bg Purple . Hover |: bg PurpleLight)
+    btn act = button act (shadow . padX 8 . padY 4 . bg Purple . hover |: bg PurpleLight . color White)
     -- btn act = button act (hover |: bg Green)
 
 
@@ -77,12 +77,14 @@ data MyColors
   = Purple
   | PurpleLight
   | Green
+  | White
   deriving (Show)
 
 instance ToColor MyColors where
   colorValue Purple = rgb 168 85 247
   colorValue PurpleLight = rgb 192 132 252
   colorValue Green = Style Hex "00FF00"
+  colorValue White = Style Hex "FFF"
   colorName = Text.toLower . pack . show
 
 

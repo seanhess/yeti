@@ -59,3 +59,6 @@ shadow = cls [shadow']
 
 bg :: ToColor c => c -> TagMod
 bg c = cls [bg' c]
+
+color :: ToColor c => c -> TagMod
+color c = cls [color' c]

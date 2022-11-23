@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLabels #-}
 module Yeti.UI.CSS where
 
-import Yeti.Prelude
+import Yeti.Prelude hiding ((-))
 import Yeti.View.Types
 import Text.RawString.QQ (r)
 import Data.ByteString.Lazy (ByteString)
@@ -11,28 +11,32 @@ import qualified Data.Map as Map
 -- Px, converted to Rem
 type PxRem = Int
 
+
+(-) :: Show a => Text -> a -> ClassName
+n - a = ClassName NoPsd $ n <> "-" <> cs (show a)
+
 pad' :: PxRem -> Class
 pad' n = Class
-  (ClassName NoPsd $ "pad-" <> cs (show n))
+  ("pad"-n)
   [("padding", pxRem n)]
 
 padY' :: PxRem -> Class
 padY' n = Class
-  (ClassName NoPsd $ "pady-" <> cs (show n))
+  ("pady"-n)
   [("padding-top", pxRem n)
   ,("padding-bottom", pxRem n)
   ]
 
 padX' :: PxRem -> Class
 padX' n = Class
-  (ClassName NoPsd $ "padx-" <> cs (show n))
+  ("padx"-n)
   [("padding-left", pxRem n)
   ,("padding-right", pxRem n)
   ]
 
 gap' :: PxRem -> Class
 gap' n = Class
-  (ClassName NoPsd $ "gap-" <> cs (show n))
+  ("gap"-n)
   [("gap", pxRem n)]
 
 grow' :: Class
@@ -66,8 +70,16 @@ bg' c =
     [ ("background-color", colorValue c)
     ]
 
+color' :: ToColor c => c -> Class
+color' c =
+  Class
+    (ClassName NoPsd $ "clr-" <> colorName c)
+    [("color", colorValue c)]
+
 rgb :: Int -> Int -> Int -> Style
 rgb rd gr bl = Style RGB $ mconcat [(show rd), " ", (show gr), " ", (show bl)]
+
+
 
 
 
