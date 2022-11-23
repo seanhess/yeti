@@ -7,6 +7,8 @@ import Yeti.View (View, Content)
 import Data.Text as Text (toLower, intercalate, dropWhile, splitOn)
 import Text.Read (readMaybe)
 import GHC.Generics
+import Control.Monad.State.Strict (StateT, MonadState)
+import qualified Control.Monad.State.Strict as State
 
 
 
@@ -19,6 +21,17 @@ data Page params model action m = Page
   , update :: Update action model m
   , view   :: View'         model
   }
+
+
+
+-- TODO change to a custom monad. We need to allow multiple sets per update
+newtype Up model m x = Up { runUp :: StateT model m x }
+  deriving newtype (Functor, Applicative, Monad, MonadState model)
+
+upset :: (MonadIO (Up model m), Monad m) => model -> Up model m ()
+upset m = do
+  liftIO $ putStrLn "HELLO"
+  Up $ State.put m
 
 
 type Load   params model m = Maybe params -> m model

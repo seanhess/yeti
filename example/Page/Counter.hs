@@ -36,9 +36,18 @@ load :: MonadIO m => Integer -> (Maybe Params) -> m Model
 load _ (Just (Params n)) = pure $ Model n
 load n _ = pure $ Model n
 
+
+-- it's not an actual state monad
+-- it's something else
+
 update :: MonadIO m => Action -> Model -> m Model
-update Increment m = pure $ m { count = m.count + 1 }
-update Decrement m = pure $ m { count = m.count - 1 }
+
+update Increment m = do
+  pure $ m { count = m.count + 1 }
+
+update Decrement m = do
+  pure $ m { count = m.count - 1 }
+
 update _ m = pure m
 
 view :: Model -> View Content ()
