@@ -21,8 +21,11 @@ att n v t = t { attributes = Map.insert n v t.attributes }
 
 
 tag :: Text -> TagMod -> View a () -> View b ()
-tag nm f ctu = addContent $
-  Node $ f $ Tag nm [] [] (viewContents ctu)
+tag nm f ctu = do
+  let t = f $ Tag nm [] [] (viewContents ctu)
+  addContent $ Node t
+  addClasses $ t.classes
+  addClasses $ classList $ viewClasses ctu
 
 
 -- type TagF = TagMod -> View Content () -> View Content ()

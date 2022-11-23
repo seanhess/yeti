@@ -100,7 +100,7 @@ respondWai render pg (Response encModel encParams view) respWai = do
 
     embedStyleSheet :: View Content () -> View Content ()
     embedStyleSheet v = do
-      let cx = nestedClasses v
+      let cx = viewClasses v
       tag "style" (att "type" "text/css" . att "id" "yeti-stylesheet") $
         (fromText $ Text.intercalate "\n" $ renderCSS cx)
 

@@ -29,6 +29,9 @@ data Class = Class
   , classProperties :: ClassProps
   } deriving (Show)
 
+classFromPair :: (ClassName, ClassProps) -> Class
+classFromPair (n,p) = Class n p
+
 type ClassProps = Map Text ClassValue
 
 
@@ -126,10 +129,15 @@ vdom :: View a () -> VDOM
 vdom = VDOM . viewContents
 
 -- viewClasses :: View a x -> 
-nestedClasses :: View a () -> Map ClassName ClassProps
-nestedClasses (View st) = do
+viewClasses :: View a () -> Map ClassName ClassProps
+viewClasses (View st) = do
   (.classStyles) $ execState st (ViewState [] [])
 
+viewContents :: View a x -> [Content]
+viewContents (View wts) = (.contents) $ execState wts (ViewState [] [])
+
+classList :: Map ClassName ClassProps -> [Class]
+classList m = map classFromPair $ Map.toList m
 
 
 renderCSS :: Map ClassName ClassProps -> [Text]
@@ -165,23 +173,25 @@ instance IsString (View Content ()) where
   fromString s = do
     addContent $ Text (cs s)
 
-viewContents :: View a x -> [Content]
-viewContents (View wts) = (.contents) $ execState wts (ViewState [] [])
+addClasses :: [Class] -> View a ()
+addClasses clss = do
+  modify $ \vs -> vs
+    { classStyles = foldr addClsDef vs.classStyles clss
+    }
+  where
+    addClsDef :: Class -> Map ClassName ClassProps -> Map ClassName ClassProps
+    addClsDef c = Map.insert c.className c.classProperties
 
 addContent :: Content -> View a ()
 addContent ct = do
   modify $ \vs -> vs
     { contents = vs.contents <> [ ct ]
-    , classStyles = foldr addClsDef vs.classStyles (cntClasses ct) 
     }
 
-  where
-    cntClasses :: Content -> [Class]
-    cntClasses (Text _) = []
-    cntClasses (Node t) = t.classes
 
-    addClsDef :: Class -> Map ClassName ClassProps -> Map ClassName ClassProps
-    addClsDef c = Map.insert c.className c.classProperties
+contentClasses :: Content -> [Class]
+contentClasses (Text _) = []
+contentClasses (Node t) = t.classes
 
 -- classAttribute :: [Class] -> Attribute
 -- classAttribute cls = ("class", Text.intercalate " " $ map (cs . (.className)) cls)

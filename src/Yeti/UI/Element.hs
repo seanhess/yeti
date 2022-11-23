@@ -45,6 +45,8 @@ pad n = cls [pad' n]
 gap :: PxRem -> TagMod
 gap n = cls [gap' n]
 
-
 grow :: TagMod
 grow = cls [grow']
+
+shadow :: TagMod
+shadow = cls [shadow']

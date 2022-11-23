@@ -37,6 +37,9 @@ pxRem 0 = ClassValue "0" Px
 pxRem 1 = ClassValue "1" Px
 pxRem n = ClassValue (show $ fromIntegral n / 16.0) Rem
 
+shadow' :: Class
+shadow' = Class "shadow" [("box-shadow", "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)")]
+
 
 
 

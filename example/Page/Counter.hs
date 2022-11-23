@@ -51,7 +51,7 @@ update Decrement m = do
 update _ m = pure m
 
 view :: Model -> View Content ()
-view m = col (gap 6) $ do
+view m = col (gap 8) $ do
 
     row (gap 10) $ do
       btn Decrement "Decrement"
@@ -67,7 +67,7 @@ view m = col (gap 6) $ do
     text_ $ pack $ show m.count
   where
     -- btn act = button act (px S4 . py S2 rounded)
-    btn act = button act id
+    btn act = button act shadow
 
 
 

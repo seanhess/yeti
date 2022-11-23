@@ -11,7 +11,7 @@ import qualified Data.Aeson as Aeson
 import Network.WebSockets (WebSocketsData)
 import Yeti.Encode (Encoded(..), Encoding(..))
 import Yeti.Page (Response(..), PageHandler, RoutePage(..), pathSegments)
-import Yeti.View.Types (vdom, nestedClasses)
+import Yeti.View.Types (vdom, viewClasses)
 import qualified Data.Text as Text
 import qualified Network.WebSockets as WS
 import qualified Yeti.Params as Params
@@ -123,7 +123,7 @@ talk (Identified page encModel) state run conn = do
     [ fromEncoded $ resModel res
     , Params.queryToText $ resParams res
     , cs $ Aeson.encode $ vdom (resView res)
-    , cs $ Aeson.encode $ nestedClasses (resView res)
+    , cs $ Aeson.encode $ viewClasses (resView res)
     ]
 
   where
