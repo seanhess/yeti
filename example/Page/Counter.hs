@@ -9,6 +9,8 @@ import Data.Text (pack, Text)
 import Yeti
 import Yeti.UI
 import Control.Monad.IO.Class (MonadIO)
+import Data.Char (toLower)
+import qualified Data.Text as Text
 -- import Lucid (toHtml)
 -- import Lucid.Html5
 
@@ -67,7 +69,21 @@ view m = col (gap 8) $ do
     text_ $ pack $ show m.count
   where
     -- btn act = button act (px S4 . py S2 rounded)
-    btn act = button act shadow
+    btn act = button act (shadow . padX 8 . padY 4 . bg Purple . Hover |: bg PurpleLight)
+    -- btn act = button act (hover |: bg Green)
+
+
+data MyColors
+  = Purple
+  | PurpleLight
+  | Green
+  deriving (Show)
+
+instance ToColor MyColors where
+  colorValue Purple = rgb 168 85 247
+  colorValue PurpleLight = rgb 192 132 252
+  colorValue Green = Style Hex "00FF00"
+  colorName = Text.toLower . pack . show
 
 
 

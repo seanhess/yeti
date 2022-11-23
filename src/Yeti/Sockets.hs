@@ -128,8 +128,6 @@ talk (Identified page encModel) state run conn = do
 
   where
 
-
-
     updateState :: MVar (Encoded 'Model) -> Message -> m Response
     updateState st msg = do
       res <- modifyMVar st updateEnc

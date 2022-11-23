@@ -4,14 +4,16 @@
 module Yeti.View.Types where
 
 import Yeti.Prelude
-import Data.Aeson (ToJSON(..), FromJSON(..), Value(String))
+import Data.Aeson (ToJSON(..), FromJSON(..), Value(String), ToJSONKey)
 import Control.Monad.Writer.Lazy (Writer, execWriter, tell, MonadWriter)
 import Control.Monad.State.Strict (State, withState, execState, modify, put, get, MonadState, gets)
 import qualified Data.Map as Map
 import qualified Data.Text as Text
 import Data.String (IsString(..))
 import qualified Data.Text.Lazy as Lazy
+import qualified Data.Text as Text
 import Debug.Trace (traceM)
+import Network.Socket (Family(Pseudo_AF_HDRCMPLT))
 
 
 type Name = Text
@@ -25,38 +27,87 @@ type TagMod = Tag -> Tag
 
 
 data Class = Class
-  { className :: ClassName
+  { className' :: ClassName
   , classProperties :: ClassProps
   } deriving (Show)
 
 classFromPair :: (ClassName, ClassProps) -> Class
 classFromPair (n,p) = Class n p
 
-type ClassProps = Map Text ClassValue
+
+type ClassProps = Map Text Style
+
+className :: Class -> Text
+className c = classNameText c.className'
+
+classNameSelector :: ClassName -> Text
+classNameSelector (ClassName NoPsd n) = n
+classNameSelector (ClassName p n) =
+    pseudoText p <> "\\:" <> n <> ":" <> pseudoText p
+
+classNameText :: ClassName -> Text
+classNameText (ClassName NoPsd n) = n
+classNameText (ClassName p n) =
+    (pseudoText p) <> ":" <> n
+
+pseudoText :: Pseudo -> Text
+pseudoText NoPsd = ""
+pseudoText p = Text.toLower $ cs $ show p
+
+data ClassName = ClassName
+  { _pseudo :: Pseudo
+  , _name :: Text
+  } deriving (Show, Eq)
+
+instance IsString ClassName where
+  fromString s = ClassName NoPsd (cs s)
+
+instance Ord ClassName where
+  compare a b = compare (classNameText a) (classNameText b)
+
+instance ToJSON ClassName where
+  toJSON cn = String $ classNameSelector cn
+
+instance ToJSONKey ClassName
 
 
-type ClassName = String
-data ClassValue = ClassValue
-  { value :: String
-  , units :: Units
-  } deriving (Show)
 
-instance IsString ClassValue where
-  fromString s = ClassValue s None
+data Pseudo
+  = NoPsd
+  | Hover
+  deriving (Show, Eq)
 
-instance ToJSON ClassValue where
-  toJSON = String . renderClassValue
+data Style = Style
+  { units :: Units
+  , value :: String
+  }
+
+instance Show Style where
+  show cv = unitsValue cv.units cv.value
+
+instance IsString Style where
+  fromString s = Style None s
+
+instance ToJSON Style where
+  toJSON = String . renderStyle
 
 
 data Units
   = None
   | Px
   | Rem
+  | Hex
+  | RGB
 
-instance Show Units where
-  show None = ""
-  show Px = "px"
-  show Rem = "rem"
+unitsValue :: Units -> String -> String
+unitsValue None s = s
+unitsValue Px s = s <> "px"
+unitsValue Rem s = s <> "rem"
+unitsValue Hex s = "#" <> s
+-- it needs to have a string?
+-- this might need to get more complicated
+unitsValue RGB s = "rgb("<> s <>")"
+
 
 
 -- -- TODO make sure purging works!
@@ -73,7 +124,7 @@ attribute n v = (n, v)
 
 data Tag = Tag
   { name :: Name
-  , classes :: [Class]
+  , classes :: [[Class]]
   , attributes :: Attributes
   , children :: [Content]
   } deriving (Show)
@@ -86,14 +137,15 @@ instance ToJSON Tag where
 
 tagAttributes :: Tag -> Attributes
 tagAttributes t =
-  addClass t.classes t.attributes
+  addClass (mconcat t.classes) t.attributes
 
   where
     addClass [] atts = atts
     addClass cx atts = Map.insert "class" (classAttValue cx) atts
 
+    classAttValue :: [Class] -> Text
     classAttValue cx =
-      Text.intercalate " " $ map (cs . (.className)) cx
+      Text.intercalate " " $ map (cs . className) cx
 
 
 data Content
@@ -128,7 +180,6 @@ instance Show VDOM where
 vdom :: View a () -> VDOM
 vdom = VDOM . viewContents
 
--- viewClasses :: View a x -> 
 viewClasses :: View a () -> Map ClassName ClassProps
 viewClasses (View st) = do
   (.classStyles) $ execState st (ViewState [] [])
@@ -148,13 +199,13 @@ renderCSS m = map renderClass $ toClasses m
 
     renderClass :: Class -> Text
     renderClass (Class n p) =
-      "." <> (cs n) <> " " <> "{" <> (Text.intercalate "; " $ map renderProp $ Map.toList p) <> "}"
+      "." <> (classNameSelector n) <> " " <> "{" <> (Text.intercalate "; " $ map renderProp $ Map.toList p) <> "}"
 
-    renderProp :: (Text, ClassValue) -> Text
-    renderProp (p, cv) = p <> ":" <> renderClassValue cv
+    renderProp :: (Text, Style) -> Text
+    renderProp (p, cv) = p <> ":" <> renderStyle cv
 
-renderClassValue :: ClassValue -> Text
-renderClassValue (ClassValue v u) = cs $ v <> show u
+renderStyle :: Style -> Text
+renderStyle (Style v u) = cs $ unitsValue v u
 
 
 newtype View a x = View
@@ -180,7 +231,7 @@ addClasses clss = do
     }
   where
     addClsDef :: Class -> Map ClassName ClassProps -> Map ClassName ClassProps
-    addClsDef c = Map.insert c.className c.classProperties
+    addClsDef c = Map.insert c.className' c.classProperties
 
 addContent :: Content -> View a ()
 addContent ct = do
@@ -191,7 +242,7 @@ addContent ct = do
 
 contentClasses :: Content -> [Class]
 contentClasses (Text _) = []
-contentClasses (Node t) = t.classes
+contentClasses (Node t) = mconcat t.classes
 
 -- classAttribute :: [Class] -> Attribute
 -- classAttribute cls = ("class", Text.intercalate " " $ map (cs . (.className)) cls)

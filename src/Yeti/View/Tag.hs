@@ -8,9 +8,10 @@ import qualified Data.Text as Text
 
 
 -- | Add a class attribute. If it exists, combine with spaces
+-- this can be MULTIPLE classes, yay
 cls :: [Class] -> TagMod
 cls cx t =
-  t { classes = t.classes <> cx }
+  t { classes = cx : t.classes }
 
 -- | Set an attribute, replacing existing value
 att :: Name -> AttValue -> TagMod
@@ -24,7 +25,7 @@ tag :: Text -> TagMod -> View a () -> View b ()
 tag nm f ctu = do
   let t = f $ Tag nm [] [] (viewContents ctu)
   addContent $ Node t
-  addClasses $ t.classes
+  addClasses $ mconcat $ t.classes
   addClasses $ classList $ viewClasses ctu
 
 

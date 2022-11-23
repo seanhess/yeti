@@ -42,6 +42,12 @@ hlink href = tag "a" (att "href" href)
 pad :: PxRem -> TagMod
 pad n = cls [pad' n]
 
+padX :: PxRem -> TagMod
+padX n = cls [padX' n]
+
+padY :: PxRem -> TagMod
+padY n = cls [padY' n]
+
 gap :: PxRem -> TagMod
 gap n = cls [gap' n]
 
@@ -50,3 +56,6 @@ grow = cls [grow']
 
 shadow :: TagMod
 shadow = cls [shadow']
+
+bg :: ToColor c => c -> TagMod
+bg c = cls [bg' c]
