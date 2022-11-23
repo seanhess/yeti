@@ -73,7 +73,7 @@ default-extensions:
   - DerivingStrategies
   - DeriveAnyClass
   - DefaultSignatures
-  - DuplicateRecordFields
+  # - DuplicateRecordFields
   - FlexibleContexts
   - FlexibleInstances
   - FunctionalDependencies

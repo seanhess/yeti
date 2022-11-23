@@ -51,7 +51,6 @@ library
       DerivingStrategies
       DeriveAnyClass
       DefaultSignatures
-      DuplicateRecordFields
       FlexibleContexts
       FlexibleInstances
       FunctionalDependencies
@@ -135,7 +134,6 @@ executable yeti-exe
       DerivingStrategies
       DeriveAnyClass
       DefaultSignatures
-      DuplicateRecordFields
       FlexibleContexts
       FlexibleInstances
       FunctionalDependencies
@@ -214,7 +212,6 @@ test-suite yeti-test
       DerivingStrategies
       DeriveAnyClass
       DefaultSignatures
-      DuplicateRecordFields
       FlexibleContexts
       FlexibleInstances
       FunctionalDependencies

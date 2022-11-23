@@ -128,7 +128,7 @@ vdom = VDOM . viewContents
 -- viewClasses :: View a x -> 
 nestedClasses :: View a () -> Map ClassName ClassProps
 nestedClasses (View st) = do
-  (.classes) $ execState st (ViewState [] [])
+  (.classStyles) $ execState st (ViewState [] [])
 
 
 
@@ -155,7 +155,7 @@ newtype View a x = View
 
 data ViewState = ViewState
   { contents :: [Content]
-  , classes :: Map ClassName ClassProps
+  , classStyles :: Map ClassName ClassProps
   } deriving (Show)
 
 instance Show (View a x) where
@@ -169,7 +169,19 @@ viewContents :: View a x -> [Content]
 viewContents (View wts) = (.contents) $ execState wts (ViewState [] [])
 
 addContent :: Content -> View a ()
-addContent c = modify $ \vs -> vs { contents = vs.contents <> [ c ]}
+addContent ct = do
+  modify $ \vs -> vs
+    { contents = vs.contents <> [ ct ]
+    , classStyles = foldr addClsDef vs.classStyles (cntClasses ct) 
+    }
+
+  where
+    cntClasses :: Content -> [Class]
+    cntClasses (Text _) = []
+    cntClasses (Node t) = t.classes
+
+    addClsDef :: Class -> Map ClassName ClassProps -> Map ClassName ClassProps
+    addClsDef c = Map.insert c.className c.classProperties
 
 -- classAttribute :: [Class] -> Attribute
 -- classAttribute cls = ("class", Text.intercalate " " $ map (cs . (.className)) cls)
