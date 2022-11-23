@@ -6,7 +6,7 @@ module Yeti.View.Types where
 import Yeti.Prelude
 import Data.Aeson (ToJSON(..), FromJSON(..), Value(String))
 import Control.Monad.Writer.Lazy (Writer, execWriter, tell, MonadWriter)
-import Control.Monad.State.Strict (State, withState, execState, modify, put, get, MonadState)
+import Control.Monad.State.Strict (State, withState, execState, modify, put, get, MonadState, gets)
 import qualified Data.Map as Map
 import qualified Data.Text as Text
 import Data.String (IsString(..))
@@ -127,19 +127,10 @@ vdom = VDOM . viewContents
 
 -- viewClasses :: View a x -> 
 nestedClasses :: View a () -> Map ClassName ClassProps
-nestedClasses vw =
-  -- classes
-  foldr addCntDefs [] $ viewContents vw
+nestedClasses (View st) = do
+  (.classes) $ execState st (ViewState [] [])
 
-  where
-    addCntDefs :: Content -> Map ClassName ClassProps -> Map ClassName ClassProps
-    addCntDefs (Text _) m = m
-    addCntDefs (Node t) m =
-      let m' = foldr addClsDef m t.classes
-      in foldr addCntDefs m' t.children
 
-    addClsDef :: Class -> Map ClassName ClassProps -> Map ClassName ClassProps
-    addClsDef c = Map.insert c.className c.classProperties
 
 renderCSS :: Map ClassName ClassProps -> [Text]
 renderCSS m = map renderClass $ toClasses m
@@ -159,21 +150,26 @@ renderClassValue (ClassValue v u) = cs $ v <> show u
 
 
 newtype View a x = View
-  { runView :: State [Content] x
-  } deriving newtype (Functor, Applicative, Monad, MonadState [Content])
+  { runView :: State ViewState x
+  } deriving newtype (Functor, Applicative, Monad, MonadState ViewState)
+
+data ViewState = ViewState
+  { contents :: [Content]
+  , classes :: Map ClassName ClassProps
+  } deriving (Show)
 
 instance Show (View a x) where
   show u = unlines $ fmap show (viewContents u)
 
 instance IsString (View Content ()) where
   fromString s = do
-    modify $ \cts -> cts <> [ Text (cs s)]
+    addContent $ Text (cs s)
 
 viewContents :: View a x -> [Content]
-viewContents (View wts) = execState wts []
+viewContents (View wts) = (.contents) $ execState wts (ViewState [] [])
 
 addContent :: Content -> View a ()
-addContent c = modify $ \cts -> cts <> [ c ]
+addContent c = modify $ \vs -> vs { contents = vs.contents <> [ c ]}
 
 -- classAttribute :: [Class] -> Attribute
 -- classAttribute cls = ("class", Text.intercalate " " $ map (cs . (.className)) cls)
