@@ -56,8 +56,6 @@ function update(newState:State, params:string, vdom:VDOM, classes:Class[]) {
     .filter((c) => !hasRule(stylesheet.cssRules, c))
     .forEach((c) => stylesheet.insertRule(c.cssText))
 
-  console.log(stylesheet.cssRules)
-
   // wait, is this pushing in a circle?
   updateHistory(newState, params, vdom)
 

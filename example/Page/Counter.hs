@@ -69,6 +69,8 @@ view m = col (gap 8) $ do
     text_ $ pack $ show m.count
   where
     -- btn act = button act (px S4 . py S2 rounded)
+
+    -- conditionally add or remove things. is that easy or hard
     btn act = button act (shadow . padX 8 . padY 4 . bg Purple . hover |: bg PurpleLight . color White . bold)
     -- btn act = button act (hover |: bg Green)
 

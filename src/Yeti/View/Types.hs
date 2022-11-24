@@ -4,7 +4,7 @@
 module Yeti.View.Types where
 
 import Yeti.Prelude
-import Data.Aeson (ToJSON(..), FromJSON(..), Value(String), ToJSONKey)
+import Data.Aeson (ToJSON(..), FromJSON(..), Value(String), ToJSONKey(..), ToJSONKeyFunction(..))
 import Control.Monad.Writer.Lazy (Writer, execWriter, tell, MonadWriter)
 import Control.Monad.State.Strict (State, withState, execState, modify, put, get, MonadState, gets)
 import qualified Data.Map as Map
@@ -68,7 +68,13 @@ instance Ord ClassName where
 instance ToJSON ClassName where
   toJSON cn = String $ classNameSelector cn
 
-instance ToJSONKey ClassName
+instance ToJSONKey ClassName where
+  toJSONKey =
+    let ToJSONKeyText tkey tenc = toJSONKey :: ToJSONKeyFunction Text
+    in ToJSONKeyText (toKey tkey) (toEnc tenc)
+    where
+      toKey f c = f (classNameSelector c)
+      toEnc f c = f (classNameSelector c)
 
 
 

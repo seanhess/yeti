@@ -11,8 +11,9 @@ import qualified Data.Aeson as Aeson
 import Network.WebSockets (WebSocketsData)
 import Yeti.Encode (Encoded(..), Encoding(..))
 import Yeti.Page (Response(..), PageHandler, RoutePage(..), pathSegments)
-import Yeti.View.Types (vdom, viewClasses)
+import Yeti.View.Types (vdom, viewClasses, ClassName, ClassProps)
 import qualified Data.Text as Text
+import qualified Data.Map as Map
 import qualified Network.WebSockets as WS
 import qualified Yeti.Params as Params
 import qualified Yeti.Runtime as Runtime
@@ -21,6 +22,11 @@ import qualified Yeti.Runtime as Runtime
 
 newtype Message = Message { fromMessage :: Text }
   deriving newtype (Eq, Show, WebSocketsData)
+
+data ClientState = ClientState
+  { model :: Encoded 'Model
+  , classes :: Map ClassName ClassProps
+  }
 
 
 socketApp
@@ -41,8 +47,9 @@ socketApp pageResponse pending = do
 
     pageRun :: Identified page -> IO (WS.Connection -> IO ())
     pageRun i = do
-      var <- newMVar (state i)
+      var <- newMVar $ ClientState i.idModel []
       pure $ \conn -> (liftBase $ talk i var pageResponse conn) `catch` onRuntimeError
+      
 
     -- this needs to return page and state
     identify :: WS.Connection -> IO (Identified page)
@@ -96,8 +103,8 @@ socketApp pageResponse pending = do
 
 
 data Identified page = Identified
-  { page :: page
-  , state :: Encoded 'Model
+  { idPage :: page
+  , idModel :: Encoded 'Model
   }
 
 -- It's all right here, except for the connection
@@ -105,7 +112,7 @@ data Identified page = Identified
 talk
   :: forall page m. (MonadIO m, MonadBase IO m, MonadBase m IO, MonadBaseControl IO m)
   => Identified page
-  -> MVar (Encoded 'Model)
+  -> MVar ClientState
   -> PageHandler page m
   -> WS.Connection ->
   m ()
@@ -114,7 +121,7 @@ talk (Identified page encModel) state run conn = do
   msg <- liftIO $ WS.receiveData conn :: m Message
   putStrLn $ " - " <> cs (fromMessage msg)
 
-  res <- updateState state msg
+  (res, newCls) <- updateState state msg
 
   -- FORMAT
   -- state
@@ -123,23 +130,28 @@ talk (Identified page encModel) state run conn = do
     [ fromEncoded $ resModel res
     , Params.queryToText $ resParams res
     , cs $ Aeson.encode $ vdom (resView res)
-    , cs $ Aeson.encode $ viewClasses (resView res)
+    , cs $ Aeson.encode $ newCls
     ]
 
   where
 
-    updateState :: MVar (Encoded 'Model) -> Message -> m Response
+    updateState :: MVar ClientState -> Message -> m (Response, Map ClassName ClassProps)
     updateState st msg = do
       res <- modifyMVar st updateEnc
       pure res
 
       where
-        updateEnc :: Encoded 'Model -> m (Encoded 'Model, Response)
+        updateEnc :: ClientState -> m (ClientState, (Response, Map ClassName ClassProps))
         updateEnc em = do
           let als = Text.splitOn "\n" $ fromMessage msg :: [Text]
           let encActions = map Encoded als :: [Encoded 'Action]
-          res <- run page (Just em) [] encActions
-          pure (resModel res, res)
+          r <- run page (Just em.model) [] encActions
+
+          let cls = viewClasses r.resView
+          let allCls = Map.union em.classes cls
+          let diffCls = Map.difference cls em.classes
+
+          pure (em { model = resModel r, classes = allCls }, (r, diffCls))
 
 
 
