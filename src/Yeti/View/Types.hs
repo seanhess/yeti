@@ -22,7 +22,7 @@ type AttValue = Text
 type Attribute = (Name, AttValue)
 type Attributes = Map Name AttValue
 
-type TagMod = Tag -> Tag
+type TagMod a = Tag -> Tag
 
 
 

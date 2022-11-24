@@ -2,6 +2,20 @@ module Yeti.View.Tag where
 
 import Yeti.Prelude
 import Yeti.View.Types
+    ( TagMod,
+      View,
+      Content(..),
+      addContent,
+      viewContents,
+      AttValue,
+      Attribute,
+      Class,
+      Name,
+      Script(..),
+      Tag(Tag, classes, attributes),
+      viewClasses,
+      addClasses,
+      classList )
 import qualified Data.Map as Map
 import qualified Data.Text as Text
 
@@ -9,19 +23,19 @@ import qualified Data.Text as Text
 
 -- | Add a class attribute. If it exists, combine with spaces
 -- this can be MULTIPLE classes, yay
-cls :: [Class] -> TagMod
+cls :: [Class] -> TagMod Class
 cls cx t =
   t { classes = cx : t.classes }
 
 -- | Set an attribute, replacing existing value
-att :: Name -> AttValue -> TagMod
+att :: Name -> AttValue -> TagMod Attribute
 att n v t = t { attributes = Map.insert n v t.attributes }
 
 
 
 
 
-tag :: Text -> TagMod -> View a () -> View b ()
+tag :: Text -> TagMod a -> View a () -> View b ()
 tag nm f ctu = do
   let t = f $ Tag nm [] [] (viewContents ctu)
   addContent $ Node t
@@ -35,14 +49,14 @@ tag nm f ctu = do
 -- infixr 8 #
 
 -- | A generic node with style, attributes, and content 
-el :: TagMod -> View Content () -> View Content ()
+el :: TagMod a -> View Content () -> View Content ()
 el = tag "div"
 
 el_ :: View Content () -> View Content ()
 el_ = tag "div" id
 
 -- | A styled inline text node
-text :: TagMod -> Text -> View Content ()
+text :: TagMod a -> Text -> View Content ()
 text f ct = tag "span" f (fromText ct)
 
 text_ :: Text -> View Content ()
@@ -75,7 +89,7 @@ none = ""
 
 
 
-meta :: TagMod -> View a ()
+meta :: TagMod a -> View a ()
 meta f = tag "meta" f (fromText "")
 
 title_ = tag "title" id

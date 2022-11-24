@@ -31,26 +31,27 @@ instance Read FormData where
 
 
 
+data Event
 
-onClick :: (LiveAction action) => action -> TagMod
+onClick :: (LiveAction action) => action -> TagMod Event
 onClick = on "click"
 
-onInput :: (LiveAction action) => (Text -> action) -> TagMod
+onInput :: (LiveAction action) => (Text -> action) -> TagMod Event
 onInput = onValue "input"
 
 -- | capture the input event and commit immediately. Should not be used for text inputs
-onSelect :: (LiveAction action, Input val) => (val -> action) -> TagMod
+onSelect :: (LiveAction action, Input val) => (val -> action) -> TagMod Event
 onSelect = onValue "input"
 
-onEnter :: (LiveAction action) => action -> TagMod
+onEnter :: (LiveAction action) => action -> TagMod Event
 onEnter = on "enter"
 
 
 
-on :: (LiveAction action) => Text -> (action) -> TagMod
+on :: (LiveAction action) => Text -> (action) -> TagMod Event
 on name act = att ("data-on-" <> name) $ fromEncoded $ encodeAction act
 
-onValue :: (LiveAction action, Input val) => Text -> (val -> action) -> TagMod
+onValue :: (LiveAction action, Input val) => Text -> (val -> action) -> TagMod Event
 onValue name con = att ("data-on-" <> name) $ fromEncoded $ encodeAction1 con
 
 
