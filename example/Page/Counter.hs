@@ -8,6 +8,7 @@ import Prelude
 import Data.Text (pack, Text)
 import Yeti
 import Yeti.UI
+import Yeti.View.Types (Tag(..))
 import Control.Monad.IO.Class (MonadIO)
 import Data.Char (toLower)
 import qualified Data.Text as Text
@@ -66,15 +67,22 @@ view m = col (gap 8) $ do
     row (pad 1 . gap 6) $ do
       input Noop id
 
-    text_ $ pack $ show m.count
+    -- example: conditionally include a style
+    text (if m.count > 10 then bold else id) $
+      pack $ show m.count
+
   where
     -- btn act = button act (px S4 . py S2 rounded)
 
-    -- conditionally add or remove things. is that easy or hard
-    btn act = button act (shadow . padX 8 . padY 4 . bg Purple . hover |: bg PurpleLight . color White . bold)
+    btn act = button act (shadow . padX 8 . padY 4 . bg Purple . hover |: bg PurpleLight . color White)
+
+
     -- btn act = button act (hover |: bg Green)
 
+    
 
+
+-- Example of App Colors
 data MyColors
   = Purple
   | PurpleLight

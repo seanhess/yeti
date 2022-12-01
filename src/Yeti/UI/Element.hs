@@ -29,7 +29,10 @@ space :: View Content ()
 space = el grow $ pure ()
 
 button :: LiveAction action => action -> TagMod a -> View Content () -> View Content ()
-button act f cnt = tag "button" (f . onClick act) cnt
+button act f cnt =
+  tag "button" (f . onClick act . att "type" "button" . reset) cnt
+  -- include the reset incrementally with UI
+  where reset = border 0
 
 input :: LiveAction action => (Text -> action) -> TagMod a -> View Content ()
 input act f = tag "input" (f . onInput act) none

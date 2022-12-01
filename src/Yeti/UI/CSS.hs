@@ -83,6 +83,16 @@ bold :: TagMod Class
 bold = cls1 $ Class "bold" [("font-weight", "bold")]
 
 
+border :: Int -> TagMod Class
+border p = cls1 $ Class
+  ("border"-p)
+  [("border", Style Px (show p))]
+
+
+
+
+
+
 hover :: Pseudo
 hover = Hover
 
