@@ -9,11 +9,11 @@ import Yeti.UI
 data AppPage
   = Counter Integer
   | Signup
+  | Todos
   -- | Index
   deriving (Generic, Show, RoutePage)
 
   -- -- = Focus
-  -- -- | Todos
   -- -- | Signup
   -- -- | Article Article.Id
 
@@ -23,7 +23,7 @@ mainView = do
     page (Counter 11)
     page Signup
     -- page Focus
-    -- page Todos
+    page Todos
     -- page (Article "1")
   where
     page :: AppPage -> View Content ()

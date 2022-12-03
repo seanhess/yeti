@@ -4,7 +4,7 @@
 module Page.Todo where
 
 import Yeti
-import Yeti.UI hiding (content)
+import Yeti.UI
 import Prelude
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad (forM_)
@@ -13,6 +13,7 @@ import Data.String.Conversions (cs)
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, STM)
 import Data.Text as Text (Text, isInfixOf, toLower)
 import Data.Function ((&))
+import App.Color
 
 
 data Model = Model
@@ -25,7 +26,7 @@ data Model = Model
 
 -- the only parameter is the search text
 data Params = Params
-  { search :: Text
+  { _search :: Text
   } deriving (Generic, ToParams)
 
 params :: Model -> Params
@@ -103,6 +104,7 @@ update todos (Delete t) m = do
 
 update todos (SetCompleted ct c) m = do
   ts <- liftIO $ atomically $ updateTodos todos (modify ct complete)
+  liftIO $ print $ ts
   pure $ m { todos = ts }
   where complete t = t { completed = c }
 
@@ -142,52 +144,45 @@ updateTodos saved up = do
 
 
 view :: Model -> View Content ()
-view m = div_ [] $ do
-  h3_ "Todos"
+view m = col (gap 10) $ do
+  el bold "Todos"
 
-  div_ [ class_ "col g8"] $ do
+  field (gap 8) LabelLeft "Todo:" $ do
+    inputText NewTodoInput m.addContent (onEnter AddTodo)
 
-    div_ [ id_ "add" ] $ do
-      button_ [ onClick AddTodo ] "Add"
-      input_ [ name_ "add", value_ (m.addContent), onInput NewTodoInput, onEnter AddTodo ]
-      dropdown NewTodoCategory (\v -> (cs $ show v)) (\v -> toHtml (cs $ show v :: Text)) [Errand, Home, Work, Personal]
-      span_ (toHtml $ show m.addCategory)
+  field (gap 8) LabelLeft "Category:" $ do
+    dropdown NewTodoCategory (pad 2) (cs . show) (text_ . cs . show)
+      [Errand, Home, Work, Personal]
 
-    div_ [ id_ "search" ] $ do
-      button_ [ onClick SearchSave ] "Search"
-      input_ [ name_ "search", value_ (m.search), onInput SearchFilter, onEnter SearchSave ]
+  button AddTodo (pad 8 . bg Gray . hover|:bg GrayLight) "Add Todo"
 
+  field (gap 8) LabelAbove "Search" $ do
+    inputSearch SearchFilter m.search (onEnter SearchSave)
 
-    let ts = m.todos & filter (isSearch m.searchCurrent)
-
-    div_ [ class_ "col g8"] $ do
-      forM_ ts $ \todo ->
-        div_ [ class_ "row g8" ] $ do
-          button_ [ onClick (Delete (content todo)) ] "X"
-          checkButton (SetCompleted (content todo)) (completed todo) $ do
-            div_ $ toHtml (content todo)
-            div_ $ toHtml (show $ category todo)
+  button SearchSave id "Search"
 
 
-checkButton :: LiveAction action => (Bool -> action) -> Bool -> Html () -> Html ()
-checkButton act chk ct =
-  button_ [ class_ "row g4", onClick $ act $ not chk ] $ do
-    span_ $ if (chk) then "☑" else "☐"
-    span_ ct
+  let todos = m.todos & filter (isSearch m.searchCurrent)
+
+  col (gap 8) $ do
+    forM_ todos $ \todo ->
+      row (gap 8) $ do
+        button (Delete todo.content) id "x"
+        checkbox (SetCompleted todo.content) (completed todo)
+        text_ $ todo.content
+
+
+checkbox :: LiveAction action => (Bool -> action) -> Bool -> View Content ()
+checkbox act chk = do
+  button (act (not chk)) id $ do
+    if chk
+      then "▣"
+      else "▢"
 
 
 isSearch :: Text -> Todo -> Bool
 isSearch "" _ = True
 isSearch t (Todo t' _ _) = Text.isInfixOf (Text.toLower t) (Text.toLower t')
-
-
--- we are going to run into similar problems. We have to encode things into values
-dropdown :: (LiveAction action, Input val) => (val -> action) -> (val -> Text) -> (val -> Html ()) -> [val] -> Html ()
-dropdown act toVal opt vals =
-  select_ [ onSelect act ] $
-    mapM_ option vals
-  where
-    option v = option_ [value_ (toVal v)] (opt v)
 
 
 

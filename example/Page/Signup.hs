@@ -124,6 +124,7 @@ workingView m v = do
   el (bold) "Choose a username and password"
 
   field (gap 8 . invalidRed validUser) LabelAbove "Username" $ do
+    text_ "Username"
     mapM_ text_ (userErrorMessages v)
     inputText EditUsername m.username (invalidRed validUser)
 

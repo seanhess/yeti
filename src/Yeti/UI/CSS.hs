@@ -89,7 +89,8 @@ border p = cls1 $ Class
   [("border", Style Px (show p))]
 
 
-
+pointer :: TagMod Class
+pointer = cls1 $ Class "pointer" [("cursor", "pointer")]
 
 
 

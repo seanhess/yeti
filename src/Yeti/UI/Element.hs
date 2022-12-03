@@ -2,8 +2,8 @@ module Yeti.UI.Element where
 
 
 import Yeti.Prelude
-import Yeti.Events (onClick, onInput)
-import Yeti.Encode (LiveAction)
+import Yeti.Events (onClick, onInput, onSelect)
+import Yeti.Encode (LiveAction, Input)
 import Yeti.UI.CSS
 import Yeti.View
 
@@ -32,11 +32,15 @@ button :: LiveAction action => action -> TagMod a -> View Content () -> View Con
 button act f cnt =
   tag "button" (f . onClick act . att "type" "button" . reset) cnt
   -- include the reset incrementally with UI
-  where reset = border 0
+  where reset = border 0 . pointer
 
 
 inputText :: LiveAction action => (Text -> action) -> Text -> TagMod a -> View FieldInput ()
 inputText act val f = tag "input" (f . onInput act . att "value" val) none
+
+
+inputSearch :: LiveAction action => (Text -> action) -> Text -> TagMod a -> View FieldInput ()
+inputSearch act val f = inputText act val (f . att "role" "search")
 
 
 hlink :: AttValue -> View a () -> View b ()
@@ -53,7 +57,7 @@ data Label
 
 data FieldInput
 
--- this forces you to have a label
+
 field :: TagMod a -> Label -> Text -> View FieldInput () -> View Content ()
 field f LabelAbove l (View ct) =
   tag "label" (flexCol . f) $ do
@@ -76,15 +80,9 @@ field f LabelLeft l (View ct) =
     View ct
 
   
-
--- <label>
---    <input type="text" name="lastname" />
---    Last Name
--- </label>
-
-
-
-
-
-
-
+dropdown :: (LiveAction action, Input val) => (val -> action) -> TagMod a -> (val -> Text) -> (val -> View Content ()) -> [val] -> View FieldInput ()
+dropdown act f toVal opt vals =
+  tag "select" (f . onSelect act) $
+    mapM_ option vals
+  where
+    option v = tag "option" (att "value" (toVal v)) (opt v)
