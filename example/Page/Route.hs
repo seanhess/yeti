@@ -10,10 +10,10 @@ data AppPage
   = Counter Integer
   | Signup
   | Todos
+  | Focus
   -- | Index
   deriving (Generic, Show, RoutePage)
 
-  -- -- = Focus
   -- -- | Signup
   -- -- | Article Article.Id
 
@@ -22,7 +22,7 @@ mainView = do
   row (pad 1) $ do
     page (Counter 11)
     page Signup
-    -- page Focus
+    page Focus
     page Todos
     -- page (Article "1")
   where

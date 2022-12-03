@@ -36,13 +36,10 @@ update (One t) m = pure $ m { one = t }
 update (Two t) m = pure $ m { two = t }
 
 view :: Model -> View Content ()
-view m = section_ [ class_ "page" ] $ do
-  "FOCUS: !"
-  div_ [ class_ "section" ] $ do
-    -- Inputs are committed on blur or enter
-    div_ $ input' [ value_ m.one, onInput One ] ""
-    div_ $ input' [ value_ m.two, onInput Two ] ""
-    div_ $ toHtml $ m.one <> " " <> m.two
+view m = col (gap 10) $ do
+  field (gap 4) LabelLeft "One" $ inputText One m.one id
+  field (gap 4) LabelLeft "Two" $ inputText Two m.two id
+  text_ $ m.one <> " " <> m.two
 
 
 
