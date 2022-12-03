@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           yeti
-version:        0.3.1
+version:        0.4.0
 description:    Please see the README on GitHub at <https://github.com/seanhess/yeti#readme>
 homepage:       https://github.com/seanhess/yeti#readme
 bug-reports:    https://github.com/seanhess/yeti/issues
