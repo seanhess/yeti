@@ -78,7 +78,7 @@ style :: Text -> View b ()
 style ct = tag "style" (att "type" "text/css") $ fromText ct
 
 none :: View Content ()
-none = ""
+none = pure ()
 
 
 

@@ -283,7 +283,10 @@ htmlTag :: (Indent -> [Text] -> [Text]) -> Indent -> Tag -> [Text]
 htmlTag indent' i tag =
   case tag.children of
 
-    [] -> [ open <> htmlAtts (tagAttributes tag) <> "/>" ]
+    [] ->
+      -- autoClosing creates a bug in chrome. An auto-closed div
+      -- absorbs the next children
+      [ open <> htmlAtts (tagAttributes tag) <> ">" <> close ]
 
     [Text t] ->
       [ open <> htmlAtts (tagAttributes tag) <> ">" <> t <> close ]

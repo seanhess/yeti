@@ -71,7 +71,6 @@ view m = col (gap 10) $ do
 
     -- BUG:, if there are no contents, it puts the next thing into this parent!!
     col (gap 6) $ do
-      text_ ""
       forM_ m.comments $ \c -> do
         text_ $ "* " <> c
 
@@ -80,6 +79,13 @@ view m = col (gap 10) $ do
         inputText Comment m.comment (onEnter SubmitComment)
 
       button SubmitComment id "Submit"
+
+test :: View Content ()
+test = do
+  col (gap 10) $ do
+    col (gap 7) (pure ())
+    text_ "xxx"
+
 
 
 page :: MonadFail m => Id -> Page () Model Action m
