@@ -12,7 +12,7 @@ import Prelude
 import Web.Scotty
 import Yeti
 import qualified Yeti.UI as UI
--- import qualified Page.Article as Article
+import qualified Page.Article as Article
 import qualified Page.Counter as Counter
 import qualified Page.Focus as Focus
 import qualified Page.Signup as Signup
@@ -51,7 +51,7 @@ startServer todos = do
     go Todos       = run (Todo.page todos)
     go Signup      = run Signup.page
     -- go Index       = run mainPage
-    -- go (Article i) = run (Article.page i)
+    go (Article i) = run (Article.page i)
 
 
 

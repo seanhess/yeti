@@ -4,18 +4,16 @@ import Prelude
 import Data.Text (pack)
 import Yeti
 import Yeti.UI
--- import qualified Page.Article as Article
+import qualified Page.Article as Article
 
 data AppPage
   = Counter Integer
   | Signup
   | Todos
   | Focus
-  -- | Index
+  | Article Article.Id
   deriving (Generic, Show, RoutePage)
 
-  -- -- | Signup
-  -- -- | Article Article.Id
 
 mainView :: View Content ()
 mainView = do
@@ -24,7 +22,7 @@ mainView = do
     page Signup
     page Focus
     page Todos
-    -- page (Article "1")
+    page (Article "1")
   where
     page :: AppPage -> View Content ()
     page p' = 

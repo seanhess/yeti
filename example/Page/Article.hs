@@ -64,19 +64,22 @@ update (Woot t) m =
   pure $ m { comments = m.comments <> ["Woot"] }
 
 view :: Model -> View Content ()
-view m = col $ do
-    h1_ $ toHtml $ "Article: " <> m.article.articleId
+view m = col (gap 10) $ do
+    el bold $ text_ $ "Article: " <> m.article.articleId
 
-    div_ [ class_ "section" ] $ do
-      p_ $ toHtml m.article.articleText
+    el (pad 10) $ text_ m.article.articleText
 
-    ol_ [ class_ "section"] $ do
+    -- BUG:, if there are no contents, it puts the next thing into this parent!!
+    col (gap 6) $ do
+      text_ ""
       forM_ m.comments $ \c -> do
-        div_ $ toHtml c
+        text_ $ "* " <> c
 
-    div_ [ class_ "section" ] $ do
-      input_ [ value_ m.comment, onInput Comment, onEnter SubmitComment ]
-      button_ [ onClick SubmitComment ] "Submit"
+    col (gap 10) $ do
+      field (gap 8) LabelAbove "Comment" $ do
+        inputText Comment m.comment (onEnter SubmitComment)
+
+      button SubmitComment id "Submit"
 
 
 page :: MonadFail m => Id -> Page () Model Action m
