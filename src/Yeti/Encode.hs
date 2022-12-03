@@ -189,7 +189,7 @@ instance ToJSON Constructor where
 
 
 resultMaybe :: Result a -> Maybe a
-resultMaybe (Error e) = Nothing
+resultMaybe (Error _) = Nothing
 resultMaybe (Success a) = Just a
 
 

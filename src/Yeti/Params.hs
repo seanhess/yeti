@@ -185,8 +185,8 @@ instance (Selector s, GenParam a) => GenQuery (M1 S s a) where
       lookupSel :: QueryText -> M1 S s a x -> Maybe (Maybe Text)
       lookupSel q' x = List.lookup (cs (selName x)) q'
 
-      toVal :: GenParam f => (String, Text) -> (Text, Maybe (f p))
-      toVal (k, t) = (cs k, genDecParam t)
+      -- toVal :: GenParam f => (String, Text) -> (Text, Maybe (f p))
+      -- toVal (k, t) = (cs k, genDecParam t)
 
 instance GenQuery f => GenQuery (M1 D d f) where
   genEncode (M1 x) = genEncode x

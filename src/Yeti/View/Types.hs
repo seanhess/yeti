@@ -4,16 +4,12 @@
 module Yeti.View.Types where
 
 import Yeti.Prelude
-import Data.Aeson (ToJSON(..), FromJSON(..), Value(String), ToJSONKey(..), ToJSONKeyFunction(..))
-import Control.Monad.Writer.Lazy (Writer, execWriter, tell, MonadWriter)
-import Control.Monad.State.Strict (State, withState, execState, modify, put, get, MonadState, gets)
+import Data.Aeson (ToJSON(..), Value(String), ToJSONKey(..), ToJSONKeyFunction(..))
+import Control.Monad.State.Strict (State, execState, modify, MonadState)
 import qualified Data.Map as Map
 import qualified Data.Text as Text
 import Data.String (IsString(..))
 import qualified Data.Text.Lazy as Lazy
-import qualified Data.Text as Text
-import Debug.Trace (traceM)
-import Network.Socket (Family(Pseudo_AF_HDRCMPLT))
 
 
 type Name = Text
@@ -70,8 +66,9 @@ instance ToJSON ClassName where
 
 instance ToJSONKey ClassName where
   toJSONKey =
-    let ToJSONKeyText tkey tenc = toJSONKey :: ToJSONKeyFunction Text
-    in ToJSONKeyText (toKey tkey) (toEnc tenc)
+    case (toJSONKey :: ToJSONKeyFunction Text) of
+      ToJSONKeyText tkey tenc -> ToJSONKeyText (toKey tkey) (toEnc tenc)
+      ToJSONKeyValue tval tenc -> ToJSONKeyValue (toKey tval) (toEnc tenc)
     where
       toKey f c = f (classNameSelector c)
       toEnc f c = f (classNameSelector c)
@@ -267,7 +264,7 @@ htmlDocument u =
 
   in case ts of
     [Node d] -> mconcat $ htmlTag noIndent 0 d
-    cts -> error "Should not be possible to create document with multiple tags. Use document function."
+    _ -> error "Should not be possible to create document with multiple tags. Use document function."
 
 showView :: View a () -> Text
 showView v = Text.unlines $ mconcat $ map showContent $ viewContents v

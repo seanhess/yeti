@@ -8,13 +8,8 @@ import Prelude
 import Data.Text (pack, Text)
 import Yeti
 import Yeti.UI
-import Yeti.View.Types (Tag(..))
 import Control.Monad.IO.Class (MonadIO)
-import Data.Char (toLower)
-import qualified Data.Text as Text
 import App.Color
--- import Lucid (toHtml)
--- import Lucid.Html5
 
 data Model = Model
   { count :: Integer

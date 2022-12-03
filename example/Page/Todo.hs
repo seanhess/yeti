@@ -108,10 +108,10 @@ update todos (SetCompleted ct c) m = do
   pure $ m { todos = ts }
   where complete t = t { completed = c }
 
-update todos (NewTodoCategory c) m = do
+update _ (NewTodoCategory c) m = do
   pure $ m { addCategory = c }
 
-update todos (NewTodoInput t) m = do
+update _ (NewTodoInput t) m = do
   pure $ m { addContent = t }
 
 update _ Test m = do

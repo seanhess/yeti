@@ -8,4 +8,4 @@ javascript :: ByteString
 javascript = liveJS
 
 liveJS :: ByteString
-liveJS = $(embedFile "dist/main.js")
+liveJS = $(embedFile "../yeti/dist/main.js")
