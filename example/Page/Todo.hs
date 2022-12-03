@@ -104,7 +104,6 @@ update todos (Delete t) m = do
 
 update todos (SetCompleted ct c) m = do
   ts <- liftIO $ atomically $ updateTodos todos (modify ct complete)
-  liftIO $ print $ ts
   pure $ m { todos = ts }
   where complete t = t { completed = c }
 

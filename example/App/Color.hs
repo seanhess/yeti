@@ -26,5 +26,5 @@ instance ToColor AppColor where
   colorValue Red = Style Hex "F00"
   colorValue Gray = Style Hex "DDD"
   colorValue GrayLight = Style Hex "EBEBEB"
-  colorName :: AppColor -> Text.Text
+
   colorName = Text.toLower . pack . show

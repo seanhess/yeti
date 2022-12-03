@@ -72,7 +72,6 @@ view m = col (gap 8) $ do
 
     btn act = button act (shadow . padX 8 . padY 4 . bg Purple . hover |: bg PurpleLight . color White)
 
-
     -- btn act = button act (hover |: bg Green)
 
     

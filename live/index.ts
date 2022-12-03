@@ -25,7 +25,6 @@ messages.connect(INIT_PAGE, currentState)
 listenEvents(messages)
 
 window.addEventListener("load", function() {
-  console.log("docload")
   rootElement = document.getElementById("yeti-root-content")
 
   let styleNode = document.getElementById("yeti-stylesheet") as any
@@ -64,7 +63,7 @@ function update(newState:State, params:string, vdom:VDOM, classes:Class[]) {
 
 function updateHistory(newState:State, params:string, vdom:VDOM) {
   if (("?" + params) != location.search) {
-    console.log("New History", params, location.search)
+    // console.log("New History", params, location.search)
     let url = location.origin + location.pathname + "?" + params
     history.pushState([newState, params, vdom], "", url)
   }

@@ -4,9 +4,6 @@ module Yeti.UI.CSS where
 import Yeti.Prelude hiding ((-))
 import Yeti.View.Types
 import Yeti.View.Tag
-import Text.RawString.QQ (r)
-import Data.ByteString.Lazy (ByteString)
-import qualified Data.Map as Map
 
 
 -- Px, converted to Rem
@@ -118,7 +115,7 @@ infixr 9 |:
 pxRem :: PxRem -> Style
 pxRem 0 = Style Px "0"
 pxRem 1 = Style Px "1"
-pxRem n = Style Rem (show $ fromIntegral n / 16.0)
+pxRem n = Style Rem (show $ (fromIntegral n / 16.0 :: Float))
 
 rgb :: Int -> Int -> Int -> Style
 rgb rd gr bl = Style RGB $ mconcat [(show rd), " ", (show gr), " ", (show bl)]

@@ -9,23 +9,22 @@ import Data.Aeson (Result(..))
 import Network.HTTP.Types.URI (QueryText)
 import Yeti.Encode
     ( decodeAction,
-      Encoded(fromEncoded),
+      Encoded,
       Encoding(Action, Model),
       LiveAction,
       LiveModel(..) )
 import Yeti.Page (Page(..), Response(..))
 import Yeti.Params (ToParams(..))
-import qualified Data.Text as Text
 
 
 -- we can only run actions if we already have a model
 runActions
-  :: forall m model params action. (Monad m, LiveAction action)
+  :: forall m model params action. (Monad m)
   => Page params model action m
   -> model
   -> [action]
   -> m model
-runActions (Page params load update view) m acts = do
+runActions (Page _ _ update _) m acts = do
   foldM (flip update) m acts
 
 
@@ -56,18 +55,15 @@ response (Page params _ _ view) m = Response (encodeModel m) (toParams $ params 
 parseModel :: (MonadIO m, LiveModel model) => Encoded 'Model -> m model
 parseModel enc = do
   case decodeModel enc of
-    Error e -> throw $ NoParseModel enc
+    Error _ -> throw $ NoParseModel enc
     Success m -> pure m
 
 parseAction :: (MonadIO m, LiveAction action) => Encoded 'Action -> m action
 parseAction e = do
 
-  let c:vts = pure $ Text.splitOn "\t" (fromEncoded e)
-  print (c, vts)
-
   case decodeAction e of
     Success (a :: action) -> pure a
-    Error err -> throw $ NoParseAction e
+    Error _ -> throw $ NoParseAction e
 
 
 

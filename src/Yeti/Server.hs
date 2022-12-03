@@ -2,16 +2,16 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Yeti.Server
   ( Render
-  , def
+  , simpleDocument
   , document
   , respondWai
   , yeti
+  , def
+  , embedLiveJS
   ) where
 
 import Control.Monad.Base (MonadBase, liftBase)
 import Control.Monad.Trans.Control (MonadBaseControl)
-import Data.ByteString.Lazy (ByteString)
-import Data.Default (Default, def)
 import Network.HTTP.Types (status200)
 import Network.HTTP.Types.URI (queryToQueryText)
 import Network.Wai (ResponseReceived, Middleware)
@@ -27,29 +27,33 @@ import qualified Data.Aeson as Aeson
 import qualified Data.Text as Text
 import qualified Network.Wai as Wai
 
-
-type Render = View Content () -> View Document ()
-
-instance Default Render where
-  def :: Render
-  def = document "Yeti" embedLiveJS
-
 type DocumentTitle = Text
+type Render = View Content () -> View Document ()
 
 embedLiveJS :: View Script ()
 embedLiveJS = 
   script $ Code $ cs liveJS
 
+def :: View Script ()
+def = embedLiveJS
+
+simpleDocument :: DocumentTitle -> View Content () -> View Document ()
+simpleDocument title = document title (embedLiveJS)
+
 document :: DocumentTitle -> View Script () -> View Content () -> View Document ()
-document title scripts body = View $ runView $
+document title (View scripts) body = View $ runView $
   html_ $ do
     head_ $ do
-      title_ $ fromText title
+      title_ title
       meta (charset "UTF-8")
       meta (httpEquiv "Content-Type" . content "text/html" . charset "UTF-8")
       meta (name "viewport" . content "width=device-width, initial-scale=1.0")
-      scripts
-    body_ body
+
+    body_ $ do
+      body
+
+      -- put scripts last in case they expect things to be loaded
+      (View scripts)
 
   where
     charset = att "charset"
@@ -57,8 +61,8 @@ document title scripts body = View $ runView $
     content = att "content"
     name = att "name"
 
-extra :: View Content () -> View Content () -> View Content ()
-extra a b = a >> b
+-- extra :: View Content () -> View Content () -> View Content ()
+-- extra a b = a >> b
 
 
 
@@ -73,7 +77,7 @@ extra a b = a >> b
 
 
 respondWai :: forall page. RoutePage page => Render -> page -> Response -> (Wai.Response -> IO ResponseReceived) -> IO ResponseReceived
-respondWai render pg (Response encModel encParams view) respWai = do
+respondWai render pg (Response encModel _ view) respWai = do
 
   let htmlContent = htmlDocument $ render $ embedContent view
 
@@ -85,9 +89,6 @@ respondWai render pg (Response encModel encParams view) respWai = do
       -- [ ("X-Params", cs $ queryToText encParams)
       [ ("Content-Type", "text/html")
       ]
-
-    stateJSON :: ByteString
-    stateJSON = Aeson.encode $ fromEncoded encModel
 
     embedStateScript :: View a ()
     embedStateScript = 

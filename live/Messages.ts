@@ -80,11 +80,11 @@ export class Messages {
   send(lines:string[]) {
     let msg = lines.join("\n")
     if (this.isOpen) {
-      console.log("Send", lines)
+      // console.log("Send", lines)
       this.socket.send(msg)
     }
     else {
-      console.log("Queue", msg)
+      // console.log("Queue", msg)
       this.queue.push(msg)
     }
   }
@@ -100,7 +100,7 @@ export class Messages {
 
   sendQueue() {
     this.queue.forEach((m) => {
-      console.log("SendQueue", m)
+      // console.log("SendQueue", m)
       this.socket.send(m)
     })
 

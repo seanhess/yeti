@@ -42,8 +42,6 @@ data Article = Article
 data Action
   = Comment Text
   | SubmitComment
-  | TestEnter
-  | Woot Text
   deriving (Show, Generic, LiveAction)
 
 -- TODO this page should be able to throw a 404 and hit the handler if it wants
@@ -58,10 +56,6 @@ update (Comment t) m =
   pure $ m { comment = t }
 update SubmitComment m =
   pure $ m { comments = m.comments <> [m.comment], comment = "" }
-update TestEnter m =
-  pure $ m { comments = m.comments <> ["Enter"] }
-update (Woot t) m =
-  pure $ m { comments = m.comments <> ["Woot"] }
 
 view :: Model -> View Content ()
 view m = col (gap 10) $ do

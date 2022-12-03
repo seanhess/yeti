@@ -45,8 +45,7 @@ type SimplePage model action m = Page () model action m
 
 -- | Page without params
 simplePage
-  :: forall action model m. Applicative m
-  => m model
+  :: m model
   -> Update action model m
   -> View' model
   -> Page () model action m

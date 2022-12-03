@@ -17,7 +17,6 @@ import Yeti.View.Types
       addClasses,
       classList )
 import qualified Data.Map as Map
-import qualified Data.Text as Text
 
 
 
@@ -92,11 +91,15 @@ none = pure ()
 meta :: TagMod a -> View a ()
 meta f = tag "meta" f (fromText "")
 
-title_ = tag "title" id
+title_ :: Text -> View Script ()
+title_ = tag "title" id . fromText
 
+head_ :: View Script () -> View a ()
 head_ = tag "head" id
 
+html_ :: View a () -> View a ()
 html_ = tag "html" id
 
+body_ :: View Content () -> View Content ()
 body_ = tag "body" id
 

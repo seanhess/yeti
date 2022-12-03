@@ -30,7 +30,7 @@ data ClientState = ClientState
 
 
 socketApp
-  :: forall page m a. (RoutePage page, MonadBase m IO, MonadIO m, MonadBaseControl IO m)
+  :: forall page m. (RoutePage page, MonadBase m IO, MonadIO m, MonadBaseControl IO m)
   => PageHandler page m
   -> WS.PendingConnection
   -> IO ()
@@ -95,11 +95,11 @@ socketApp pageResponse pending = do
     onRuntimeError e = do
       putStrLn $ "RUNTIME ERROR! " <> show e
 
-    disconnect :: IO ()
-    disconnect = do
-      -- perform any cleanup here
-      putStrLn "DISCONNECT!"
-      pure ()
+    -- disconnect :: IO ()
+    -- disconnect = do
+    --   -- perform any cleanup here
+    --   putStrLn "DISCONNECT!"
+    --   pure ()
 
 
 data Identified page = Identified
@@ -110,16 +110,16 @@ data Identified page = Identified
 -- It's all right here, except for the connection
 -- run :: (MonadFail m, MonadIO m) => AppPage -> Encoded 'Encode.Model -> [Encoded 'Encode.Action] -> m Response
 talk
-  :: forall page m. (MonadIO m, MonadBase IO m, MonadBase m IO, MonadBaseControl IO m)
+  :: forall page m. (MonadIO m, MonadBase m IO, MonadBaseControl IO m)
   => Identified page
   -> MVar ClientState
   -> PageHandler page m
   -> WS.Connection ->
   m ()
-talk (Identified page encModel) state run conn = do
+talk (Identified page _) state run conn = do
   -- putStrLn $ "TALK: " <> (show page)
   msg <- liftIO $ WS.receiveData conn :: m Message
-  putStrLn $ " - " <> cs (fromMessage msg)
+  -- putStrLn $ " - " <> cs (fromMessage msg)
 
   (res, newCls) <- updateState state msg
 

@@ -9,8 +9,6 @@ import Yeti
 import Yeti.UI
 
 import Data.Text (Text)
-import Lucid (toHtml)
-import Lucid.Html5
 
 
 data Model = Model
