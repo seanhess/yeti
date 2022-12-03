@@ -6,6 +6,7 @@ module Page.Signup where
 import Prelude
 import Yeti
 import Yeti.UI
+import App.Color
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Time.Clock as Time (UTCTime, getCurrentTime)
@@ -111,37 +112,33 @@ isValid v = not (passwordsDoNotMatch v || usernameTooShort v || usernameIsTaken 
 
 
 
--- we want to validate, and give the errors here
---
-
-view :: Model -> Html ()
-view m = section_ $ do
+view :: Model -> View Content ()
+view m = col (gap 20 . pad 10) $ do
   case m.signup of
     Working v -> workingView m v
     Valid -> validView
 
-workingView :: Model -> Validation -> Html ()
+workingView :: Model -> Validation -> View Content ()
 workingView m v = do
-  p_ "Choose a username and password"
 
-  div_ [ class_ $ if (validUser v) then "section" else "section error" ] $ do
-    div_ $ label_ [ for_ "username" ] "Username"
-    div_ $ do
-      input' [ name_ "username", type_ "text", value_ (m.username), onInput (EditUsername) ] ""
-      mapM_ (span_ [ class_ "message" ] . toHtml) (userErrorMessages v)
+  el (bold) "Choose a username and password"
 
-  div_ [ class_ $ if (validPass v) then "section" else "section error" ] $ do
-    div_ $ label_ [ for_ "password1" ] "Password"
-    div_ $ do
-      input' [ name_ "password1", type_ "password", value_ (m.pass1), onInput (EditPass1) ] ""
-      mapM_ (span_ [ class_ "message" ] . toHtml) (passErrorMessages v)
+  field (gap 8 . invalidRed validUser) LabelAbove "Username" $ do
+    mapM_ text_ (userErrorMessages v)
+    inputText EditUsername m.username (invalidRed validUser)
 
-  div_ [ class_ $ if (validPass v) then "section" else "section error" ] $ do
-    div_ $ label_ [ for_ "password2" ] "Re-type Password"
-    div_ $ input' [ name_ "password2", type_ "password", value_ (m.pass2), onInput (EditPass2) ] ""
+  field (gap 8 . invalidRed validPass) LabelAbove "Password" $ do
+    mapM_ text_ (passErrorMessages v)
+    inputText EditPass1 m.pass1 (invalidRed validPass)
 
-  div_ [ class_ "row" ] $
-    button_ [ onClick SignUp ] "Sign Up"
+  field (gap 8 . invalidRed validPass) LabelAbove "Re-type password" $ do
+    inputText EditPass2 m.pass2 (invalidRed validPass)
+
+  button SignUp id "Sign Up"
+
+  where
+    invalidRed f = if f v then id else color Red
+
 
 
 userErrorMessages :: Validation -> [Text]
@@ -157,9 +154,9 @@ passErrorMessages v = catMaybes
   ]
 
 
-validView :: Html ()
+validView :: View Content ()
 validView = do
-  p_ "Thanks for signing up!"
+  el (bold) "Thanks for signing up!"
 
 
 page :: MonadIO m => Page () Model Action m

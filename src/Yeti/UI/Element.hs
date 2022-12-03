@@ -34,10 +34,57 @@ button act f cnt =
   -- include the reset incrementally with UI
   where reset = border 0
 
-input :: LiveAction action => (Text -> action) -> TagMod a -> View Content ()
-input act f = tag "input" (f . onInput act) none
+
+inputText :: LiveAction action => (Text -> action) -> Text -> TagMod a -> View FieldInput ()
+inputText act val f = tag "input" (f . onInput act . att "value" val) none
+
 
 hlink :: AttValue -> View a () -> View b ()
 hlink href = tag "a" (att "href" href)
+
+-- Automatically wraps it in a label
+-- you can pic how it is laid out
+
+data Label
+  = LabelAbove
+  | LabelBelow
+  | LabelRight
+  | LabelLeft
+
+data FieldInput
+
+-- this forces you to have a label
+field :: TagMod a -> Label -> Text -> View FieldInput () -> View Content ()
+field f LabelAbove l (View ct) =
+  tag "label" (flexCol . f) $ do
+    text_ l
+    View ct
+
+field f LabelBelow l (View ct) =
+  tag "label" (flexCol . f) $ do
+    View ct
+    text_ l
+
+field f LabelRight l (View ct) =
+  tag "label" (flexRow . f) $ do
+    View ct
+    text_ l
+
+field f LabelLeft l (View ct) =
+  tag "label" (flexRow . f) $ do
+    text_ l
+    View ct
+
+  
+
+-- <label>
+--    <input type="text" name="lastname" />
+--    Last Name
+-- </label>
+
+
+
+
+
 
 

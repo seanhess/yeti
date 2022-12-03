@@ -8,6 +8,7 @@ import Yeti.UI
 
 data AppPage
   = Counter Integer
+  | Signup
   -- | Index
   deriving (Generic, Show, RoutePage)
 
@@ -20,7 +21,7 @@ mainView :: View Content ()
 mainView = do
   row (pad 1) $ do
     page (Counter 11)
-    -- page Signup
+    page Signup
     -- page Focus
     -- page Todos
     -- page (Article "1")

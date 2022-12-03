@@ -12,6 +12,7 @@ import Yeti.View.Types (Tag(..))
 import Control.Monad.IO.Class (MonadIO)
 import Data.Char (toLower)
 import qualified Data.Text as Text
+import App.Color
 -- import Lucid (toHtml)
 -- import Lucid.Html5
 
@@ -64,8 +65,8 @@ view m = col (gap 8) $ do
       --   Sign Up
       -- </button>
 
-    row (pad 1 . gap 6) $ do
-      input Noop id
+    -- row (pad 1 . gap 6) $ do
+    --   input Noop id
 
     -- example: conditionally include a style
     text (if m.count > 10 then bold else id) $
@@ -82,20 +83,6 @@ view m = col (gap 8) $ do
     
 
 
--- Example of App Colors
-data MyColors
-  = Purple
-  | PurpleLight
-  | Green
-  | White
-  deriving (Show)
-
-instance ToColor MyColors where
-  colorValue Purple = rgb 168 85 247
-  colorValue PurpleLight = rgb 192 132 252
-  colorValue Green = Style Hex "00FF00"
-  colorValue White = Style Hex "FFF"
-  colorName = Text.toLower . pack . show
 
 
 

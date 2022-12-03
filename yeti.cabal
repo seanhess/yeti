@@ -118,6 +118,7 @@ executable yeti-exe
   main-is: Main.hs
   other-modules:
       App
+      App.Color
       Page.Article
       Page.Counter
       Page.Focus

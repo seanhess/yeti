@@ -15,7 +15,7 @@ import qualified Yeti.UI as UI
 -- import qualified Page.Article as Article
 import qualified Page.Counter as Counter
 -- import qualified Page.Focus as Focus
--- import qualified Page.Signup as Signup
+import qualified Page.Signup as Signup
 -- import qualified Page.Todo as Todo
 
 start :: IO ()
@@ -53,7 +53,7 @@ startServer = do
     -- go Focus       = run Focus.page
     go (Counter n) = run (Counter.page n)
     -- go Todos       = run (Todo.page todos)
-    -- go Signup      = run Signup.page
+    go Signup      = run Signup.page
     -- go Index       = run mainPage
     -- go (Article i) = run (Article.page i)
 

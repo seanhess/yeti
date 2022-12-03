@@ -56,10 +56,10 @@ el_ :: View Content () -> View Content ()
 el_ = tag "div" id
 
 -- | A styled inline text node
-text :: TagMod a -> Text -> View Content ()
+text :: TagMod a -> Text -> View a ()
 text f ct = tag "span" f (fromText ct)
 
-text_ :: Text -> View Content ()
+text_ :: Text -> View a ()
 text_ ct = tag "span" id (fromText ct)
 
 
@@ -99,5 +99,4 @@ head_ = tag "head" id
 html_ = tag "html" id
 
 body_ = tag "body" id
-
 
