@@ -122,6 +122,7 @@ executable yeti-exe
       Page.Article
       Page.Counter
       Page.Focus
+      Page.Interview
       Page.Route
       Page.Signup
       Page.Todo

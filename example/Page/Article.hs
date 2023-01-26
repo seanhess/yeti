@@ -45,7 +45,7 @@ data Action
   deriving (Show, Generic, LiveAction)
 
 -- TODO this page should be able to throw a 404 and hit the handler if it wants
-load :: (MonadFail m) => Id -> m Model
+load :: (Monad m) => Id -> m Model
 load i = do
   case List.lookup i fakeDatabase of
     Nothing -> throw $ NotFound $ "Article " <> unpack i
@@ -82,5 +82,5 @@ test = do
 
 
 
-page :: MonadFail m => Id -> Page () Model Action m
+page :: Monad m => Id -> Page () Model Action m
 page i = simplePage (load i) update view

@@ -87,8 +87,7 @@ respondWai render pg (Response encModel _ view) respWai = do
     headers =
       -- don't need to send them, because the url already results in the correct page
       -- [ ("X-Params", cs $ queryToText encParams)
-      [ ("Content-Type", "text/html")
-      ]
+      [ ("Content-Type", "text/html") ]
 
     embedStateScript :: View a ()
     embedStateScript = 

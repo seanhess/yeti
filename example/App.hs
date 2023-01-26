@@ -45,7 +45,7 @@ startServer todos = do
 
 
   where
-    go :: (MonadFail m, MonadIO m) => PageHandler AppPage m
+    go :: MonadIO m => PageHandler AppPage m
     go Focus       = run Focus.page
     go (Counter n) = run (Counter.page n)
     go Todos       = run (Todo.page todos)
