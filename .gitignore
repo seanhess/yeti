@@ -1,6 +1,9 @@
 .stack-work/
 .DS_Store
 node_modules
+tags
+dist-newstyle/
+package-lock.json
 ghcid.txt
 dist/
 *~
