@@ -101,7 +101,7 @@ library:
   source-dirs: src
 
 executables:
-  yeti-exe:
+  example:
     main:                Main.hs
     source-dirs:         example
     ghc-options:
@@ -113,7 +113,7 @@ executables:
     - yeti
 
 tests:
-  yeti-test:
+  test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:

@@ -55,7 +55,7 @@ startServer todos = do
 
 
 
-config :: Render
+config :: View Content () -> View Document ()
 config content =
   document "Example" (pure ()) $ do
     content

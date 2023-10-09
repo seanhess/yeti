@@ -1,2 +1,37 @@
 cradle:
-  stack:
+  cabal:
+    - path: "src"
+      component: "lib:yeti"
+
+    - path: "example/Main.hs"
+      component: "yeti:exe:example"
+
+    - path: "example/App.hs"
+      component: "yeti:exe:example"
+
+    - path: "example/App/Color.hs"
+      component: "yeti:exe:example"
+
+    - path: "example/Page/Article.hs"
+      component: "yeti:exe:example"
+
+    - path: "example/Page/Counter.hs"
+      component: "yeti:exe:example"
+
+    - path: "example/Page/Focus.hs"
+      component: "yeti:exe:example"
+
+    - path: "example/Page/Route.hs"
+      component: "yeti:exe:example"
+
+    - path: "example/Page/Signup.hs"
+      component: "yeti:exe:example"
+
+    - path: "example/Page/Todo.hs"
+      component: "yeti:exe:example"
+
+    - path: "example/Paths_yeti.hs"
+      component: "yeti:exe:example"
+
+    - path: "test"
+      component: "yeti:test:test"
